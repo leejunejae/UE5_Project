@@ -14,4 +14,8 @@ class UE5PROJECT_API AUE5projectGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+	AUE5projectGameModeBase();
+
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 };
