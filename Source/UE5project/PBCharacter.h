@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Camera/CameraComponent.h"
 #include "PBCharacter.generated.h"
 
 class USkeletalMeshComponent;
 class UInputMappingContext;
 class UInputAction;
+class USpringArmComponent;
 
 UCLASS()
 class UE5PROJECT_API APBCharacter : public ACharacter
@@ -32,12 +34,26 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
+	UPROPERTY(VisibleAnywhere, Category = Camera)
+	USpringArmComponent* SpringArm;
+
+	UPROPERTY(VisibleAnywhere, Category = Camera)
+	UCameraComponent* Camera;
+
 	UPROPERTY(VisibleAnywhere, Category = Input)
 	UInputMappingContext* DefaultContext;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
 	UInputAction* MoveAction;
 
+	UPROPERTY(VisibleAnywhere, Category = Input)
+	UInputAction* LookAction;
+
+	UPROPERTY(VisibleAnywhere, Category = Input)
+	UInputAction* JumpAction;
+
 	/* 캐릭터의 기본적인 움직임을 수행하는 함수*/
 	void Move(const FInputActionValue& value);
+	void Look(const FInputActionValue& value);
+	void Jump();
 };

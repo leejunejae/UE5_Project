@@ -9,7 +9,7 @@ void APBCController::PostInitializeComponents()
 
 }
 
-void APBCController::Possess(APawn* aPawn)
+void APBCController::OnPossess(APawn* aPawn)
 {
-	Super::Possess(aPawn);
+	Super::OnPossess(aPawn);
 }
