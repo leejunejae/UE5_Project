@@ -19,19 +19,12 @@ APBCharacter::APBCharacter()
 
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
-	GetMesh()->SetOwnerNoSee(true);
+	//GetMesh()->SetOwnerNoSee(true);
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	Camera->SetupAttachment(GetCapsuleComponent());
 	Camera->SetRelativeLocation(FVector(10.0f, 0.0f, BaseEyeHeight));
 	Camera->bUsePawnControlRotation = true;
-
-
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh>PBC_Mannequin(TEXT("/Game/Character/C_Mesh/Paladin_WProp_J_Nordstrom.Paladin_WProp_J_Nordstrom"));
-	if (PBC_Mannequin.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(PBC_Mannequin.Object);
-	}
 
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext>PBC_Context(TEXT("/Game/Character/C_Input/C_BasicInput.C_BasicInput"));
 	if (PBC_Context.Succeeded())
