@@ -55,5 +55,16 @@ protected:
 	/* 캐릭터의 기본적인 움직임을 수행하는 함수*/
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
+	void CameraSetting();
 	void Jump();
+
+private:
+	int32 MoveFlag;
+	void Initialization();
+
+public:
+	int32 CheckMFlag()
+	{
+		return MoveFlag;
+	}
 };

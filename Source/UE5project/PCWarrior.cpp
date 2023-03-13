@@ -2,6 +2,7 @@
 
 
 #include "PCWarrior.h"
+#include "PCWAnimInstance.h"
 
 APCWarrior::APCWarrior()
 {
@@ -12,6 +13,14 @@ APCWarrior::APCWarrior()
 	if (PBC_Mannequin.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(PBC_Mannequin.Object);
+	}
+
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+
+	static ConstructorHelpers::FClassFinder<UAnimInstance>WARRIOR_ANIM(TEXT("/Game/Character/C_Animation/CA_Warrior/CAW_BP/CAW_AnimBlueprint.CAW_AnimBlueprint_C"));
+	if (WARRIOR_ANIM.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
 	}
 }
 
