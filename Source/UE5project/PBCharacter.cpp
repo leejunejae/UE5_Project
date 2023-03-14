@@ -4,6 +4,7 @@
 #include "PBCharacter.h"
 
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include <Engine/Classes/Components/CapsuleComponent.h>
 
 #include "Components/InputComponent.h"
@@ -68,12 +69,13 @@ void APBCharacter::BeginPlay()
 void APBCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void APBCharacter::Initialization()
 {
 	MoveFlag = 0;
+	JumpHold = false;
+	JumpTime = 0;
 }
 
 void APBCharacter::CameraSetting()
@@ -140,5 +142,24 @@ void APBCharacter::Look(const FInputActionValue& value)
 
 void APBCharacter::Jump()
 {
-	Super::Jump();
+	if (!JumpHold)
+	{
+		Super::Jump();
+		JumpHold = true;
+		GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &APBCharacter::JumpTimer, 1.0f, true);
+	}
+}
+
+void APBCharacter::JumpTimer()
+{
+	if (JumpHold && !GetMovementComponent()->IsFalling())
+	{
+		JumpTime++;
+		if (JumpTime > 1)
+		{
+			JumpTime = 0;
+			JumpHold = false;
+			GetWorldTimerManager().ClearTimer(JumpTimerHandle);
+		}
+	}
 }

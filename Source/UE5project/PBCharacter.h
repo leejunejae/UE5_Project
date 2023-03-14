@@ -60,6 +60,13 @@ protected:
 
 private:
 	int32 MoveFlag;
+
+	// 연속 점프 제한
+	FTimerHandle JumpTimerHandle;
+	bool JumpHold;
+	int32 JumpTime;
+
+	void JumpTimer();
 	void Initialization();
 
 public:
