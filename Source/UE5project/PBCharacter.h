@@ -52,6 +52,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Input)
 	UInputAction* JumpAction;
 
+	FVector2D AimOffVal;
+
 	/* 캐릭터의 기본적인 움직임을 수행하는 함수*/
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
@@ -73,5 +75,10 @@ public:
 	int32 CheckMFlag()
 	{
 		return MoveFlag;
+	}
+
+	float Character_Pitch()
+	{
+		return AimOffVal.Y;
 	}
 };

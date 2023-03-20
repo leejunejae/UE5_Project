@@ -16,7 +16,6 @@ APCWarrior::APCWarrior()
 	}
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-
 	static ConstructorHelpers::FClassFinder<UAnimInstance>WARRIOR_ANIM(TEXT("/Game/Character/C_Animation/CA_Warrior/CAW_BP/CAW_AnimBlueprint.CAW_AnimBlueprint_C"));
 	if (WARRIOR_ANIM.Succeeded())
 	{

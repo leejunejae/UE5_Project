@@ -136,6 +136,7 @@ void APBCharacter::Move(const FInputActionValue& value)
 void APBCharacter::Look(const FInputActionValue& value)
 {
 	const FVector2D LookAxisValue = value.Get<FVector2D>();
+	AimOffVal = value.Get<FVector2D>();
 	AddControllerPitchInput(LookAxisValue.Y);
 	AddControllerYawInput(LookAxisValue.X);
 }
