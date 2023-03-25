@@ -5,6 +5,7 @@
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include <Engine/Classes/Components/CapsuleComponent.h>
 
 #include "Components/InputComponent.h"
@@ -69,6 +70,7 @@ void APBCharacter::BeginPlay()
 void APBCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	//UE_LOG(LogTemp, Log, TEXT("%f"), GetActorRotation().Yaw);
 }
 
 void APBCharacter::Initialization()
@@ -113,24 +115,21 @@ void APBCharacter::Move(const FInputActionValue& value)
 	const FVector2D DirectionValue = value.Get<FVector2D>();
 	const FVector forward = GetActorForwardVector();
 	const FVector right = GetActorRightVector();
-	if (DirectionValue.Y > 0.5f)
-	{
-		MoveFlag = 0;
-	}
-	else if(DirectionValue.Y < -0.5f)
-	{
-		MoveFlag = 1;
-	}
-	else if(DirectionValue.X > 0.5f)
-	{
-		MoveFlag = 2;
-	}
-	else if(DirectionValue.X < -0.5f)
-	{
-		MoveFlag = 3;
-	}
-	AddMovementInput(forward, DirectionValue.Y*0.5);
-	AddMovementInput(right, DirectionValue.X*0.5);
+
+	FVector NewVelocity = GetVelocity();
+	float Speed_For = FVector::DotProduct(NewVelocity, forward);
+	float Speed_Side = FVector::DotProduct(NewVelocity, right);
+	float LineValue = Speed_For + Speed_Side - 300;
+	if (LineValue < 0)
+		LineValue -= LineValue;
+
+	SpeedSide = Speed_Side - LineValue / 2;
+	SpeedFor = Speed_For - LineValue / 2;
+	UE_LOG(LogTemp, Log, TEXT("%f"), SpeedSide);
+	UE_LOG(LogTemp, Log, TEXT("%f"), SpeedFor);
+
+	AddMovementInput(forward, DirectionValue.Y);
+	AddMovementInput(right, DirectionValue.X);
 }
 
 void APBCharacter::Look(const FInputActionValue& value)

@@ -12,6 +12,7 @@ class USkeletalMeshComponent;
 class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
+class UCharacterMovementComponent;
 
 UCLASS()
 class UE5PROJECT_API APBCharacter : public ACharacter
@@ -67,6 +68,8 @@ private:
 	FTimerHandle JumpTimerHandle;
 	bool JumpHold;
 	int32 JumpTime;
+	float SpeedFor;
+	float SpeedSide;
 
 	void JumpTimer();
 	void Initialization();
@@ -80,5 +83,15 @@ public:
 	float Character_Pitch()
 	{
 		return AimOffVal.Y;
+	}
+
+	float Character_SpeedFor()
+	{
+		return SpeedFor;
+	}
+
+	float Character_SpeedSide()
+	{
+		return SpeedSide;
 	}
 };

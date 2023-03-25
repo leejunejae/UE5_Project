@@ -3,6 +3,7 @@
 
 #include "PCWarrior.h"
 #include "PCWAnimInstance.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 APCWarrior::APCWarrior()
 {
@@ -21,6 +22,8 @@ APCWarrior::APCWarrior()
 	{
 		GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
 	}
+
+	GetCharacterMovement()->MaxWalkSpeed = 300.0f;
 }
 
 void APCWarrior::BeginPlay()

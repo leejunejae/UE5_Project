@@ -16,7 +16,6 @@ class UE5PROJECT_API UPCWAnimInstance : public UAnimInstance
 
 public:
 	UPCWAnimInstance();
-	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
@@ -24,10 +23,13 @@ private:
 	float CurrentSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-	int32 MoveFlag;
+	bool IsInAir;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-	bool IsInAir;
+		float Speed_For;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		float Speed_Side;
 
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
 		float Pitch;

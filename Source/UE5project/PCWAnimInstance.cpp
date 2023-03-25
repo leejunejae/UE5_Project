@@ -8,7 +8,6 @@
 UPCWAnimInstance::UPCWAnimInstance()
 {
 	CurrentSpeed = 0.0f;
-	MoveFlag = 0;
 	IsInAir = false;
 }
 
@@ -24,9 +23,11 @@ void UPCWAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		if (Character)
 		{
 			FVector NewVelocity = Character->GetVelocity();
-			MoveFlag = Character->CheckMFlag();
+			Speed_For = Character->Character_SpeedFor();
+			Speed_Side = Character->Character_SpeedSide();
 			IsInAir = Character->GetMovementComponent()->IsFalling();
 			Pitch = Character->GetBaseAimRotation().Pitch;
+			Yaw = Character->GetBaseAimRotation().Yaw;
 		}
 	}
 }
