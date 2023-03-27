@@ -22,9 +22,8 @@ void UPCWAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		auto Character = Cast<APCWarrior>(Pawn);
 		if (Character)
 		{
-			FVector NewVelocity = Character->GetVelocity();
-			Speed_For = Character->Character_SpeedFor();
-			Speed_Side = Character->Character_SpeedSide();
+			Speed = Character->GetVelocity().Size();
+			Direction = (Warrior_AnimInstance->CalculateDirection(Character->GetVelocity(), Character->GetActorRotation()));
 			IsInAir = Character->GetMovementComponent()->IsFalling();
 			Pitch = Character->GetBaseAimRotation().Pitch;
 			Yaw = Character->GetBaseAimRotation().Yaw;

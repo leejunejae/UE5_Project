@@ -9,7 +9,6 @@ APCWarrior::APCWarrior()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>PBC_Mannequin(TEXT("/Game/Character/C_Mesh/CM_Warrior/Paladin_WProp_J_Nordstrom.Paladin_WProp_J_Nordstrom"));
 	if (PBC_Mannequin.Succeeded())
 	{
@@ -24,6 +23,9 @@ APCWarrior::APCWarrior()
 	}
 
 	GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+	GetCharacterMovement()->MaxAcceleration = 512.0f;
+	//GetCharacterMovement()->BrakingDecelerationWalking = 128.0f;
+	//GetCharacterMovement()->GroundFriction = 0.1f;
 }
 
 void APCWarrior::BeginPlay()
@@ -41,4 +43,34 @@ void APCWarrior::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void APCWarrior::MoveSpeedToggle()
+{
+	Super::MoveSpeedToggle();
+	if (IsRun)
+	{
+		GetCharacterMovement()->MaxAcceleration = 0.0f;
+		//GetCharacterMovement()->bUseSeparateBrakingFriction = true;
+		GetWorldTimerManager().SetTimer(MoveSpeedTimerHandle, this, &APCWarrior::MoveSpeedTimer, 0.1f, true);
+	}
+	else
+	{
+		if(GetWorldTimerManager().IsTimerActive(MoveSpeedTimerHandle))
+			GetWorldTimerManager().ClearTimer(MoveSpeedTimerHandle);
+		GetCharacterMovement()->MaxAcceleration = 512.0f;
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+		//GetCharacterMovement()->bUseSeparateBrakingFriction = false;
+	}
+}
+
+void APCWarrior::MoveSpeedTimer()
+{
+	if (GetVelocity().Size() <= 300.0f)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+		GetCharacterMovement()->MaxAcceleration = 512.0f;
+		GetWorldTimerManager().ClearTimer(MoveSpeedTimerHandle);
+		//GetCharacterMovement()->bUseSeparateBrakingFriction = false;
+	}
 }

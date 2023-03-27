@@ -41,6 +41,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	UCameraComponent* Camera;
 
+
+	/* 캐릭터 입력 매핑 변수 */
 	UPROPERTY(VisibleAnywhere, Category = Input)
 	UInputMappingContext* DefaultContext;
 
@@ -53,45 +55,33 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Input)
 	UInputAction* JumpAction;
 
+	UPROPERTY(VisibleAnywhere, Category = Input)
+	UInputAction* MoveSpeedToggleAction;
+
+
 	FVector2D AimOffVal;
+
+	bool IsRun;
 
 	/* 캐릭터의 기본적인 움직임을 수행하는 함수*/
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
 	void CameraSetting();
 	void Jump();
+	virtual void MoveSpeedToggle();
 
 private:
-	int32 MoveFlag;
-
 	// 연속 점프 제한
 	FTimerHandle JumpTimerHandle;
 	bool JumpHold;
 	int32 JumpTime;
-	float SpeedFor;
-	float SpeedSide;
 
 	void JumpTimer();
 	void Initialization();
 
 public:
-	int32 CheckMFlag()
-	{
-		return MoveFlag;
-	}
-
 	float Character_Pitch()
 	{
 		return AimOffVal.Y;
-	}
-
-	float Character_SpeedFor()
-	{
-		return SpeedFor;
-	}
-
-	float Character_SpeedSide()
-	{
-		return SpeedSide;
 	}
 };

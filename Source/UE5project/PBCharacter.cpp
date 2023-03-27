@@ -42,6 +42,12 @@ APBCharacter::APBCharacter()
 		LookAction = IP_Look.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_MoveSpeedToggle(TEXT("/Game/Character/C_Input/C_MoveSpeedToggle.C_MoveSpeedToggle"));
+	if (IP_MoveSpeedToggle.Succeeded())
+	{
+		MoveSpeedToggleAction = IP_MoveSpeedToggle.Object;
+	}
+
 	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Jump(TEXT("/Game/Character/C_Input/C_Jump.C_Jump"));
 	if (IP_Jump.Succeeded())
 	{
@@ -70,14 +76,14 @@ void APBCharacter::BeginPlay()
 void APBCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//UE_LOG(LogTemp, Log, TEXT("%f"), GetActorRotation().Yaw);
 }
 
 void APBCharacter::Initialization()
 {
-	MoveFlag = 0;
 	JumpHold = false;
 	JumpTime = 0;
+	IsRun = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 }
 
 void APBCharacter::CameraSetting()
@@ -107,6 +113,7 @@ void APBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APBCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APBCharacter::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APBCharacter::Jump);
+		EnhancedInputComponent->BindAction(MoveSpeedToggleAction, ETriggerEvent::Completed, this, &APBCharacter::MoveSpeedToggle);
 	}
 }
 
@@ -116,17 +123,7 @@ void APBCharacter::Move(const FInputActionValue& value)
 	const FVector forward = GetActorForwardVector();
 	const FVector right = GetActorRightVector();
 
-	FVector NewVelocity = GetVelocity();
-	float Speed_For = FVector::DotProduct(NewVelocity, forward);
-	float Speed_Side = FVector::DotProduct(NewVelocity, right);
-	float LineValue = Speed_For + Speed_Side - 300;
-	if (LineValue < 0)
-		LineValue -= LineValue;
-
-	SpeedSide = Speed_Side - LineValue / 2;
-	SpeedFor = Speed_For - LineValue / 2;
-	UE_LOG(LogTemp, Log, TEXT("%f"), SpeedSide);
-	UE_LOG(LogTemp, Log, TEXT("%f"), SpeedFor);
+	UE_LOG(LogTemp, Error, TEXT("%f"), GetVelocity().Size());
 
 	AddMovementInput(forward, DirectionValue.Y);
 	AddMovementInput(right, DirectionValue.X);
@@ -147,6 +144,19 @@ void APBCharacter::Jump()
 		Super::Jump();
 		JumpHold = true;
 		GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &APBCharacter::JumpTimer, 1.0f, true);
+	}
+}
+
+void APBCharacter::MoveSpeedToggle()
+{
+	UE_LOG(LogTemp, Error, TEXT("TOGGLING"));
+	if (IsRun)
+	{
+		IsRun = false;
+	}
+	else
+	{
+		IsRun = true;
 	}
 }
 
