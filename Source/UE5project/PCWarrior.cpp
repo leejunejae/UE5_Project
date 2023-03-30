@@ -23,9 +23,9 @@ APCWarrior::APCWarrior()
 	}
 
 	GetCharacterMovement()->MaxWalkSpeed = 300.0f;
-	GetCharacterMovement()->MaxAcceleration = 512.0f;
-	//GetCharacterMovement()->BrakingDecelerationWalking = 128.0f;
-	//GetCharacterMovement()->GroundFriction = 0.1f;
+	GetCharacterMovement()->MaxAcceleration = 2048.0f;
+	GetCharacterMovement()->GroundFriction = 0.1f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 2048.0f;
 }
 
 void APCWarrior::BeginPlay()
@@ -48,19 +48,19 @@ void APCWarrior::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 void APCWarrior::MoveSpeedToggle()
 {
 	Super::MoveSpeedToggle();
-	if (IsRun)
+	if (!IsRun)
 	{
 		GetCharacterMovement()->MaxAcceleration = 0.0f;
-		//GetCharacterMovement()->bUseSeparateBrakingFriction = true;
+		GetCharacterMovement()->BrakingDecelerationWalking = 1024.0f;
 		GetWorldTimerManager().SetTimer(MoveSpeedTimerHandle, this, &APCWarrior::MoveSpeedTimer, 0.1f, true);
 	}
 	else
 	{
 		if(GetWorldTimerManager().IsTimerActive(MoveSpeedTimerHandle))
 			GetWorldTimerManager().ClearTimer(MoveSpeedTimerHandle);
-		GetCharacterMovement()->MaxAcceleration = 512.0f;
+		GetCharacterMovement()->MaxAcceleration = 2048.0f;
 		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
-		//GetCharacterMovement()->bUseSeparateBrakingFriction = false;
+		GetCharacterMovement()->BrakingDecelerationWalking = 2048.0f;
 	}
 }
 
@@ -69,8 +69,8 @@ void APCWarrior::MoveSpeedTimer()
 	if (GetVelocity().Size() <= 300.0f)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
-		GetCharacterMovement()->MaxAcceleration = 512.0f;
+		GetCharacterMovement()->MaxAcceleration = 2048.0f;
 		GetWorldTimerManager().ClearTimer(MoveSpeedTimerHandle);
-		//GetCharacterMovement()->bUseSeparateBrakingFriction = false;
+		GetCharacterMovement()->BrakingDecelerationWalking = 2048.0f;
 	}
 }

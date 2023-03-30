@@ -78,10 +78,4 @@ private:
 
 	void JumpTimer();
 	void Initialization();
-
-public:
-	float Character_Pitch()
-	{
-		return AimOffVal.Y;
-	}
 };

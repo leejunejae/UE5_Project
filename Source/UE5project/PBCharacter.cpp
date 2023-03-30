@@ -76,6 +76,8 @@ void APBCharacter::BeginPlay()
 void APBCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	Get
 }
 
 void APBCharacter::Initialization()
@@ -132,7 +134,6 @@ void APBCharacter::Move(const FInputActionValue& value)
 void APBCharacter::Look(const FInputActionValue& value)
 {
 	const FVector2D LookAxisValue = value.Get<FVector2D>();
-	AimOffVal = value.Get<FVector2D>();
 	AddControllerPitchInput(LookAxisValue.Y);
 	AddControllerYawInput(LookAxisValue.X);
 }
@@ -150,14 +151,7 @@ void APBCharacter::Jump()
 void APBCharacter::MoveSpeedToggle()
 {
 	UE_LOG(LogTemp, Error, TEXT("TOGGLING"));
-	if (IsRun)
-	{
-		IsRun = false;
-	}
-	else
-	{
-		IsRun = true;
-	}
+	IsRun = !IsRun;
 }
 
 void APBCharacter::JumpTimer()
