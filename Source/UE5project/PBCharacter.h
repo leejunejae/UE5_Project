@@ -34,6 +34,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void PostInitializeComponents() override;
+
 protected:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	USpringArmComponent* SpringArm;
@@ -56,18 +58,23 @@ protected:
 	UInputAction* JumpAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
+	UInputAction* AttackAction;
+
+	UPROPERTY(VisibleAnywhere, Category = Input)
 	UInputAction* MoveSpeedToggleAction;
 
 
 	FVector2D AimOffVal;
 
 	bool IsRun;
+	bool IsAttack;
 
 	/* 캐릭터의 기본적인 움직임을 수행하는 함수*/
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
 	void CameraSetting();
 	void Jump();
+	virtual void Attack();
 	virtual void MoveSpeedToggle();
 
 private:

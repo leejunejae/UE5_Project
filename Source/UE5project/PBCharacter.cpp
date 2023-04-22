@@ -54,6 +54,12 @@ APBCharacter::APBCharacter()
 		JumpAction = IP_Jump.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Attack(TEXT("/Game/Character/C_Input/C_Attack.C_Attack"));
+	if (IP_Attack.Succeeded())
+	{
+		AttackAction = IP_Attack.Object;
+	}
+
 	CameraSetting();
 }
 
@@ -76,8 +82,6 @@ void APBCharacter::BeginPlay()
 void APBCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	Get
 }
 
 void APBCharacter::Initialization()
@@ -116,7 +120,14 @@ void APBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APBCharacter::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APBCharacter::Jump);
 		EnhancedInputComponent->BindAction(MoveSpeedToggleAction, ETriggerEvent::Completed, this, &APBCharacter::MoveSpeedToggle);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &APBCharacter::Attack);
 	}
+}
+
+void APBCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
 }
 
 void APBCharacter::Move(const FInputActionValue& value)
@@ -166,4 +177,9 @@ void APBCharacter::JumpTimer()
 			GetWorldTimerManager().ClearTimer(JumpTimerHandle);
 		}
 	}
+}
+
+void APBCharacter::Attack()
+{
+	IsAttack = true;
 }

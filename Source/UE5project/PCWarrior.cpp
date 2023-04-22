@@ -26,6 +26,9 @@ APCWarrior::APCWarrior()
 	GetCharacterMovement()->MaxAcceleration = 2048.0f;
 	GetCharacterMovement()->GroundFriction = 0.1f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2048.0f;
+
+	IsMontagePlay = false;
+	IsAttack = false;
 }
 
 void APCWarrior::BeginPlay()
@@ -43,6 +46,20 @@ void APCWarrior::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void APCWarrior::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	PCWAnim = Cast<UPCWAnimInstance>(GetMesh()->GetAnimInstance());
+
+	PCWAnim->OnMontageEnded.AddDynamic(this, &APCWarrior::OnAttackMontageEnded);
+}
+
+void APCWarrior::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsAttack = false;
 }
 
 void APCWarrior::MoveSpeedToggle()
@@ -73,4 +90,11 @@ void APCWarrior::MoveSpeedTimer()
 		GetWorldTimerManager().ClearTimer(MoveSpeedTimerHandle);
 		GetCharacterMovement()->BrakingDecelerationWalking = 2048.0f;
 	}
+}
+
+void APCWarrior::Attack()
+{
+	Super::Attack();
+	PCWAnim->PlayAttackMontage();
+	IsMontagePlay = true;
 }

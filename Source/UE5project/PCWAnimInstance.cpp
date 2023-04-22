@@ -9,6 +9,12 @@ UPCWAnimInstance::UPCWAnimInstance()
 {
 	CurrentSpeed = 0.0f;
 	IsInAir = false;
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> ATTACK_MONTAGE(TEXT("/Game/Character/C_Animation/CA_Warrior/CAW_BP/CAW_AttackMontage.CAW_AttackMontage"));
+	if (ATTACK_MONTAGE.Succeeded())
+	{
+		AttackMontage = ATTACK_MONTAGE.Object;
+	}
 }
 
 void UPCWAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -29,4 +35,9 @@ void UPCWAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			Yaw = Character->GetBaseAimRotation().Yaw;
 		}
 	}
+}
+
+void UPCWAnimInstance::PlayAttackMontage()
+{
+	Montage_Play(AttackMontage, 1.0f);
 }

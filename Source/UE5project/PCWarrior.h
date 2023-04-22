@@ -27,9 +27,24 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void MoveSpeedToggle() override;
+	virtual void PostInitializeComponents() override;
 
 private:
 	FTimerHandle MoveSpeedTimerHandle;
 	void MoveSpeedTimer();
+
+	virtual void MoveSpeedToggle() override;
+	virtual void Attack() override;
+
+
+
+
+	// 애니메이션 연결을 위한 클래스 변수
+	UPROPERTY()
+		class UPCWAnimInstance* PCWAnim;
+
+	bool IsMontagePlay;
+
+	UFUNCTION()
+		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };
