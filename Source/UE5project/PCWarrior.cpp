@@ -29,6 +29,8 @@ APCWarrior::APCWarrior()
 
 	IsMontagePlay = false;
 	IsAttack = false;
+	PrevLoc = GetActorLocation() - GetMesh()->GetBoneTransform(0).GetLocation();
+	NextLoc = GetActorLocation() - GetMesh()->GetBoneTransform(0).GetLocation();
 }
 
 void APCWarrior::BeginPlay()
@@ -39,7 +41,6 @@ void APCWarrior::BeginPlay()
 void APCWarrior::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void APCWarrior::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

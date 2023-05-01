@@ -21,6 +21,10 @@ public:
 	void PlayAttackMontage();
 
 private:
+	FVector PrevLoc;
+	FVector NextLoc;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Classes, Meta = (AllowPrivateAccess = true))
 		class UAnimInstance* Warrior_AnimInstance;
 

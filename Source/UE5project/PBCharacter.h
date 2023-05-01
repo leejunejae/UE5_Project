@@ -27,7 +27,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -38,30 +38,30 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
-	USpringArmComponent* SpringArm;
+		USpringArmComponent* SpringArm;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
-	UCameraComponent* Camera;
+		UCameraComponent* Camera;
 
 
 	/* 캐릭터 입력 매핑 변수 */
 	UPROPERTY(VisibleAnywhere, Category = Input)
-	UInputMappingContext* DefaultContext;
+		UInputMappingContext* DefaultContext;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
-	UInputAction* MoveAction;
+		UInputAction* MoveAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
-	UInputAction* LookAction;
+		UInputAction* LookAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
-	UInputAction* JumpAction;
+		UInputAction* JumpAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
-	UInputAction* AttackAction;
+		UInputAction* AttackAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
-	UInputAction* MoveSpeedToggleAction;
+		UInputAction* MoveSpeedToggleAction;
 
 
 	FVector2D AimOffVal;

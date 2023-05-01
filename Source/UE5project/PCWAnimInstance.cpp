@@ -33,6 +33,26 @@ void UPCWAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			IsInAir = Character->GetMovementComponent()->IsFalling();
 			Pitch = Character->GetBaseAimRotation().Pitch;
 			Yaw = Character->GetBaseAimRotation().Yaw;
+
+			/*
+			if (Montage_IsPlaying(AttackMontage))
+			{
+				if (PrevLoc == NextLoc)
+				{
+					//원점과 중앙좌표의 오차를 저장
+					PrevLoc = Character->GetActorLocation() - Character->GetMesh()->GetBoneTransform(0).GetLocation();
+				}
+				else
+				{
+					//이전의 좌표를 기억
+					PrevLoc = NextLoc;
+					//원점과 중앙좌표의 오차를 저장
+					NextLoc = Character->GetActorLocation() - Character->GetMesh()->GetBoneTransform(0).GetLocation();
+
+					Character->SetActorLocation(Character->GetActorLocation() + PrevLoc - NextLoc);
+				}
+			}
+			*/
 		}
 	}
 }

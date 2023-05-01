@@ -36,8 +36,9 @@ private:
 	virtual void MoveSpeedToggle() override;
 	virtual void Attack() override;
 
-
-
+	FVector PrevLoc;
+	FVector NextLoc;
+	FVector ABDiff;
 
 	// 애니메이션 연결을 위한 클래스 변수
 	UPROPERTY()
