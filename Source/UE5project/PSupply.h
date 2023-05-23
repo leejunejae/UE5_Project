@@ -7,7 +7,6 @@
 #include "PSupply.generated.h"
 
 class UBoxComponent;
-
 UCLASS()
 class UE5PROJECT_API APSupply : public AActor
 {
@@ -25,7 +24,6 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Box)
 		TObjectPtr<UBoxComponent> Trigger;
 
-	//UPROPERTY(VisibleAnywhere, Category = Box)
-		//FActorComponentInstanceData
-		//FActorComponentInstanceSourceInfo
+	UPROPERTY(VisibleAnywhere, Category = Box)
+		UStaticMeshComponent* Mesh;
 };

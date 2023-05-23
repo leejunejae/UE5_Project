@@ -18,10 +18,4 @@ public:
 	APBEnemyAIController();
 	virtual void OnPossess(APawn* InPawn) override;
 	//virtual void OnUnPossess() override;
-
-	UPROPERTY()
-		class UBehaviorTree* BTAsset;
-
-	UPROPERTY()
-		class UBlackboardData* BBAsset;
 };

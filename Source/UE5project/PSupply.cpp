@@ -11,12 +11,14 @@ APSupply::APSupply()
 	PrimaryActorTick.bCanEverTick = false;
 
 	Trigger = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger"));
-	//Box = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BOX"));
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 
 	RootComponent = Trigger;
-	//Box->SetupAttachment(RootComponent);
+	Mesh->SetupAttachment(RootComponent);
 
-	//Box->SetRelativeLocation(FVector(0.0f, -3.5f, -30.0f))
+	Trigger->SetCollisionProfileName(TEXT("SupplyBox"));
+	Trigger->SetBoxExtent(FVector(206.0f, 248.0f, 114.0f));
+	Mesh->SetRelativeLocation(FVector(0.0f, -3.5f, -30.0f));
 }
 
 // Called when the game starts or when spawned
