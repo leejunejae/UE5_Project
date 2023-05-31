@@ -2,8 +2,8 @@
 
 
 #include "UE5projectGameModeBase.h"
-#include "PCWarrior.h"
-#include "PBCController.h"
+#include "Character/Warrior/PCWarrior.h"
+#include "Character/PBCController.h"
 
 AUE5projectGameModeBase::AUE5projectGameModeBase()
 {
