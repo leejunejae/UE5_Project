@@ -34,7 +34,7 @@ private:
 	void MoveSpeedTimer();
 
 	virtual void MoveSpeedToggle() override;
-	virtual void Attack() override;
+	//virtual void Attack() override;
 
 	FVector PrevLoc;
 	FVector NextLoc;
@@ -46,6 +46,6 @@ private:
 
 	bool IsMontagePlay;
 
-	UFUNCTION()
-		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	//UFUNCTION()
+		//void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

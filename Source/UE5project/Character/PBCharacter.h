@@ -36,13 +36,37 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	
+/* PRIVATE VARIATION */
+private:
+	enum class CharacterReadiness
+	{
+		Normal, // 평시태세
+		Combat // 전투태세
+	};
+	// 연속 점프 제한
+	//FTimerHandle JumpTimerHandle;
+	//bool JumpHold;
+	//int32 JumpTime;
+/* PRIVATE VARIATION */
+
+/* PRIVATE FUNCTION */
+	//void JumpTimer();
+	void Initialization();
+/* PRIVATE FUNCTION */
+
+
+
+
+/* PROTECTED VARIATION */
 protected:
+	CharacterReadiness CurrentReadiness;
+
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		USpringArmComponent* SpringArm;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
-
 
 	/* 캐릭터 입력 매핑 변수 */
 	UPROPERTY(VisibleAnywhere, Category = Input)
@@ -54,8 +78,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Input)
 		UInputAction* LookAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
-		UInputAction* JumpAction;
+	//UPROPERTY(VisibleAnywhere, Category = Input)
+		//UInputAction* JumpAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
 		UInputAction* AttackAction;
@@ -63,26 +87,40 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Input)
 		UInputAction* MoveSpeedToggleAction;
 
+	UPROPERTY(VisibleAnywhere, Category = Input)
+		UInputAction* ReadinessToggleAction;
+
 
 	FVector2D AimOffVal;
 
 	bool IsRun;
 	bool IsAttack;
+/* PROTECTED VARIATION */
+
+/* PROTECTED FUNCTION */
+protected:
 
 	/* 캐릭터의 기본적인 움직임을 수행하는 함수*/
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
+	void ReadinessToggle();
 	void CameraSetting();
-	void Jump();
+	//void Jump();
 	virtual void Attack();
 	virtual void MoveSpeedToggle();
 
-private:
-	// 연속 점프 제한
-	FTimerHandle JumpTimerHandle;
-	bool JumpHold;
-	int32 JumpTime;
+/* PROTECTED FUNCTION */
 
-	void JumpTimer();
-	void Initialization();
+
+
+
+/* Public VARIATION */
+public:
+
+/* Public VARIATION */
+
+/* Public FUNCTION */
+public:
+	bool ReturnReadiness();
+/* Public FUNCTION */
 };

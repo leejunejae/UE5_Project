@@ -61,10 +61,11 @@ void UPBEKraken_FindTarget_Service::TickNode(UBehaviorTreeComponent& OwnerComp, 
 			if (SupplyBox)
 			{
 				OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), SupplyBox);
+				
 				DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
 				return;
 			}
-			if (PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
+			else if (PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
 			{
 				OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), PlayerCharacter);
 

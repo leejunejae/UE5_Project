@@ -49,11 +49,19 @@ APBCharacter::APBCharacter()
 		MoveSpeedToggleAction = IP_MoveSpeedToggle.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_ReadinessToggle(TEXT("/Game/Character/C_Input/C_ReadinessToggle.C_ReadinessToggle"));
+	if (IP_ReadinessToggle.Succeeded())
+	{
+		ReadinessToggleAction = IP_ReadinessToggle.Object;
+	}
+
+	/*
 	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Jump(TEXT("/Game/Character/C_Input/C_Jump.C_Jump"));
 	if (IP_Jump.Succeeded())
 	{
 		JumpAction = IP_Jump.Object;
 	}
+	*/
 
 	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Attack(TEXT("/Game/Character/C_Input/C_Attack.C_Attack"));
 	if (IP_Attack.Succeeded())
@@ -87,9 +95,10 @@ void APBCharacter::Tick(float DeltaTime)
 
 void APBCharacter::Initialization()
 {
-	JumpHold = false;
-	JumpTime = 0;
+	//JumpHold = false;
+	//JumpTime = 0;
 	IsRun = false;
+	CurrentReadiness = CharacterReadiness::Normal;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 }
 
@@ -119,9 +128,10 @@ void APBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APBCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APBCharacter::Look);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APBCharacter::Jump);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APBCharacter::Jump);
 		EnhancedInputComponent->BindAction(MoveSpeedToggleAction, ETriggerEvent::Completed, this, &APBCharacter::MoveSpeedToggle);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &APBCharacter::Attack);
+		EnhancedInputComponent->BindAction(ReadinessToggleAction, ETriggerEvent::Triggered, this, &APBCharacter::ReadinessToggle);
 	}
 }
 
@@ -131,6 +141,7 @@ void APBCharacter::PostInitializeComponents()
 
 }
 
+/* Input Action */
 void APBCharacter::Move(const FInputActionValue& value)
 {
 	const FVector2D DirectionValue = value.Get<FVector2D>();
@@ -150,6 +161,7 @@ void APBCharacter::Look(const FInputActionValue& value)
 	AddControllerYawInput(LookAxisValue.X);
 }
 
+/*
 void APBCharacter::Jump()
 {
 	if (!JumpHold)
@@ -159,6 +171,7 @@ void APBCharacter::Jump()
 		GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &APBCharacter::JumpTimer, 1.0f, true);
 	}
 }
+*/
 
 void APBCharacter::MoveSpeedToggle()
 {
@@ -166,6 +179,20 @@ void APBCharacter::MoveSpeedToggle()
 	IsRun = !IsRun;
 }
 
+void APBCharacter::Attack()
+{
+	CurrentReadiness = CharacterReadiness::Combat;
+	IsAttack = true;
+}
+
+void APBCharacter::ReadinessToggle()
+{
+	CurrentReadiness = (CurrentReadiness == CharacterReadiness::Normal) ? CharacterReadiness::Combat : CharacterReadiness::Normal;
+}
+
+/* Input Action */
+
+/*
 void APBCharacter::JumpTimer()
 {
 	if (JumpHold && !GetMovementComponent()->IsFalling())
@@ -179,8 +206,12 @@ void APBCharacter::JumpTimer()
 		}
 	}
 }
+*/
 
-void APBCharacter::Attack()
+bool APBCharacter::ReturnReadiness()
 {
-	IsAttack = true;
+	if (CurrentReadiness == CharacterReadiness::Combat)
+		return true;
+	else
+		return false;
 }

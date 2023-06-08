@@ -9,14 +9,9 @@ APCWarrior::APCWarrior()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh>PBC_Mannequin(TEXT("/Game/Character/C_Mesh/CM_Warrior/Paladin_WProp_J_Nordstrom.Paladin_WProp_J_Nordstrom"));
-	if (PBC_Mannequin.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(PBC_Mannequin.Object);
-	}
-
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	static ConstructorHelpers::FClassFinder<UAnimInstance>WARRIOR_ANIM(TEXT("/Game/Character/C_Animation/CA_Warrior/CAW_BP/CAW_AnimBlueprint.CAW_AnimBlueprint_C"));
+	
+	static ConstructorHelpers::FClassFinder<UAnimInstance>WARRIOR_ANIM(TEXT("/Game/Character/C_Warrior/CW_Animation/CWA_BP/CWAB_AnimBlueprint.CWAB_AnimBlueprint_C"));
 	if (WARRIOR_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
@@ -54,14 +49,16 @@ void APCWarrior::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	PCWAnim = Cast<UPCWAnimInstance>(GetMesh()->GetAnimInstance());
 
-	PCWAnim->OnMontageEnded.AddDynamic(this, &APCWarrior::OnAttackMontageEnded);
+	//PCWAnim->OnMontageEnded.AddDynamic(this, &APCWarrior::OnAttackMontageEnded);
 }
 
+/*
 void APCWarrior::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
 	IsAttack = false;
 }
+*/
 
 void APCWarrior::MoveSpeedToggle()
 {
@@ -93,9 +90,11 @@ void APCWarrior::MoveSpeedTimer()
 	}
 }
 
+/*
 void APCWarrior::Attack()
 {
 	Super::Attack();
 	PCWAnim->PlayAttackMontage();
 	IsMontagePlay = true;
 }
+*/

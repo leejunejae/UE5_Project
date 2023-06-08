@@ -9,12 +9,13 @@ UPCWAnimInstance::UPCWAnimInstance()
 {
 	CurrentSpeed = 0.0f;
 	IsInAir = false;
-
+	/*
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> ATTACK_MONTAGE(TEXT("/Game/Character/C_Animation/CA_Warrior/CAW_BP/CAW_AttackMontage.CAW_AttackMontage"));
 	if (ATTACK_MONTAGE.Succeeded())
 	{
 		AttackMontage = ATTACK_MONTAGE.Object;
 	}
+	*/
 }
 
 void UPCWAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -29,30 +30,11 @@ void UPCWAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		if (Character)
 		{
 			Speed = Character->GetVelocity().Size();
+			CombatMode = Character->ReturnReadiness();
 			Direction = (Warrior_AnimInstance->CalculateDirection(Character->GetVelocity(), Character->GetActorRotation()));
 			IsInAir = Character->GetMovementComponent()->IsFalling();
 			Pitch = Character->GetBaseAimRotation().Pitch;
 			Yaw = Character->GetBaseAimRotation().Yaw;
-
-			/*
-			if (Montage_IsPlaying(AttackMontage))
-			{
-				if (PrevLoc == NextLoc)
-				{
-					//원점과 중앙좌표의 오차를 저장
-					PrevLoc = Character->GetActorLocation() - Character->GetMesh()->GetBoneTransform(0).GetLocation();
-				}
-				else
-				{
-					//이전의 좌표를 기억
-					PrevLoc = NextLoc;
-					//원점과 중앙좌표의 오차를 저장
-					NextLoc = Character->GetActorLocation() - Character->GetMesh()->GetBoneTransform(0).GetLocation();
-
-					Character->SetActorLocation(Character->GetActorLocation() + PrevLoc - NextLoc);
-				}
-			}
-			*/
 		}
 	}
 }
