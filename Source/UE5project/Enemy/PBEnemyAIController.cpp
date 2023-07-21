@@ -5,6 +5,10 @@
 #include "NavigationSystem.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 
+const FName APBEnemyAIController::PrevPos(TEXT("PrevPos"));
+const FName APBEnemyAIController::NextPos(TEXT("NextPos"));
+const FName APBEnemyAIController::TargetKey(TEXT("Target"));
+
 APBEnemyAIController::APBEnemyAIController()
 {
 	//RepeatInterval = 3.0f;

@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardData.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "PBEnemyAIController.generated.h"
 
 /**
@@ -19,7 +22,16 @@ public:
 	virtual void OnPossess(APawn* InPawn) override;
 	//virtual void OnUnPossess() override;
 
-private:
+	static const FName PrevPos;
+	static const FName NextPos;
+	static const FName TargetKey;
+
+protected:
+	UPROPERTY()
+		class UBehaviorTree* BTAsset;
+
+	UPROPERTY()
+		class UBlackboardData* BBAsset;
 	//void OnRepeatTimer();
 
 	//FTimerHandle RepeatTimerHandle;

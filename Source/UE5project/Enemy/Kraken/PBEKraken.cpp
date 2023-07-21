@@ -10,12 +10,6 @@ APBEKraken::APBEKraken()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh>PBEK_Mannequin(TEXT("/Game/Kraken/Meshes/KRAKEN.KRAKEN"));
-	if (PBEK_Mannequin.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(PBEK_Mannequin.Object);
-	}
-
 	AIControllerClass = APBEKrakenAI::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 

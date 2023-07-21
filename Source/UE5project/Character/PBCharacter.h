@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
+#include "EnhancedInputComponent.h"
 #include "PBCharacter.generated.h"
 
 class USkeletalMeshComponent;

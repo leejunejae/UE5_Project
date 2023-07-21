@@ -22,10 +22,12 @@ APCWarrior::APCWarrior()
 	GetCharacterMovement()->GroundFriction = 0.1f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2048.0f;
 
-	IsMontagePlay = false;
 	IsAttack = false;
 	PrevLoc = GetActorLocation() - GetMesh()->GetBoneTransform(0).GetLocation();
 	NextLoc = GetActorLocation() - GetMesh()->GetBoneTransform(0).GetLocation();
+
+	MaxCombo = 4;
+	AttackEndComboState();
 }
 
 void APCWarrior::BeginPlay()
@@ -41,24 +43,37 @@ void APCWarrior::Tick(float DeltaTime)
 void APCWarrior::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &APCWarrior::Attack);
+	}
 }
+
 
 void APCWarrior::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	PCWAnim = Cast<UPCWAnimInstance>(GetMesh()->GetAnimInstance());
+	WarriorAnim = Cast<UPCWAnimInstance>(GetMesh()->GetAnimInstance());
 
-	//PCWAnim->OnMontageEnded.AddDynamic(this, &APCWarrior::OnAttackMontageEnded);
+	WarriorAnim->OnMontageEnded.AddDynamic(this, &APCWarrior::OnAttackMontageEnded);
+
+	WarriorAnim->OnNextAttackCheck.AddLambda([this]()->void {
+		CanNextCombo = false;
+
+		if (IsComboInputOn)
+		{
+			AttackStartComboState();
+			WarriorAnim->JumpToAttackMontageSection(CurrentCombo);
+		}
+		});
 }
 
-/*
+
 void APCWarrior::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsMontagePlay = false;
 	IsAttack = false;
+	AttackEndComboState();
 }
-*/
 
 void APCWarrior::MoveSpeedToggle()
 {
@@ -90,11 +105,41 @@ void APCWarrior::MoveSpeedTimer()
 	}
 }
 
-/*
 void APCWarrior::Attack()
 {
+	if (nullptr == WarriorAnim)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ATTACKFAILED"));
+		return;
+	}
 	Super::Attack();
-	PCWAnim->PlayAttackMontage();
-	IsMontagePlay = true;
+	if (IsAttack)
+	{
+		if (CanNextCombo)
+		{
+			IsComboInputOn = true;
+		}
+	}
+	else
+	{
+		AttackStartComboState();
+		WarriorAnim->PlayAttackMontage();
+		WarriorAnim->JumpToAttackMontageSection(CurrentCombo);
+		IsAttack = true;
+	}
 }
-*/
+
+void APCWarrior::AttackStartComboState()
+{
+	CanNextCombo = true;
+	IsComboInputOn = false;
+	CurrentCombo = FMath::Clamp<int32>(CurrentCombo + 1, 1, MaxCombo);
+}
+
+void APCWarrior::AttackEndComboState()
+{
+	UE_LOG(LogTemp, Error, TEXT("CHECK1"));
+	IsComboInputOn = false;
+	CanNextCombo = false;
+	CurrentCombo = 0;
+}

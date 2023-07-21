@@ -10,7 +10,6 @@
 
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 
 // Sets default values
@@ -97,6 +96,7 @@ void APBCharacter::Initialization()
 {
 	//JumpHold = false;
 	//JumpTime = 0;
+	IsAttack = false;
 	IsRun = false;
 	CurrentReadiness = CharacterReadiness::Normal;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
@@ -130,7 +130,6 @@ void APBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APBCharacter::Look);
 		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APBCharacter::Jump);
 		EnhancedInputComponent->BindAction(MoveSpeedToggleAction, ETriggerEvent::Completed, this, &APBCharacter::MoveSpeedToggle);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &APBCharacter::Attack);
 		EnhancedInputComponent->BindAction(ReadinessToggleAction, ETriggerEvent::Triggered, this, &APBCharacter::ReadinessToggle);
 	}
 }
@@ -175,14 +174,13 @@ void APBCharacter::Jump()
 
 void APBCharacter::MoveSpeedToggle()
 {
-	UE_LOG(LogTemp, Error, TEXT("TOGGLING"));
+	//UE_LOG(LogTemp, Error, TEXT("TOGGLING"));
 	IsRun = !IsRun;
 }
 
 void APBCharacter::Attack()
 {
 	CurrentReadiness = CharacterReadiness::Combat;
-	IsAttack = true;
 }
 
 void APBCharacter::ReadinessToggle()

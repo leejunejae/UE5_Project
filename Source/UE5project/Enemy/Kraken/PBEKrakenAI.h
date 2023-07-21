@@ -18,17 +18,7 @@ public:
 	APBEKrakenAI();
 	virtual void OnPossess(APawn* InPawn) override;
 
-	static const FName PrevPos;
-	static const FName NextPos;
-	static const FName TargetKey;
-
 private:
-	UPROPERTY()
-		class UBehaviorTree* BTAsset;
-
-	UPROPERTY()
-		class UBlackboardData* BBAsset;
-
 	void OnRepeatTimer();
 	FTimerHandle RepeatTimerHandle;
 	float RepeatInterval;

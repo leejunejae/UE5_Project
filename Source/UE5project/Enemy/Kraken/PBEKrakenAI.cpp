@@ -2,13 +2,6 @@
 
 
 #include "PBEKrakenAI.h"
-#include "BehaviorTree/BehaviorTree.h"
-#include "BehaviorTree/BlackboardData.h"
-#include "BehaviorTree/BlackboardComponent.h"
-
-const FName APBEKrakenAI::PrevPos(TEXT("PrevPos"));
-const FName APBEKrakenAI::NextPos(TEXT("NextPos"));
-const FName APBEKrakenAI::TargetKey(TEXT("Target"));
 
 APBEKrakenAI::APBEKrakenAI()
 {

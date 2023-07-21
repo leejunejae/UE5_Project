@@ -9,6 +9,9 @@
 /**
  * 
  */
+
+class UPCWAnimInstance;
+
 UCLASS()
 class UE5PROJECT_API APCWarrior : public APBCharacter
 {
@@ -31,21 +34,35 @@ public:
 
 private:
 	FTimerHandle MoveSpeedTimerHandle;
+
+	UPROPERTY(VisibleAnywhere, Category = Input)
+		class UPCWAnimInstance* WarriorAnim;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		bool CanNextCombo;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		bool IsComboInputOn;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		int32 CurrentCombo;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		int32 MaxCombo;
+
+private:
 	void MoveSpeedTimer();
 
 	virtual void MoveSpeedToggle() override;
-	//virtual void Attack() override;
+	virtual void Attack() override;
+
+	void AttackStartComboState();
+	void AttackEndComboState();
 
 	FVector PrevLoc;
 	FVector NextLoc;
 	FVector ABDiff;
 
-	// 애니메이션 연결을 위한 클래스 변수
-	UPROPERTY()
-		class UPCWAnimInstance* PCWAnim;
-
-	bool IsMontagePlay;
-
-	//UFUNCTION()
-		//void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	UFUNCTION()
+		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };
