@@ -18,6 +18,8 @@ APBCharacter::APBCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
+	DamageSystem = CreateDefaultSubobject<UPBDamageSystem>(TEXT("DAMAGESYSTEM"));
+	DamageSystem->bAutoActivate = true;
 
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
@@ -138,6 +140,9 @@ void APBCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
+	DamageSystem->OnDeath.BindUFunction(this, FName("Death"));
+	DamageSystem->OnBlocked.BindUFunction(this, FName("Block"));
+	DamageSystem->OnDamaged.BindUFunction(this, FName("DamageResponse"));
 }
 
 /* Input Action */
@@ -183,6 +188,28 @@ void APBCharacter::Attack()
 	CurrentReadiness = CharacterReadiness::Combat;
 }
 
+void APBCharacter::Death()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Your Character was Dead"));
+}
+
+void APBCharacter::Block(bool CanParried)
+{
+	if (CanParried)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Your Character Parried"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Your Character Blocked"));
+	}
+}
+
+void APBCharacter::DamageResponse(HitResponse Response)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Your Character Was Damaged"));
+}
+
 void APBCharacter::ReadinessToggle()
 {
 	CurrentReadiness = (CurrentReadiness == CharacterReadiness::Normal) ? CharacterReadiness::Combat : CharacterReadiness::Normal;
@@ -213,3 +240,35 @@ bool APBCharacter::ReturnReadiness()
 	else
 		return false;
 }
+
+
+// 전투 시스템 인터페이스 //
+bool APBCharacter::TakeDamage_Implementation(FDamageInfo DamageInfo)
+{
+	IPBDamagableInterface::TakeDamage_Implementation(DamageInfo);
+
+	return DamageSystem->TakeDamage(DamageInfo);
+}
+
+float APBCharacter::GetMaxHealth_Implementation()
+{
+	IPBDamagableInterface::GetMaxHealth_Implementation();
+
+	return DamageSystem->GetfloatValue("MaxHealth");
+}
+
+float APBCharacter::GetHealth_Implementation()
+{
+	IPBDamagableInterface::GetHealth_Implementation();
+
+	return DamageSystem->GetfloatValue("Health");
+}
+
+float APBCharacter::Heal_Implementation(float amount)
+{
+	IPBDamagableInterface::Heal_Implementation(amount);
+
+	return DamageSystem->Heal(amount);
+}
+
+// 전투 시스템 인터페이스 //

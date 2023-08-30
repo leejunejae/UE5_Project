@@ -20,8 +20,15 @@ class UE5PROJECT_API APCWarrior : public APBCharacter
 public:
 	APCWarrior();
 
-protected:
 	virtual void BeginPlay() override;
+
+	virtual void Death() override;
+
+	virtual void Block(bool CanParried) override;
+
+	virtual void DamageResponse(HitResponse Response) override;
+
+protected:
 
 public:
 	// Called every frame
@@ -35,8 +42,11 @@ public:
 private:
 	FTimerHandle MoveSpeedTimerHandle;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(VisibleAnywhere, Category = Animation)
 		class UPCWAnimInstance* WarriorAnim;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat)
+		class UPBDamageSystem* WarriorDMGSystem;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		bool CanNextCombo;
@@ -64,5 +74,5 @@ private:
 	FVector ABDiff;
 
 	UFUNCTION()
-		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+		void IsMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

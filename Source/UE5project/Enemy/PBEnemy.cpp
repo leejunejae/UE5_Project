@@ -13,6 +13,8 @@ APBEnemy::APBEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootComponent = GetCapsuleComponent();
+
+	IsAttack = false;
 }
 
 // Called when the game starts or when spawned
@@ -36,3 +38,7 @@ void APBEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
+void APBEnemy::Attack()
+{
+	
+}

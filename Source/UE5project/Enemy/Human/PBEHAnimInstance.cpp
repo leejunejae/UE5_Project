@@ -7,11 +7,22 @@
 UPBEHAnimInstance::UPBEHAnimInstance()
 {
 	CurrentSpeed = 0.0f;
-	IsInAir = false;
+	
 }
 
 void UPBEHAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	Character = Cast<APBEHuman>(TryGetPawnOwner());
+
+}
+
+void UPBEHAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeUpdateAnimation(DeltaSeconds);
+	
+	if (Character)
+	{
+		Speed = Character->GetVelocity().Size();
+		Direction = CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
+	}
 }

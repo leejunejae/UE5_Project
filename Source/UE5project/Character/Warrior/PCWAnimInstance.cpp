@@ -16,6 +16,12 @@ UPCWAnimInstance::UPCWAnimInstance()
 	{
 		AttackMontage = ATTACK_MONTAGE.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> DEATH_MONTAGE(TEXT("/Game/Character/C_Warrior/CW_Animation/CWA_BP/CWAB_DeathMontage.CWAB_DeathMontage"));
+	if (DEATH_MONTAGE.Succeeded())
+	{
+		DeathMontage = DEATH_MONTAGE.Object;
+	}
 }
 
 void UPCWAnimInstance::NativeInitializeAnimation()
@@ -90,9 +96,20 @@ void UPCWAnimInstance::SetRootYawOffset()
 }
 
 
-void UPCWAnimInstance::PlayAttackMontage()
+void UPCWAnimInstance::PlayMontage(MontageType Type)
 {
-	Montage_Play(AttackMontage, 1.0f);
+	switch (Type)
+	{
+	case MontageType::Attack:
+		Montage_Play(AttackMontage, 1.0f);
+		break;
+	case MontageType::Death:
+		Montage_Play(DeathMontage, 1.0f);
+		break;
+	default:
+		break;
+	}
+	
 }
 
 void UPCWAnimInstance::JumpToAttackMontageSection(int32 NewSection)
@@ -110,4 +127,14 @@ void UPCWAnimInstance::AnimNotify_NOT_NextAttack()
 FName UPCWAnimInstance::GetAttackMontageSectionName(int32 Section)
 {
 	return FName(*FString::Printf(TEXT("Light%d"), Section));
+}
+
+MontageType UPCWAnimInstance::CheckMontage(UAnimMontage* Montage)
+{
+	if (Montage == AttackMontage)
+		return MontageType::Attack;
+	else if (Montage == DeathMontage)
+		return MontageType::Death;
+	else
+		return MontageType::None;
 }

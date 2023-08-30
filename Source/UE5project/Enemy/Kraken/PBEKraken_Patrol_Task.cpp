@@ -2,7 +2,7 @@
 
 
 #include "PBEKraken_Patrol_Task.h"
-#include "PBEKrakenAI.h"
+#include "../PBEnemyAIController.h"
 #include "NavigationSystem.h"
 #include "BehaviorTree/BlackboardComponent.h"
 

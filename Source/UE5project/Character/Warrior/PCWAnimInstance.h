@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "../../PEnumHeader.h"
 #include "Animation/AnimInstance.h"
 #include "PCWAnimInstance.generated.h"
 
@@ -21,8 +22,9 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	void PlayAttackMontage();
+	void PlayMontage(MontageType Type);
 	void JumpToAttackMontageSection(int32 NewSection);
+	MontageType CheckMontage(UAnimMontage* Montage);
 
 public:
 	FOnNextAttackCheckDelegate OnNextAttackCheck;
@@ -82,9 +84,11 @@ private:
 		FName Turning = TEXT("Turning");
 
 
-
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AttackMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* DeathMontage;
 
 	UFUNCTION()
 		void AnimNotify_NOT_NextAttack();

@@ -4,14 +4,24 @@
 #include "PBEnemyAIController.h"
 #include "NavigationSystem.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
 const FName APBEnemyAIController::PrevPos(TEXT("PrevPos"));
 const FName APBEnemyAIController::NextPos(TEXT("NextPos"));
 const FName APBEnemyAIController::TargetKey(TEXT("Target"));
+const FName APBEnemyAIController::MeleeRadius(TEXT("MeleeRadius"));
+const FName APBEnemyAIController::RangedRadius(TEXT("RangedRadius"));
+const FName APBEnemyAIController::DefendRadius(TEXT("DefendRadius"));
 
 APBEnemyAIController::APBEnemyAIController()
 {
 	//RepeatInterval = 3.0f;
+}
+
+void APBEnemyAIController::BeginPlay()
+{
+	Super::BeginPlay();
+	
 }
 
 void APBEnemyAIController::OnPossess(APawn* InPawn)

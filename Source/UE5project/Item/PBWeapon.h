@@ -14,4 +14,6 @@ class UE5PROJECT_API APBWeapon : public APBasicItem
 {
 	GENERATED_BODY()
 	
+public:
+	APBWeapon();
 };

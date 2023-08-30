@@ -7,16 +7,20 @@
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
+#include "../PBDamagableInterface.h"
+#include "../PBDamageSystem.h"
 #include "PBCharacter.generated.h"
 
 class USkeletalMeshComponent;
+class UStaticMeshComponent;
 class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
 class UCharacterMovementComponent;
+class UPBDamageSystem;
 
 UCLASS()
-class UE5PROJECT_API APBCharacter : public ACharacter
+class UE5PROJECT_API APBCharacter : public ACharacter, public IPBDamagableInterface
 {
 	GENERATED_BODY()
 
@@ -63,11 +67,20 @@ private:
 protected:
 	CharacterReadiness CurrentReadiness;
 
+	UPROPERTY(VisibleAnywhere, Category = Equipment)
+		UStaticMeshComponent* Weapon;
+
+	UPROPERTY(VisibleAnywhere, Category = Equipment)
+		UStaticMeshComponent* SubEquip;
+
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		USpringArmComponent* SpringArm;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat)
+		UPBDamageSystem* DamageSystem;
 
 	/* 캐릭터 입력 매핑 변수 */
 	UPROPERTY(VisibleAnywhere, Category = Input)
@@ -114,7 +127,6 @@ protected:
 
 
 
-
 /* Public VARIATION */
 public:
 
@@ -123,5 +135,17 @@ public:
 /* Public FUNCTION */
 public:
 	bool ReturnReadiness();
+
+	virtual bool TakeDamage_Implementation(FDamageInfo DamageInfo) override;
+	virtual float Heal_Implementation(float amount) override;
+	virtual float GetHealth_Implementation() override;
+	virtual float GetMaxHealth_Implementation() override;
+
+	UFUNCTION()
+		virtual void Death();
+	UFUNCTION()
+		virtual void Block(bool CanParried);
+	UFUNCTION()
+		virtual void DamageResponse(HitResponse Response);
 /* Public FUNCTION */
 };

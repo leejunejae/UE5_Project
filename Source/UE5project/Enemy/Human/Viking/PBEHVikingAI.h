@@ -14,4 +14,8 @@ class UE5PROJECT_API APBEHVikingAI : public APBEHumanAI
 {
 	GENERATED_BODY()
 	
+public:
+	APBEHVikingAI();
+
+	virtual void OnPossess(APawn* InPawn) override;
 };

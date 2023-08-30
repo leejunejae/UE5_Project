@@ -16,17 +16,21 @@ class UE5PROJECT_API UPBEHAnimInstance : public UAnimInstance
 public:
 	UPBEHAnimInstance();
 	virtual void NativeInitializeAnimation() override;
-	//virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-private:
+protected:
 	class APBEHuman* Character = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Classes, Meta = (AllowPrivateAccess = true))
-		class UAnimInstance* Human_AnimInstance;
+		class UAnimInstance* AnimInstance;
+
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		float Speed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		float Direction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		float CurrentSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsInAir;
 };

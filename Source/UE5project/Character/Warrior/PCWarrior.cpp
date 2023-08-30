@@ -4,13 +4,49 @@
 #include "PCWarrior.h"
 #include "PCWAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "../../PBPWShield.h"
+#include "../../PBPWSword.h"
 
 APCWarrior::APCWarrior()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh>WARRIOR_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/SK_Fallen_Knight.SK_Fallen_Knight"));
+	if (WARRIOR_MESH.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(WARRIOR_MESH.Object);
+	}
+
+	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponComponent"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> WEAPON_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/Separated_Mesh/Weapon/SM_Sword.SM_Sword"));
+	if (WEAPON_MESH.Succeeded())
+	{
+		Weapon->SetStaticMesh(WEAPON_MESH.Object);
+	}
+
+	SubEquip = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SubEquipComponent"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SUBEQUIP_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/Separated_Mesh/Weapon/SM_Shield.SM_Shield"));
+	if (SUBEQUIP_MESH.Succeeded())
+	{
+		SubEquip->SetStaticMesh(SUBEQUIP_MESH.Object);
+	}
+
+	FName WeaponSocket(TEXT("S_Sword"));
+	FName ShieldSocket(TEXT("S_Shield"));
+
+	if (Weapon)
+	{
+		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
+	}
+
+	if (SubEquip)
+	{
+		SubEquip->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, ShieldSocket);
+	}
+
+
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	
+
 	static ConstructorHelpers::FClassFinder<UAnimInstance>WARRIOR_ANIM(TEXT("/Game/Character/C_Warrior/CW_Animation/CWA_BP/CWAB_AnimBlueprint.CWAB_AnimBlueprint_C"));
 	if (WARRIOR_ANIM.Succeeded())
 	{
@@ -53,9 +89,10 @@ void APCWarrior::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 void APCWarrior::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+	
 	WarriorAnim = Cast<UPCWAnimInstance>(GetMesh()->GetAnimInstance());
 
-	WarriorAnim->OnMontageEnded.AddDynamic(this, &APCWarrior::OnAttackMontageEnded);
+	WarriorAnim->OnMontageEnded.AddDynamic(this, &APCWarrior::IsMontageEnded);
 
 	WarriorAnim->OnNextAttackCheck.AddLambda([this]()->void {
 		CanNextCombo = false;
@@ -66,13 +103,28 @@ void APCWarrior::PostInitializeComponents()
 			WarriorAnim->JumpToAttackMontageSection(CurrentCombo);
 		}
 		});
+		
 }
 
-
-void APCWarrior::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void APCWarrior::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsAttack = false;
-	AttackEndComboState();
+	if (nullptr==WarriorAnim)
+		return;
+	MontageType Type = WarriorAnim->CheckMontage(Montage);
+	
+	switch (Type)
+	{
+	case MontageType::Attack:
+		IsAttack = false;
+		AttackEndComboState();
+		break;
+	case MontageType::Death:
+		break;
+	case MontageType::Hit:
+		break;
+	default:
+		break;
+	}
 }
 
 void APCWarrior::MoveSpeedToggle()
@@ -123,7 +175,7 @@ void APCWarrior::Attack()
 	else
 	{
 		AttackStartComboState();
-		WarriorAnim->PlayAttackMontage();
+		WarriorAnim->PlayMontage(MontageType::Attack);
 		WarriorAnim->JumpToAttackMontageSection(CurrentCombo);
 		IsAttack = true;
 	}
@@ -142,4 +194,45 @@ void APCWarrior::AttackEndComboState()
 	IsComboInputOn = false;
 	CanNextCombo = false;
 	CurrentCombo = 0;
+}
+
+void APCWarrior::Death()
+{
+	Super::Death();
+	if (nullptr == WarriorAnim)
+		return;
+	WarriorAnim->PlayMontage(MontageType::Death);
+}
+
+void APCWarrior::Block(bool CanParried)
+{
+	Super::Block(CanParried);
+	if (CanParried)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Your Character Parried"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Your Character Blocked"));
+	}
+}
+
+void APCWarrior::DamageResponse(HitResponse Response)
+{
+	Super::DamageResponse(Response);
+	switch (Response)
+	{
+	case HitResponse::HitReaction:
+		break;
+	case HitResponse::Collpase:
+		break;
+	case HitResponse::Fall:
+		break;
+	case HitResponse::KnockBack:
+		break;
+	case HitResponse::Stagger:
+		break;
+	case HitResponse::Stun:
+		break;
+	}
 }

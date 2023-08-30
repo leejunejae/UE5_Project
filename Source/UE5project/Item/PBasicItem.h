@@ -14,4 +14,7 @@ class UE5PROJECT_API APBasicItem : public AActor
 public:	
 	// Sets default values for this actor's properties
 	APBasicItem();;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Box)
+		UStaticMeshComponent* ItemMesh;
 };

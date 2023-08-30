@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "../PBEnemyAIController.h"
+#include "../../PEnumHeader.h"
 #include "PBEHumanAI.generated.h"
 
 /**
@@ -17,6 +18,24 @@ class UE5PROJECT_API APBEHumanAI : public APBEnemyAIController
 public:
 	APBEHumanAI();
 	virtual void OnPossess(APawn* InPawn) override;
+
+	AActor* AttackTarget;
+
+	UFUNCTION()
+		void OnTargetPerceptionUpdated_Delegate(AActor* Actor, FAIStimulus Stimulus);
+
+	UPROPERTY(VisibleAnywhere, Category = AI)
+		TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere, Category = AI)
+		TObjectPtr<class UAISenseConfig_Sight> AISenseConfigSight = nullptr;
+
+	void SetMovementMode(MovementMode mode);
+
+protected:
+	virtual void BeginPlay() override;
+
+protected:
 
 private:
 	void OnRepeatTimer();

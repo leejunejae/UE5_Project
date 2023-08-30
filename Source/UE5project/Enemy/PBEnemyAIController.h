@@ -7,6 +7,8 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
 #include "PBEnemyAIController.generated.h"
 
 /**
@@ -19,12 +21,18 @@ class UE5PROJECT_API APBEnemyAIController : public AAIController
 	
 public:
 	APBEnemyAIController();
+	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	//virtual void OnUnPossess() override;
 
+
+public:
 	static const FName PrevPos;
 	static const FName NextPos;
 	static const FName TargetKey;
+	static const FName MeleeRadius;
+	static const FName RangedRadius;
+	static const FName DefendRadius;
 
 protected:
 	UPROPERTY()
