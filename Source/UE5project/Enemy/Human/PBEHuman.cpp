@@ -18,6 +18,8 @@ APBEHuman::APBEHuman()
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 0.0f;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 0.0f, 180.0f);
+
+	Tags.Add("Enemy");
 }
 
 void APBEHuman::PostInitializeComponents()
@@ -51,7 +53,9 @@ FRangeInfo APBEHuman::GetIdealRange()
 
 void APBEHuman::Death()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Your Character was Dead"));
+	UE_LOG(LogTemp, Warning, TEXT("Enemy Dead"));
+	IsDead = true;
+	SetActorEnableCollision(false);
 }
 
 void APBEHuman::Block(bool CanParried)

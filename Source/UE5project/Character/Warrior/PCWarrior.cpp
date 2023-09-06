@@ -62,6 +62,7 @@ APCWarrior::APCWarrior()
 	PrevLoc = GetActorLocation() - GetMesh()->GetBoneTransform(0).GetLocation();
 	NextLoc = GetActorLocation() - GetMesh()->GetBoneTransform(0).GetLocation();
 
+	AttackRange = 200.0f;
 	MaxCombo = 4;
 	AttackEndComboState();
 }
@@ -116,6 +117,8 @@ void APCWarrior::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	{
 	case MontageType::Attack:
 		IsAttack = false;
+		if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))
+			GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 		AttackEndComboState();
 		break;
 	case MontageType::Death:
@@ -165,6 +168,7 @@ void APCWarrior::Attack()
 		return;
 	}
 	Super::Attack();
+
 	if (IsAttack)
 	{
 		if (CanNextCombo)
@@ -177,7 +181,40 @@ void APCWarrior::Attack()
 		AttackStartComboState();
 		WarriorAnim->PlayMontage(MontageType::Attack);
 		WarriorAnim->JumpToAttackMontageSection(CurrentCombo);
+		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &APCWarrior::AttackTimer, 0.1f, true);
 		IsAttack = true;
+	}
+}
+
+void APCWarrior::SetAttackInfo(float Amount, AttackType Type, HitResponse Response, bool Invincible, bool CanBlocked, bool CanParried, bool ForceInterrupt)
+{
+	AttackInfo.Amount = Amount;
+	AttackInfo.Type = Type;
+	AttackInfo.Response = Response;
+	AttackInfo.Invincible = Invincible;
+	AttackInfo.CanBlocked = CanBlocked;
+	AttackInfo.CanParried = CanParried;
+	AttackInfo.ForceInterrupt = ForceInterrupt;
+}
+
+void APCWarrior::AttackTimer()
+{
+	FVector StartLoc = GetMesh()->GetSocketLocation("S_RangeStart");
+	FVector EndLoc = GetMesh()->GetSocketLocation("S_RangeEnd");
+
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionParams;
+	DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Red, false, 1.0f);
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartLoc, EndLoc, ECC_Visibility, CollisionParams);
+	if (bHit)
+	{
+		if (HitResult.GetActor()->ActorHasTag("Enemy"))
+		{
+			IPBDamagableInterface* GetDamagedEnemy = Cast<IPBDamagableInterface>(HitResult.GetActor());
+			GetDamagedEnemy->TakeDamage_Implementation(AttackInfo);
+			if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))
+				GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+		}
 	}
 }
 
@@ -186,11 +223,11 @@ void APCWarrior::AttackStartComboState()
 	CanNextCombo = true;
 	IsComboInputOn = false;
 	CurrentCombo = FMath::Clamp<int32>(CurrentCombo + 1, 1, MaxCombo);
+	SetAttackInfo(FMath::RandRange(25, 30), AttackType::Sword, HitResponse::HitReaction);
 }
 
 void APCWarrior::AttackEndComboState()
 {
-	UE_LOG(LogTemp, Error, TEXT("CHECK1"));
 	IsComboInputOn = false;
 	CanNextCombo = false;
 	CurrentCombo = 0;

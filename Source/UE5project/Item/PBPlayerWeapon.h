@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PBasicItem.h"
+#include "../PEnumHeader.h"
 #include "PBPlayerWeapon.generated.h"
 
 /**
@@ -17,5 +18,6 @@ class UE5PROJECT_API APBPlayerWeapon : public APBasicItem
 public:
 	APBPlayerWeapon();
 
-
+protected:
+	FWeaponInfo WeaponStat;
 };

@@ -18,4 +18,9 @@ public:
 	APBEHVikingAI();
 
 	virtual void OnPossess(APawn* InPawn) override;
+
+	//virtual void RunAI() override;
+	//virtual void StopAI() override;
+
+	virtual void StopAI();
 };

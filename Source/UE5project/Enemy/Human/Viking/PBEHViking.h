@@ -21,8 +21,11 @@ class UE5PROJECT_API APBEHViking : public APBEHuman
 public:
 	APBEHViking();
 	virtual void Tick(float DeltaTime) override;
-
 	virtual void Attack() override;
+	virtual void Death() override;
+	virtual void Block(bool CanParried) override;
+	virtual void DamageResponse(HitResponse Response) override;
+
 public:
 	FOnAttackEndDelegate OnAttackEnd;
 
@@ -37,5 +40,5 @@ private:
 	virtual void PostInitializeComponents() override;
 
 	UFUNCTION()
-		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+		void IsMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

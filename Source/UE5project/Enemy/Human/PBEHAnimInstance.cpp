@@ -24,5 +24,6 @@ void UPBEHAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		Speed = Character->GetVelocity().Size();
 		Direction = CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
+		IsDead = Character->GetHealth_Implementation() < 0.0f;
 	}
 }

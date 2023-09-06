@@ -97,6 +97,17 @@ public:
 	float Defend;
 };
 
+USTRUCT(BlueprintType)
+struct FWeaponInfo
+{
+	GENERATED_BODY()
+
+public:
+	float AttackRange;
+	float StrikingPower;
+	AttackType WeaponType;
+};
+
 UCLASS()
 class UE5PROJECT_API APEnumHeader : public AActor
 {

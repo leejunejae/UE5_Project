@@ -71,6 +71,7 @@ APBCharacter::APBCharacter()
 	}
 
 	CameraSetting();
+	Tags.Add("Player");
 }
 
 // Called when the game starts or when spawned
@@ -186,6 +187,7 @@ void APBCharacter::MoveSpeedToggle()
 void APBCharacter::Attack()
 {
 	CurrentReadiness = CharacterReadiness::Combat;
+
 }
 
 void APBCharacter::Death()

@@ -9,6 +9,7 @@
 #include "EnhancedInputComponent.h"
 #include "../PBDamagableInterface.h"
 #include "../PBDamageSystem.h"
+#include "../Enemy/Human/PBEHuman.h"
 #include "PBCharacter.generated.h"
 
 class USkeletalMeshComponent;
@@ -125,7 +126,11 @@ protected:
 
 /* PROTECTED FUNCTION */
 
+/* PROTECTED VARIATION */
+protected:
+	float AttackRange;
 
+/* PROTECTED VARIATION */
 
 /* Public VARIATION */
 public:

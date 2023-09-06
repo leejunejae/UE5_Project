@@ -75,6 +75,7 @@ bool UPBDamageSystem::TakeDamage(FDamageInfo DamageInfo)
 				OnDamaged.ExecuteIfBound(DamageInfo.Response);
 			}
 		}
+		UE_LOG(LogTemp, Warning, TEXT("HitLog"));
 		return true;
 	}
 	case HitCheck::Blocked:

@@ -70,12 +70,12 @@ void APBEHViking::PostInitializeComponents()
 
 	if (VikingAnim != nullptr)
 	{
-		VikingAnim->OnMontageEnded.AddDynamic(this, &APBEHViking::OnAttackMontageEnded);
+		VikingAnim->OnMontageEnded.AddDynamic(this, &APBEHViking::IsMontageEnded);
 	
 	}
 }
 
-void APBEHViking::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void APBEHViking::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsAttack = false;
 	OnAttackEnd.Broadcast();
@@ -89,6 +89,43 @@ void APBEHViking::Attack()
 	{
 		return;
 	}
-	VikingAnim->PlayAttackMontage();
+	VikingAnim->PlayMontage(MontageType::Attack);
 	IsAttack = true;
+}
+
+void APBEHViking::Death()
+{
+	Super::Death();
+	APBEHVikingAI* VikingAI = Cast<APBEHVikingAI>(GetController());
+	VikingAI->StopAI();
+	//VikingAnim->PlayMontage(MontageType::Death);
+	//GetMesh()->SetSimulatePhysics(true);
+	//GetController()->UnPossess();
+}
+
+void APBEHViking::Block(bool CanParried)
+{
+	Super::Block(CanParried);
+}
+
+void APBEHViking::DamageResponse(HitResponse Response)
+{
+	Super::DamageResponse(Response);
+
+	switch (Response)
+	{
+	case HitResponse::HitReaction:
+		VikingAnim->PlayMontage(MontageType::Hit);
+		break;
+	case HitResponse::Collpase:
+		break;
+	case HitResponse::Fall:
+		break;
+	case HitResponse::KnockBack:
+		break;
+	case HitResponse::Stagger:
+		break;
+	case HitResponse::Stun:
+		break;
+	}
 }

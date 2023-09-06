@@ -109,7 +109,6 @@ void UPCWAnimInstance::PlayMontage(MontageType Type)
 	default:
 		break;
 	}
-	
 }
 
 void UPCWAnimInstance::JumpToAttackMontageSection(int32 NewSection)

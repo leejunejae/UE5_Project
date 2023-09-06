@@ -38,6 +38,7 @@ public:
 	UFUNCTION()
 		virtual void DamageResponse(HitResponse Response);
 
+
 private:
 	
 
@@ -56,6 +57,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		UStaticMeshComponent* SubEquip;
+
+	bool IsDead;
 
 	MovementMode CurrentMovement;
 	float MeleeRadius;

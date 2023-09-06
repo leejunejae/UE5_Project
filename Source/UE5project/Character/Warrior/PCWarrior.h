@@ -41,6 +41,7 @@ public:
 
 private:
 	FTimerHandle MoveSpeedTimerHandle;
+	FDamageInfo AttackInfo;
 
 	UPROPERTY(VisibleAnywhere, Category = Animation)
 		class UPCWAnimInstance* WarriorAnim;
@@ -60,6 +61,8 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		int32 MaxCombo;
 
+
+
 private:
 	void MoveSpeedTimer();
 
@@ -68,6 +71,11 @@ private:
 
 	void AttackStartComboState();
 	void AttackEndComboState();
+	void AttackTimer();
+	void AttackTimerFin();
+	void SetAttackInfo(float Amount, AttackType Type, HitResponse Response, bool Invincible = false, bool CanBlocked = false, bool CanParried = false, bool ForceInterrupt = true);
+
+	FTimerHandle AttackTimerHandle;
 
 	FVector PrevLoc;
 	FVector NextLoc;
