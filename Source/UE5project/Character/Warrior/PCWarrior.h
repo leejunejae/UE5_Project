@@ -28,7 +28,9 @@ public:
 
 	virtual void DamageResponse(HitResponse Response) override;
 
-protected:
+	bool CheckHeavyAttack();
+	bool IsAttacking();
+	int32 CheckCombo();
 
 public:
 	// Called every frame
@@ -53,26 +55,23 @@ private:
 		bool CanNextCombo;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		bool IsComboInputOn;
+		int32 CurrentCombo=0;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		int32 CurrentCombo;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		int32 MaxCombo;
-
-
+	bool CanAttack;
+	bool IsHeavyAttack;
 
 private:
 	void MoveSpeedTimer();
 
 	virtual void MoveSpeedToggle() override;
 	virtual void Attack() override;
+	void Dodge() override;
 
-	void AttackStartComboState();
-	void AttackEndComboState();
+	void ResetAttackState();
 	void AttackTimer();
-	void AttackTimerFin();
+	void OnHeavyAttack();
+	void OffHeavyAttack();
+
 	void SetAttackInfo(float Amount, AttackType Type, HitResponse Response, bool Invincible = false, bool CanBlocked = false, bool CanParried = false, bool ForceInterrupt = true);
 
 	FTimerHandle AttackTimerHandle;

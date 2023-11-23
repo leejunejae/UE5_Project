@@ -2,7 +2,6 @@
 
 #include "PBEKraken_FindTarget_Service.h"
 #include "../../Character/PBCharacter.h"
-#include "../../Item/PSupply.h"
 #include "PBEKraken.h"
 #include "PBEKrakenAI.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -56,16 +55,8 @@ void UPBEKraken_FindTarget_Service::TickNode(UBehaviorTreeComponent& OwnerComp, 
 	{
 		for (auto const& OverlapResult : OverlapResults)
 		{
-			APSupply* SupplyBox = Cast<APSupply>(OverlapResult.GetActor());
 			APBCharacter* PlayerCharacter = Cast<APBCharacter>(OverlapResult.GetActor());
-			if (SupplyBox)
-			{
-				OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), SupplyBox);
-				
-				DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
-				return;
-			}
-			else if (PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
+			if (PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
 			{
 				OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), PlayerCharacter);
 

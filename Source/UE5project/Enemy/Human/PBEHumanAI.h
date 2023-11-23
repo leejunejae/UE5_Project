@@ -31,6 +31,7 @@ public:
 		TObjectPtr<class UAISenseConfig_Sight> AISenseConfigSight = nullptr;
 
 	void SetMovementMode(MovementMode mode);
+	virtual void StopAI();
 	//virtual void RunAI();
 
 protected:

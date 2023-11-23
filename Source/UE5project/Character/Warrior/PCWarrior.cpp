@@ -4,8 +4,6 @@
 #include "PCWarrior.h"
 #include "PCWAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "../../PBPWShield.h"
-#include "../../PBPWSword.h"
 
 APCWarrior::APCWarrior()
 {
@@ -24,12 +22,14 @@ APCWarrior::APCWarrior()
 		Weapon->SetStaticMesh(WEAPON_MESH.Object);
 	}
 
+	/*
 	SubEquip = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SubEquipComponent"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SUBEQUIP_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/Separated_Mesh/Weapon/SM_Shield.SM_Shield"));
 	if (SUBEQUIP_MESH.Succeeded())
 	{
 		SubEquip->SetStaticMesh(SUBEQUIP_MESH.Object);
 	}
+	*/
 
 	FName WeaponSocket(TEXT("S_Sword"));
 	FName ShieldSocket(TEXT("S_Shield"));
@@ -39,11 +39,12 @@ APCWarrior::APCWarrior()
 		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
 	}
 
+	/*
 	if (SubEquip)
 	{
 		SubEquip->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, ShieldSocket);
 	}
-
+	*/
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
@@ -63,8 +64,7 @@ APCWarrior::APCWarrior()
 	NextLoc = GetActorLocation() - GetMesh()->GetBoneTransform(0).GetLocation();
 
 	AttackRange = 200.0f;
-	MaxCombo = 4;
-	AttackEndComboState();
+	CanAttack = true;
 }
 
 void APCWarrior::BeginPlay()
@@ -83,6 +83,10 @@ void APCWarrior::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &APCWarrior::Attack);
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Triggered, this, &APCWarrior::OnHeavyAttack);
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Completed, this, &APCWarrior::OffHeavyAttack);
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Canceled, this, &APCWarrior::OffHeavyAttack);
+		//EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &APCWarrior::Dodge);
 	}
 }
 
@@ -96,15 +100,25 @@ void APCWarrior::PostInitializeComponents()
 	WarriorAnim->OnMontageEnded.AddDynamic(this, &APCWarrior::IsMontageEnded);
 
 	WarriorAnim->OnNextAttackCheck.AddLambda([this]()->void {
-		CanNextCombo = false;
-
-		if (IsComboInputOn)
-		{
-			AttackStartComboState();
-			WarriorAnim->JumpToAttackMontageSection(CurrentCombo);
-		}
+		CanAttack = true;
 		});
-		
+
+	WarriorAnim->OnEndAttack.AddLambda([this]()->void {
+		CurrentCombo = 0;
+		IsAttack = false;
+		CanAttack = true;
+		bUseControllerRotationYaw = true;
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		});
+
+	WarriorAnim->OnStartHit.AddLambda([this]()->void {
+		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &APCWarrior::AttackTimer, 0.01f, true);
+		});
+
+	WarriorAnim->OnEndHit.AddLambda([this]()->void {
+		if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))
+			GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+		});
 }
 
 void APCWarrior::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -116,14 +130,13 @@ void APCWarrior::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	switch (Type)
 	{
 	case MontageType::Attack:
-		IsAttack = false;
-		if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))
-			GetWorldTimerManager().ClearTimer(AttackTimerHandle);
-		AttackEndComboState();
 		break;
 	case MontageType::Death:
 		break;
 	case MontageType::Hit:
+		break;
+	case MontageType::Dodge:
+		IsDodge = false;
 		break;
 	default:
 		break;
@@ -169,20 +182,12 @@ void APCWarrior::Attack()
 	}
 	Super::Attack();
 
-	if (IsAttack)
+	if (CanAttack)
 	{
-		if (CanNextCombo)
-		{
-			IsComboInputOn = true;
-		}
-	}
-	else
-	{
-		AttackStartComboState();
-		WarriorAnim->PlayMontage(MontageType::Attack);
-		WarriorAnim->JumpToAttackMontageSection(CurrentCombo);
-		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &APCWarrior::AttackTimer, 0.1f, true);
 		IsAttack = true;
+		CanAttack = false;
+		CurrentCombo++;
+		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 	}
 }
 
@@ -205,7 +210,14 @@ void APCWarrior::AttackTimer()
 	FHitResult HitResult;
 	FCollisionQueryParams CollisionParams;
 	DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Red, false, 1.0f);
-	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartLoc, EndLoc, ECC_Visibility, CollisionParams);
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult, 
+		StartLoc, 
+		EndLoc, 
+		ECC_Visibility, 
+		CollisionParams
+	);
+
 	if (bHit)
 	{
 		if (HitResult.GetActor()->ActorHasTag("Enemy"))
@@ -218,19 +230,45 @@ void APCWarrior::AttackTimer()
 	}
 }
 
-void APCWarrior::AttackStartComboState()
+void APCWarrior::OnHeavyAttack()
 {
-	CanNextCombo = true;
-	IsComboInputOn = false;
-	CurrentCombo = FMath::Clamp<int32>(CurrentCombo + 1, 1, MaxCombo);
-	SetAttackInfo(FMath::RandRange(25, 30), AttackType::Sword, HitResponse::HitReaction);
+	IsHeavyAttack = true;
 }
 
-void APCWarrior::AttackEndComboState()
+void APCWarrior::OffHeavyAttack()
 {
-	IsComboInputOn = false;
-	CanNextCombo = false;
+	IsHeavyAttack = false;
+}
+
+void APCWarrior::ResetAttackState()
+{
 	CurrentCombo = 0;
+	CanAttack = true;
+}
+
+void APCWarrior::Dodge()
+{
+	if (nullptr == WarriorAnim || IsDodge)
+		return;
+	Super::Dodge();
+	
+	WarriorAnim->PlayMontage(MontageType::Dodge);
+	switch (CurrentDirection)
+	{
+	case MovementDirection::Fwd:
+		WarriorAnim->Montage_JumpToSection("Fwd");
+		break;
+	case MovementDirection::Left:
+		WarriorAnim->Montage_JumpToSection("Left");
+		break;
+	case MovementDirection::Right:
+		WarriorAnim->Montage_JumpToSection("Right");
+		break;
+	case MovementDirection::Bwd:
+		WarriorAnim->Montage_JumpToSection("Bwd");
+		break;
+	}
+	
 }
 
 void APCWarrior::Death()
@@ -272,4 +310,19 @@ void APCWarrior::DamageResponse(HitResponse Response)
 	case HitResponse::Stun:
 		break;
 	}
+}
+
+bool APCWarrior::CheckHeavyAttack()
+{
+	return IsHeavyAttack;
+}
+
+bool APCWarrior::IsAttacking()
+{
+	return IsAttack;
+}
+
+int32 APCWarrior::CheckCombo()
+{
+	return CurrentCombo;
 }

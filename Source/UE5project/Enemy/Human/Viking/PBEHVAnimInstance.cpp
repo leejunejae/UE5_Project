@@ -28,41 +28,9 @@ UPBEHVAnimInstance::UPBEHVAnimInstance()
 void UPBEHVAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	Character = Cast<APBEHViking>(TryGetPawnOwner());
 }
 
 void UPBEHVAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
-}
-
-void UPBEHVAnimInstance::PlayMontage(MontageType Type)
-{
-	switch (Type)
-	{
-	case MontageType::Attack:
-		Montage_Play(AttackMontage, 1.0f);
-		break;
-	case MontageType::Death:
-		Montage_Play(DeathMontage, 1.0f);
-		IsDead = true;
-		break;
-	case MontageType::Hit:
-		Montage_Play(HitMontage, 1.0f);
-		break;
-	default:
-		break;
-	}
-}
-
-MontageType UPBEHVAnimInstance::CheckMontage(UAnimMontage* Montage)
-{
-	if (Montage == AttackMontage)
-		return MontageType::Attack;
-	else if (Montage == DeathMontage)
-		return MontageType::Death;
-	else if (Montage == HitMontage)
-		return MontageType::Hit;
-	else
-		return MontageType::None;
 }

@@ -7,7 +7,7 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include <Engine/Classes/Components/CapsuleComponent.h>
-
+#include "Kismet/KismetMathLibrary.h"
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -44,6 +44,12 @@ APBCharacter::APBCharacter()
 		LookAction = IP_Look.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Dodge(TEXT("/Game/Character/C_Input/C_Dodge.C_Dodge"));
+	if (IP_Dodge.Succeeded())
+	{
+		DodgeAction = IP_Dodge.Object;
+	}
+
 	static ConstructorHelpers::FObjectFinder<UInputAction>IP_MoveSpeedToggle(TEXT("/Game/Character/C_Input/C_MoveSpeedToggle.C_MoveSpeedToggle"));
 	if (IP_MoveSpeedToggle.Succeeded())
 	{
@@ -68,6 +74,12 @@ APBCharacter::APBCharacter()
 	if (IP_Attack.Succeeded())
 	{
 		AttackAction = IP_Attack.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_HeavyAttack(TEXT("/Game/Character/C_Input/C_HeavyAttack.C_HeavyAttack"));
+	if (IP_HeavyAttack.Succeeded())
+	{
+		HeavyAttackAction = IP_HeavyAttack.Object;
 	}
 
 	CameraSetting();
@@ -102,6 +114,7 @@ void APBCharacter::Initialization()
 	IsAttack = false;
 	IsRun = false;
 	CurrentReadiness = CharacterReadiness::Normal;
+	CurrentDirection = MovementDirection::Bwd;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 }
 
@@ -134,6 +147,7 @@ void APBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APBCharacter::Jump);
 		EnhancedInputComponent->BindAction(MoveSpeedToggleAction, ETriggerEvent::Completed, this, &APBCharacter::MoveSpeedToggle);
 		EnhancedInputComponent->BindAction(ReadinessToggleAction, ETriggerEvent::Triggered, this, &APBCharacter::ReadinessToggle);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &APBCharacter::Dodge);
 	}
 }
 
@@ -149,12 +163,14 @@ void APBCharacter::PostInitializeComponents()
 /* Input Action */
 void APBCharacter::Move(const FInputActionValue& value)
 {
+	if (IsDodge)
+		return;
 	const FVector2D DirectionValue = value.Get<FVector2D>();
 	const FVector forward = GetActorForwardVector();
 	const FVector right = GetActorRightVector();
 
-	//UE_LOG(LogTemp, Error, TEXT("%f"), GetVelocity().Size());
-
+	DodgeDirection = DirectionValue;
+	UE_LOG(LogTemp, Error, TEXT("%f, %f"), DirectionValue.Y, DirectionValue.X);
 	AddMovementInput(forward, DirectionValue.Y);
 	AddMovementInput(right, DirectionValue.X);
 }
@@ -162,8 +178,50 @@ void APBCharacter::Move(const FInputActionValue& value)
 void APBCharacter::Look(const FInputActionValue& value)
 {
 	const FVector2D LookAxisValue = value.Get<FVector2D>();
-	AddControllerPitchInput(LookAxisValue.Y);
-	AddControllerYawInput(LookAxisValue.X);
+	if (IsAttack)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%f"), SpringArm->GetRelativeRotation().Yaw);
+		AddControllerPitchInput(LookAxisValue.Y * 0.1f);
+		AddControllerYawInput(LookAxisValue.X * 0.1f);
+	}
+	else
+	{
+		AddControllerPitchInput(LookAxisValue.Y * 0.5f);
+		AddControllerYawInput(LookAxisValue.X * 0.5f);
+	}
+}
+
+void APBCharacter::Dodge()
+{
+	float Direction = UKismetAnimationLibrary::CalculateDirection(GetVelocity(), GetActorRotation());
+	if (GetVelocity().IsNearlyZero())
+	{
+		CurrentDirection = MovementDirection::Bwd;
+	}
+	else
+	{
+		if (Direction <= 45.0f && Direction >= -45.0f)
+		{
+			CurrentDirection = MovementDirection::Fwd;
+		}
+		else if (Direction <-45.0f && Direction >-135.0f)
+			CurrentDirection = MovementDirection::Left;
+		else if (Direction > 45.0f && Direction < 135.0f)
+			CurrentDirection = MovementDirection::Right;
+		else
+		{
+			CurrentDirection = MovementDirection::Bwd;
+		}
+	}
+
+	/*
+	//GetWorldTimerManager().SetTimer(DodgeTimerHandle, this, &APBCharacter::DodgeTimer, 0.1f, true);
+	FVector DesLocation = GetActorForwardVector() * DodgeDirection.Y + GetActorRightVector() * DodgeDirection.X;
+	DesLocation.Normalize();
+	LaunchCharacter(DesLocation * 800.0f, false, false);
+	//SetActorLocation(FMath::VInterpTo(GetActorLocation(), DesLocation, 50.0f, 2.0f));
+	*/
+	IsDodge = true;
 }
 
 /*

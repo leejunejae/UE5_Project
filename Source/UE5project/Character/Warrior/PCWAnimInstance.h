@@ -8,7 +8,9 @@
 #include "PCWAnimInstance.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnNextAttackCheckDelegate);
-
+DECLARE_MULTICAST_DELEGATE(FOnEndAttackDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnStartHitDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnEndHitDelegate);
 /**
  * 
  */
@@ -22,12 +24,15 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	void PlayMontage(MontageType Type);
+	void PlayMontage(MontageType Type, int32 Section = 0);
 	void JumpToAttackMontageSection(int32 NewSection);
 	MontageType CheckMontage(UAnimMontage* Montage);
 
 public:
 	FOnNextAttackCheckDelegate OnNextAttackCheck;
+	FOnEndAttackDelegate OnEndAttack;
+	FOnStartHitDelegate OnStartHit;
+	FOnEndHitDelegate OnEndHit;
 
 private:
 	FVector PrevLoc;
@@ -39,17 +44,25 @@ private:
 		class UAnimInstance* Warrior_AnimInstance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-	float CurrentSpeed;
+		float CurrentSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-	bool IsInAir;
+		bool IsInAir;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		bool IsAttack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		bool IsHeavyAttack;
 
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool CombatMode;
 
-
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsTurning=false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		int32 ComboCount;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		float Speed;
@@ -84,14 +97,38 @@ private:
 		FName Turning = TEXT("Turning");
 
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AttackMontage;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* AttackMontage1;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* AttackMontage2;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* AttackMontage3;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* AttackMontage4;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* DeathMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* DodgeMontage;
 
 	UFUNCTION()
 		void AnimNotify_NOT_NextAttack();
+
+	UFUNCTION()
+		void AnimNotify_NOT_EndAttack();
+
+	UFUNCTION()
+		void AnimNotify_NOT_StartHit();
+
+	UFUNCTION()
+		void AnimNotify_NOT_EndHit();
 
 	FName GetAttackMontageSectionName(int32 Section);
 

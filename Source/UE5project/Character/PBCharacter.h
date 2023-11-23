@@ -7,8 +7,9 @@
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
-#include "../PBDamagableInterface.h"
-#include "../PBDamageSystem.h"
+#include "KismetAnimationLibrary.h"
+#include "../Function/PBDamagableInterface.h"
+#include "../Function/PBDamageSystem.h"
 #include "../Enemy/Human/PBEHuman.h"
 #include "PBCharacter.generated.h"
 
@@ -50,8 +51,10 @@ private:
 		Normal, // 평시태세
 		Combat // 전투태세
 	};
+
+	FVector2D DodgeDirection;
 	// 연속 점프 제한
-	//FTimerHandle JumpTimerHandle;
+	//FTimerHandle DodgeTimerHandle;
 	//bool JumpHold;
 	//int32 JumpTime;
 /* PRIVATE VARIATION */
@@ -67,6 +70,7 @@ private:
 /* PROTECTED VARIATION */
 protected:
 	CharacterReadiness CurrentReadiness;
+	MovementDirection CurrentDirection;
 
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		UStaticMeshComponent* Weapon;
@@ -100,6 +104,12 @@ protected:
 		UInputAction* AttackAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
+		UInputAction* HeavyAttackAction;
+
+	UPROPERTY(VisibleAnywhere, Category = Input)
+		UInputAction* DodgeAction;
+
+	UPROPERTY(VisibleAnywhere, Category = Input)
 		UInputAction* MoveSpeedToggleAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
@@ -110,6 +120,7 @@ protected:
 
 	bool IsRun;
 	bool IsAttack;
+	bool IsDodge;
 /* PROTECTED VARIATION */
 
 /* PROTECTED FUNCTION */
@@ -118,6 +129,7 @@ protected:
 	/* 캐릭터의 기본적인 움직임을 수행하는 함수*/
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
+	virtual void Dodge();
 	void ReadinessToggle();
 	void CameraSetting();
 	//void Jump();

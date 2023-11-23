@@ -3,7 +3,6 @@
 
 #include "PBEHVikingAI.h"
 #include "PBEHViking.h"
-#include "../../../Character/PBCharacter.h"
 
 APBEHVikingAI::APBEHVikingAI()
 {
@@ -28,11 +27,4 @@ void APBEHVikingAI::OnPossess(APawn* InPawn)
 	Blackboard->SetValueAsFloat(MeleeRadius, ControllingPawn->GetIdealRange().Melee);
 	Blackboard->SetValueAsFloat(RangedRadius, ControllingPawn->GetIdealRange().Ranged);
 	Blackboard->SetValueAsFloat(DefendRadius, ControllingPawn->GetIdealRange().Defend);
-}
-
-void APBEHVikingAI::StopAI()
-{
-	auto BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
-	if (BehaviorTreeComponent && BehaviorTreeComponent->IsRunning())
-		BehaviorTreeComponent->StopTree();
 }

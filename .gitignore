@@ -74,10 +74,4 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 
 # Asset files
-Content/Megascans/*
-Content/MSPresets/*
-Content/__ExternalActors__/*
-Content/__ExternalObjects__/*
-Content/Asset/*
-Content/Character/C_Warrior/*
-Content/Character/Dumpfile/*
+Content/*

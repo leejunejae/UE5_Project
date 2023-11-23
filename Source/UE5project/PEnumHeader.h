@@ -25,6 +25,15 @@ enum class MovementMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class MovementDirection : uint8
+{
+	Fwd,
+	Bwd,
+	Left,
+	Right,
+};
+
+UENUM(BlueprintType)
 enum class AttackType : uint8
 {
 	Sword UMETA(DisplayName = "Sword"),
@@ -55,6 +64,13 @@ enum class MontageType : uint8
 {
 	None UMETA(DisplayName = "None"),
 	Attack UMETA(DisplayName = "Attack"),
+	Swing1 UMETA(DisplayName = "Swing1"),
+	Swing2 UMETA(DisplayName = "Swing2"),
+	Swing3 UMETA(DisplayName = "Swing3"),
+	Swing4 UMETA(DisplayName = "Swing4"),
+	Appear UMETA(DisplayName = "Appear"),
+	Dodge UMETA(DisplayName = "Dodge"),
+	Swoop UMETA(DisplayName = "Swoop"),
 	Block UMETA(DisplayName = "Block"),
 	Death UMETA(DisplayName = "Death"),
 	Hit UMETA(DisplayName = "Hit"),
@@ -62,6 +78,39 @@ enum class MontageType : uint8
 	KnockBack UMETA(DisplayName = "KnockBack"),
 	Collpase UMETA(DisplayName = "Collpase"),
 	Fall UMETA(DisplayName = "Fall"),
+};
+
+UENUM(BlueprintType)
+enum class HereticMontage : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Attack UMETA(DisplayName = "Attack"),
+	Summon UMETA(DisplayName = "Summon"),
+	Death UMETA(DisplayName = "Death"),
+	Teleport UMETA(DisplayName = "Teleport"),
+};
+
+UENUM(BlueprintType)
+enum class HereticSkill : uint8
+{
+	None UMETA(DisplayName = "None"),
+	SummonSoldier UMETA(DisplayName = "SummonSoldier"),
+	Darkball UMETA(DisplayName = "Darkball"),
+};
+
+UENUM(BlueprintType)
+enum class HereticVar : uint8
+{
+	Summon UMETA(DisplayName = "Summon"),
+	Action UMETA(DisplayName = "Action"),
+};
+
+UENUM(BlueprintType)
+enum class RangeCheck : uint8
+{
+	Far UMETA(DisplayName = "Far"),
+	Proper UMETA(DisplayName = "Proper"),
+	Close UMETA(DisplayName = "Close"),
 };
 
 USTRUCT(BlueprintType)

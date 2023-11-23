@@ -37,10 +37,6 @@ EBTNodeResult::Type UPBEKraken_Patrol_Task::ExecuteTask(UBehaviorTreeComponent& 
 		OwnerComp.GetBlackboardComponent()->SetValueAsVector(FName(TEXT("NextPos")), NextLocation.Location);
 		return EBTNodeResult::Succeeded;
 	}
-	else
-	{
-		OwnerComp.GetBlackboardComponent()->SetValueAsVector(FName(TEXT("NextPos")), PrevPos);
-		return EBTNodeResult::Succeeded;
-	}
+
 	return EBTNodeResult::Failed;
 }

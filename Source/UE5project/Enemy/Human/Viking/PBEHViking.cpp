@@ -49,6 +49,8 @@ APBEHViking::APBEHViking()
 	MeleeRadius = 150.0f;
 	DefendRadius = 350.0f;
 	RangedRadius = 0.0f;
+
+	Tags.Add("Viking");
 }
 
 void APBEHViking::BeginPlay()
@@ -73,6 +75,22 @@ void APBEHViking::PostInitializeComponents()
 		VikingAnim->OnMontageEnded.AddDynamic(this, &APBEHViking::IsMontageEnded);
 	
 	}
+
+	/*
+	VikingAnim->OnStartHit.AddLambda([this]()->void {
+		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &APBEHViking::AttackTimer, 0.01f, true);
+		});
+
+	
+	VikingAnim->OnEndHit.AddLambda([this]()->void {
+		if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))
+		{
+			GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+		}
+		else
+			return;
+		});
+		*/
 }
 
 void APBEHViking::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -90,6 +108,7 @@ void APBEHViking::Attack()
 		return;
 	}
 	VikingAnim->PlayMontage(MontageType::Attack);
+	SetAttackInfo(FMath::RandRange(50, 55), AttackType::Sword, HitResponse::HitReaction);
 	IsAttack = true;
 }
 

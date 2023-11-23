@@ -12,9 +12,9 @@ APBEHumanAI::APBEHumanAI()
 	AISenseConfigSight->DetectionByAffiliation.bDetectEnemies = true;
 	AISenseConfigSight->DetectionByAffiliation.bDetectFriendlies = true;
 	AISenseConfigSight->DetectionByAffiliation.bDetectNeutrals = true;
-	AISenseConfigSight->SightRadius = 500.0f;
-	AISenseConfigSight->LoseSightRadius = 600.0f;
-	AISenseConfigSight->PeripheralVisionAngleDegrees = 60.0f;
+	AISenseConfigSight->SightRadius = 5000.0f;
+	AISenseConfigSight->LoseSightRadius = 10000.0f;
+	AISenseConfigSight->PeripheralVisionAngleDegrees = 180.0f;
 
 	AIPerceptionComponent->ConfigureSense(*AISenseConfigSight);
 	AIPerceptionComponent->SetDominantSense(UAISenseConfig_Sight::StaticClass());
@@ -85,4 +85,11 @@ void APBEHumanAI::SetMovementMode(MovementMode Mode)
 	}
 
 	ControllingPawn->SetMovementSpeed(movespeed);
+}
+
+void APBEHumanAI::StopAI()
+{
+	auto BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
+	if (BehaviorTreeComponent && BehaviorTreeComponent->IsRunning())
+		BehaviorTreeComponent->StopTree();
 }

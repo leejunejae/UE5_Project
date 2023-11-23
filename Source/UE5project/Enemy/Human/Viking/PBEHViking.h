@@ -11,7 +11,6 @@
  */
 class UPBEHVAnimInstance;
 
-DECLARE_MULTICAST_DELEGATE(FOnAttackEndDelegate);
 
 UCLASS()
 class UE5PROJECT_API APBEHViking : public APBEHuman
@@ -27,7 +26,6 @@ public:
 	virtual void DamageResponse(HitResponse Response) override;
 
 public:
-	FOnAttackEndDelegate OnAttackEnd;
 
 protected:
 	virtual void BeginPlay() override;
@@ -39,6 +37,5 @@ private:
 private:
 	virtual void PostInitializeComponents() override;
 
-	UFUNCTION()
-		void IsMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void IsMontageEnded(UAnimMontage* Montage, bool bInterrupted) override;
 };
