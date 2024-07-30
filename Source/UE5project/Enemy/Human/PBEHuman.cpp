@@ -9,10 +9,17 @@ APBEHuman::APBEHuman()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	CombatComponent->bAutoActivate = true;
 	DamageSystem = CreateDefaultSubobject<UPBDamageSystem>(TEXT("DAMAGESYSTEM"));
 	DamageSystem->bAutoActivate = true;
+
+	MotionWarpComp = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("UMotionWarpingComponent"));
+	MotionWarpComp->bAutoActivate = true;
+
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Enemy"));
+	GetMesh()->SetCollisionProfileName("Enemy");
 
 	//bUseControllerRotationYaw = false;
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -27,80 +34,30 @@ void APBEHuman::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	DamageSystem->OnDeath.BindUFunction(this, FName("Death"));
-	DamageSystem->OnBlocked.BindUFunction(this, FName("Block"));
-	DamageSystem->OnDamaged.BindUFunction(this, FName("DamageResponse"));
 }
 
-void APBEHuman::Attack()
+void APBEHuman::BeginPlay()
+{
+	Super::BeginPlay();
+	DamageSystem->SetHealth(GetMaxHP());
+}
+
+void APBEHuman::Attack(FName AttackName, ACharacter* Target)
 {
 	
 }
 
-void APBEHuman::SetAttackInfo(float Amount, AttackType Type, HitResponse Response, bool Invincible, bool CanBlocked, bool CanParried, bool ForceInterrupt)
-{
-	AttackInfo.Amount = Amount;
-	AttackInfo.Type = Type;
-	AttackInfo.Response = Response;
-	AttackInfo.Invincible = Invincible;
-	AttackInfo.CanBlocked = CanBlocked;
-	AttackInfo.CanParried = CanParried;
-	AttackInfo.ForceInterrupt = ForceInterrupt;
-}
-
-void APBEHuman::AttackTimer()
-{
-	/*
-	FVector StartLoc = GetMesh()->GetSocketLocation("S_RangeStart");
-	FVector EndLoc = GetMesh()->GetSocketLocation("S_RangeEnd");
-	*/
-	if (ActorHasTag("Viking"))
-	{
-		FHitResult HitResult;
-		FCollisionQueryParams CollisionParams(NAME_None, false, this);
-
-		/*
-		bool bHit = GetWorld()->LineTraceSingleByChannel(
-			HitResult,
-			StartLoc,
-			EndLoc,
-			ECC_Visibility,
-			CollisionParams
-		);
-		*/
-
-		bool bResult = GetWorld()->SweepSingleByChannel(
-			HitResult,
-			GetActorLocation(),
-			GetActorLocation() + GetActorForwardVector() * 200.0f,
-			FQuat::Identity,
-			ECollisionChannel::ECC_EngineTraceChannel3,
-			FCollisionShape::MakeSphere(50.0f),
-			CollisionParams
-		);
-
-		FVector TraceVec = GetActorForwardVector() * 200.0f;
-		FVector Center = GetActorLocation() + TraceVec * 0.5f;
-		float HalfHeight = 200.0f * 0.5f + 50.0f;
-		FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
-		FColor DrawColor = bResult ? FColor::Green : FColor::Red;
-		float DebugLifeTime = 5.0f;
-
-		DrawDebugCapsule(GetWorld(), Center, HalfHeight, 50.0f, CapsuleRot, DrawColor, false, DebugLifeTime);
-
-		if (bResult)
-		{
-			if (HitResult.GetActor()->ActorHasTag("Player"))
-			{
-				IPBDamagableInterface* GetDamagedEnemy = Cast<IPBDamagableInterface>(HitResult.GetActor());
-				GetDamagedEnemy->TakeDamage_Implementation(AttackInfo);
-				if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))
-					GetWorldTimerManager().ClearTimer(AttackTimerHandle);
-			}
-		}
-	}
-}
-
 void APBEHuman::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	
+}
+
+void APBEHuman::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
+{
+
+}
+
+void APBEHuman::OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
 {
 	
 }
@@ -127,21 +84,59 @@ void APBEHuman::Death()
 	SetActorEnableCollision(false);
 }
 
-void APBEHuman::Block(bool CanParried)
+void APBEHuman::Block(bool IsDefenseMode)
 {
-	if (CanParried)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy Parried"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy Blocked"));
-	}
+
 }
 
 void APBEHuman::Teleport()
 {
 	
+}
+
+bool APBEHuman::IsLookingAt()
+{
+	return IsLookAt;
+}
+
+AActor* APBEHuman::GetLookingTarget()
+{
+	return LookAtTarget;
+}
+
+void APBEHuman::SetLookingTarget(AActor* Target)
+{
+	LookAtTarget = Target;
+}
+
+void APBEHuman::SetIsLook(bool IsLook)
+{
+	IsLookAt = IsLook;
+}
+
+FString APBEHuman::GetName()
+{
+	return EnemyInfo.EName;
+}
+
+int32 APBEHuman::GetMaxHP()
+{
+	return EnemyInfo.EMaxHP;
+}
+
+int32 APBEHuman::GetOffensePower()
+{
+	return EnemyInfo.EOffensePower;
+}
+
+int32 APBEHuman::GetDefenseCap()
+{
+	return EnemyInfo.EDefenseCap;
+}
+
+int32 APBEHuman::GetDownPercent()
+{
+	return EnemyInfo.EDownPercent;
 }
 
 void APBEHuman::Summon()
@@ -159,12 +154,13 @@ void APBEHuman::Swoop()
 
 }
 
-void APBEHuman::DamageResponse(HitResponse Response)
+void APBEHuman::Dash(FVector TargetLocation)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Your Character Was Damaged"));
+
 }
 
-bool APBEHuman::TakeDamage_Implementation(FDamageInfo DamageInfo)
+
+void APBEHuman::TakeDamage_Implementation(FAttackInfo DamageInfo)
 {
 	IPBDamagableInterface::TakeDamage_Implementation(DamageInfo);
 
@@ -176,6 +172,11 @@ float APBEHuman::GetMaxHealth_Implementation()
 	IPBDamagableInterface::GetMaxHealth_Implementation();
 
 	return DamageSystem->GetfloatValue("MaxHealth");
+}
+
+UStaticMeshComponent* APBEHuman::GetWeapon_Implementation()
+{
+	return Weapon;
 }
 
 float APBEHuman::GetHealth_Implementation()

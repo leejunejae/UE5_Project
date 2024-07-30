@@ -30,14 +30,21 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = AI)
 		TObjectPtr<class UAISenseConfig_Sight> AISenseConfigSight = nullptr;
 
-	void SetMovementMode(MovementMode mode);
+	void SetMovementMode(float MovementSpeed);
 	virtual void StopAI();
 	//virtual void RunAI();
+
+	virtual void UpdateControlRotation(float DeltaTime, bool bUpdatePawn = true) override;
+
 
 protected:
 	virtual void BeginPlay() override;
 
 protected:
+	FRotator SmoothTargetRotation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float SmoothFocusInterpSpeed = 360.0f;
 
 private:
 	void OnRepeatTimer();

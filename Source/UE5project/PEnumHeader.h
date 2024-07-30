@@ -7,15 +7,6 @@
 #include "PEnumHeader.generated.h"
 
 UENUM(BlueprintType)
-enum class HitCheck : uint8
-{
-	None UMETA(DisplayName = "None"),
-	Blocked UMETA(DisplayName = "Blocked"),
-	Damaged UMETA(DisplayName = "Damaged"),
-	Invincibled UMETA(DisplayName = "Invincibled"),
-};
-
-UENUM(BlueprintType)
 enum class MovementMode : uint8
 {
 	Idle UMETA(DisplayName="Idle"),
@@ -27,36 +18,32 @@ enum class MovementMode : uint8
 UENUM(BlueprintType)
 enum class MovementDirection : uint8
 {
-	Fwd,
-	Bwd,
-	Left,
-	Right,
+	Fwd UMETA(DisplayName = "FWD"),
+	Bwd UMETA(DisplayName = "BWD"),
+	Left UMETA(DisplayName = "LFT"),
+	Right UMETA(DisplayName = "RGT"),
+	FwdRight UMETA(DisplayName = "FRGT"),
+	FwdLeft UMETA(DisplayName = "FLFT"),
+	BwdRight UMETA(DisplayName = "BRGT"),
+	BwdLeft UMETA(DisplayName = "BLFT"),
 };
 
 UENUM(BlueprintType)
-enum class AttackType : uint8
+enum class WarriorStance : uint8
 {
-	Sword UMETA(DisplayName = "Sword"),
-	GreatSword UMETA(DisplayName = "GreatSword"),
-	Arrow UMETA(DisplayName = "Arrow"),
-	Axe UMETA(DisplayName = "Axe"),
-	Hatchet UMETA(DisplayName = "Hatchet"),
-	Magic UMETA(DisplayName = "Magic"),
-	Environment UMETA(DisplayName = "Environment"),
-	Punch UMETA(DisplayName = "Punch"),
-	Kick UMETA(DisplayName = "Kick"),
+	UA UMETA(DisplayName = "UA"),
+	LS UMETA(DisplayName = "LS"),
+	SNS UMETA(DisplayName = "SNS"),
 };
 
 UENUM(BlueprintType)
-enum class HitResponse : uint8
+enum class HorseMovement : uint8
 {
-	None UMETA(DisplayName = "None"),
-	HitReaction UMETA(DisplayName = "HitReaction"),
-	Stagger UMETA(DisplayName = "Stagger"),
-	Stun UMETA(DisplayName = "Stun"),
-	KnockBack UMETA(DisplayName = "KnockBack"),
-	Fall UMETA(DisplayName = "Fall"),
-	Collpase UMETA(DisplayName = "Collpase"),
+	Walk UMETA(DisplayName = "Walk"),
+	Trot UMETA(DisplayName = "Trot"),
+	Canter UMETA(DisplayName = "Canter"),
+	Gallop UMETA(DisplayName = "Gallop"),
+	Sprint UMETA(DisplayName = "Sprint"),
 };
 
 UENUM(BlueprintType)
@@ -93,9 +80,22 @@ enum class HereticMontage : uint8
 UENUM(BlueprintType)
 enum class HereticSkill : uint8
 {
+	DarkBall UMETA(DisplayName = "DarkBall"),
+	SawTooth UMETA(DisplayName = "SawTooth"),
+	DarkSpear UMETA(DisplayName = "DarkSpear"),
+	DarkBeam UMETA(DisplayName = "DarkBeam"),
+	Tornado UMETA(DisplayName = "Tornado"),
 	None UMETA(DisplayName = "None"),
-	SummonSoldier UMETA(DisplayName = "SummonSoldier"),
-	Darkball UMETA(DisplayName = "Darkball"),
+};
+
+UENUM(BlueprintType)
+enum class WarriorVar : uint8
+{
+	Attack UMETA(DisplayName = "Attack"),
+	HeavyAttack UMETA(DisplayName = "HeavyAttack"),
+	Dodge UMETA(DisplayName = "Dodge"),
+	Block UMETA(DisplayName = "Block"),
+	Combo UMETA(DisplayName = "Combo"),
 };
 
 UENUM(BlueprintType)
@@ -103,6 +103,30 @@ enum class HereticVar : uint8
 {
 	Summon UMETA(DisplayName = "Summon"),
 	Action UMETA(DisplayName = "Action"),
+	DarkBall UMETA(DisplayName = "DarkBall"),
+	SawTooth UMETA(DisplayName = "SawTooth"),
+	DarkSpear UMETA(DisplayName = "DarkSpear"),
+	DarkBeam UMETA(DisplayName = "DarkBeam"),
+	Tornado UMETA(DisplayName = "Tornado"),
+};
+
+UENUM(BlueprintType)
+enum class HSoldierVar : uint8
+{
+	IsAttack UMETA(DisplayName = "IsAttack"),
+	IsHit UMETA(DisplayName = "IsHit"),
+	IsHitLarge UMETA(DisplayName = "IsHitLarge"),
+	IsBlock UMETA(DisplayName = "IsBlock"),
+	IsDefenseMode UMETA(DisplayName = "IsDefenseMode"),
+	IsParried UMETA(DisplayName = "IsParried"),
+	IsBlockBreak UMETA(DisplayName = "IsBlockBreak"),
+};
+
+UENUM(BlueprintType)
+enum class HSoldierMode : uint8
+{
+	OffenseMode UMETA(DisplayName = "OffenseMode"),
+	DefenseMode UMETA(DisplayName = "DefenseMode"),
 };
 
 UENUM(BlueprintType)
@@ -113,26 +137,93 @@ enum class RangeCheck : uint8
 	Close UMETA(DisplayName = "Close"),
 };
 
+UENUM(BlueprintType)
+enum class RideVar : uint8
+{
+	Horizontal UMETA(DisplayName = "Horizontal"),
+	Vertical UMETA(DisplayName = "Vertical"),
+	IsBreak UMETA(DisplayName = "IsBreak"),
+};
+
 USTRUCT(BlueprintType)
-struct FDamageInfo
+struct FCharacterInfo
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Amount;
+		FString CName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		AttackType Type;
+		int32 CMaxHP;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		HitResponse Response;
+		int32 COffensePower;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool Invincible;
+		int32 CDefenseCap;
+
+public:
+	void SetName(FString Name)
+	{
+		CName = Name;
+	}
+
+	void SetMaxHP(int32 MaxHP)
+	{
+		CMaxHP = MaxHP;
+	}
+
+	void SetOffensePower(int32 OffensePower)
+	{
+		COffensePower = OffensePower;
+	}
+
+	void SetDefenseCap(int32 DefenseCap)
+	{
+		CDefenseCap = DefenseCap;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FEnemyInfo
+{
+	GENERATED_BODY()
+
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool CanBlocked;
+		FString EName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool CanParried;
+		int32 EMaxHP;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool ForceInterrupt;
+		int32 EOffensePower;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int32 EDefenseCap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int32 EDownPercent = 0;
+
+public:
+	void SetName(FString Name)
+	{
+		EName = Name;
+	}
+
+	void SetMaxHP(int32 MaxHP)
+	{
+		EMaxHP = MaxHP;
+	}
+
+	void SetOffensePower(int32 OffensePower)
+	{
+		EOffensePower = OffensePower;
+	}
+
+	void SetDefenseCap(int32 DefenseCap)
+	{
+		EDefenseCap = DefenseCap;
+	}
+
+	void SetDownPercent(int32 DownPercent)
+	{
+		EDownPercent = DownPercent;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -154,7 +245,16 @@ struct FWeaponInfo
 public:
 	float AttackRange;
 	float StrikingPower;
-	AttackType WeaponType;
+};
+
+USTRUCT(BlueprintType)
+struct FComponentTransform
+{
+	GENERATED_BODY()
+
+public:
+	FVector Location;
+	FRotator Rotation;
 };
 
 UCLASS()

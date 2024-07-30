@@ -2,13 +2,14 @@
 
 
 #include "UE5projectGameModeBase.h"
-#include "Character/Warrior/PCWarrior.h"
-#include "Character/PBCController.h"
+#include "Character/Warrior/Warrior.h"
+#include "Character/ControllerBase.h"
+#include "Function/PBDefaultWidget.h"
 
 AUE5projectGameModeBase::AUE5projectGameModeBase()
 {
-	DefaultPawnClass = APCWarrior::StaticClass();
-	PlayerControllerClass = APBCController::StaticClass();
+	DefaultPawnClass = AWarrior::StaticClass();
+	PlayerControllerClass = AControllerBase::StaticClass();
 }
 
 void AUE5projectGameModeBase::PostLogin(APlayerController* NewPlayer)

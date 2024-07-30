@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PBEKraken_FindTarget_Service.h"
-#include "../../Character/PBCharacter.h"
+#include "../../Character/CharacterBase.h"
 #include "PBEKraken.h"
 #include "PBEKrakenAI.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -55,7 +55,7 @@ void UPBEKraken_FindTarget_Service::TickNode(UBehaviorTreeComponent& OwnerComp, 
 	{
 		for (auto const& OverlapResult : OverlapResults)
 		{
-			APBCharacter* PlayerCharacter = Cast<APBCharacter>(OverlapResult.GetActor());
+			ACharacterBase* PlayerCharacter = Cast<ACharacterBase>(OverlapResult.GetActor());
 			if (PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
 			{
 				OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), PlayerCharacter);

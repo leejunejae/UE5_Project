@@ -36,7 +36,7 @@ APBEHOrc::APBEHOrc()
 
 	if (Weapon)
 	{
-		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
+		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
 	}
 	
 	/*

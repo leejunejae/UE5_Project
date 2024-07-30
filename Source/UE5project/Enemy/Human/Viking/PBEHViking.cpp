@@ -35,12 +35,12 @@ APBEHViking::APBEHViking()
 
 	if (Weapon)
 	{
-		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
+		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
 	}
 
 	if (SubEquip)
 	{
-		SubEquip->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, ShieldSocket);
+		SubEquip->SetupAttachment(GetMesh(), ShieldSocket);
 	}
 
 	AIControllerClass = APBEHVikingAI::StaticClass();
@@ -99,16 +99,15 @@ void APBEHViking::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	OnAttackEnd.Broadcast();
 }
 
-void APBEHViking::Attack()
+void APBEHViking::Attack(FName AttackName, ACharacter* Target)
 {
-	Super::Attack();
+	Super::Attack(AttackName);
 
 	if (IsAttack)
 	{
 		return;
 	}
-	VikingAnim->PlayMontage(MontageType::Attack);
-	SetAttackInfo(FMath::RandRange(50, 55), AttackType::Sword, HitResponse::HitReaction);
+	//VikingAnim->PlayMontage(MontageType::Attack);
 	IsAttack = true;
 }
 
@@ -122,29 +121,9 @@ void APBEHViking::Death()
 	//GetController()->UnPossess();
 }
 
+/*
 void APBEHViking::Block(bool CanParried)
 {
 	Super::Block(CanParried);
 }
-
-void APBEHViking::DamageResponse(HitResponse Response)
-{
-	Super::DamageResponse(Response);
-
-	switch (Response)
-	{
-	case HitResponse::HitReaction:
-		VikingAnim->PlayMontage(MontageType::Hit);
-		break;
-	case HitResponse::Collpase:
-		break;
-	case HitResponse::Fall:
-		break;
-	case HitResponse::KnockBack:
-		break;
-	case HitResponse::Stagger:
-		break;
-	case HitResponse::Stun:
-		break;
-	}
-}
+*/

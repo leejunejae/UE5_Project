@@ -18,25 +18,49 @@ void UPBEnemy_SelectSkill_Service::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	auto ControllingPawn = Cast<APBEHHeretic>(OwnerComp.GetAIOwner()->GetPawn());
 	if (ControllingPawn == nullptr)
 		return;
-
-	int32 RandSkill;
+	
+	IsReadyList = ControllingPawn->CheckSkillIsReady();
+	int32 Skillindex;
+	if (IsReadyList.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SkillList is Empty"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Size of SkillList : %d"), IsReadyList.Num());
+	}
 
 	if (!ControllingPawn->CheckBool(HereticVar::Action))
-		RandSkill = FMath::RandRange(1, 2);
+		Skillindex = FMath::RandRange(0, IsReadyList.Num() - 1);
 	else
-		RandSkill = 0;
-
-	switch (RandSkill)
 	{
-	case 0:
 		OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::None));
-		break;
-	case 1:
-		OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::SummonSoldier));
-		break;
-	case 2:
-		OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::Darkball));
-		break;
+		return;
+	}
+
+	if (IsReadyList.IsValidIndex(Skillindex))
+	{
+		switch (IsReadyList[Skillindex])
+		{
+		case HereticSkill::DarkBall:
+			OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::DarkBall));
+			break;
+		case HereticSkill::SawTooth:
+			OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::SawTooth));
+			break;
+		case HereticSkill::DarkSpear:
+			OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::DarkSpear));
+			break;
+		case HereticSkill::DarkBeam:
+			OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::DarkBeam));
+			break;
+		case HereticSkill::Tornado:
+			OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::Tornado));
+			break;
+		default:
+			OwnerComp.GetBlackboardComponent()->SetValueAsEnum(FName(TEXT("Skill")), static_cast<uint8>(HereticSkill::None));
+			break;
+		}
 	}
 
 	return;

@@ -3,7 +3,8 @@
 
 #include "PBEHumanAI.h"
 #include "PBEHuman.h"
-#include "../../Character/PBCharacter.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "../../Character/CharacterBase.h"
 
 APBEHumanAI::APBEHumanAI()
 {
@@ -47,7 +48,7 @@ void APBEHumanAI::OnPossess(APawn* InPawn)
 void APBEHumanAI::OnTargetPerceptionUpdated_Delegate(AActor* Actor, FAIStimulus Stimulus)
 {
 	UBlackboardComponent* BlackboardComp = Blackboard.Get();
-	APBCharacter* PlayerCharacter = Cast<APBCharacter>(Actor);
+	ACharacterBase* PlayerCharacter = Cast<ACharacterBase>(Actor);
 	if (UseBlackboard(BBAsset, BlackboardComp) && PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
 	{
 		Blackboard->SetValueAsObject(TargetKey, Actor);
@@ -59,32 +60,11 @@ void APBEHumanAI::OnTargetPerceptionUpdated_Delegate(AActor* Actor, FAIStimulus 
 	}
 }
 
-void APBEHumanAI::SetMovementMode(MovementMode Mode)
+void APBEHumanAI::SetMovementMode(float MovementSpeed)
 {
 	auto ControllingPawn = Cast<APBEHuman>(GetPawn());
 
-	float movespeed;
-
-	switch (Mode)
-	{
-	case MovementMode::Idle:
-		movespeed = 0.0f;
-		break;
-	case MovementMode::Walking:
-		movespeed = 150.0f;
-		break;
-	case MovementMode::Jogging:
-		movespeed = 300.0f;
-		break;
-	case MovementMode::Sprinting:
-		movespeed = 500.0f;
-		break;
-	default:
-		movespeed = 0.0f;
-		break;
-	}
-
-	ControllingPawn->SetMovementSpeed(movespeed);
+	ControllingPawn->SetMovementSpeed(MovementSpeed);
 }
 
 void APBEHumanAI::StopAI()
@@ -92,4 +72,28 @@ void APBEHumanAI::StopAI()
 	auto BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
 	if (BehaviorTreeComponent && BehaviorTreeComponent->IsRunning())
 		BehaviorTreeComponent->StopTree();
+}
+
+void APBEHumanAI::UpdateControlRotation(float DeltaTime, bool bUpdatePawn)
+{
+	Super::UpdateControlRotation(DeltaTime, false);
+
+	//Smooth and change the pawn rotation
+	
+	if (bUpdatePawn)
+	{
+		//Get pawn
+		APawn* const MyPawn = GetPawn();
+		//Get Pawn current rotation
+		const FRotator CurrentPawnRotation = MyPawn->GetActorRotation();
+
+		//Calculate smoothed rotation
+		SmoothTargetRotation = UKismetMathLibrary::RInterpTo_Constant(MyPawn->GetActorRotation(), ControlRotation, DeltaTime, SmoothFocusInterpSpeed);
+		//Check if we need to change
+		if (CurrentPawnRotation.Equals(SmoothTargetRotation, 1e-3f) == false)
+		{
+			//Change rotation using the Smooth Target Rotation
+			MyPawn->FaceRotation(SmoothTargetRotation, DeltaTime);
+		}
+	}
 }

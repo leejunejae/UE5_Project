@@ -16,4 +16,15 @@ class UE5PROJECT_API APBSkill_DarkSawTooth : public APBAttackSkill
 	
 public:
 	APBSkill_DarkSawTooth();
+
+protected:
+	void BeginPlay() override;
+	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
+
+private:
+	UFUNCTION()
+		void ReturnTimer();
+
+private:
+	FTimerHandle ReturnTimerHandle;
 };

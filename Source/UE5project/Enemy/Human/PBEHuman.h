@@ -5,8 +5,13 @@
 #include "CoreMinimal.h"
 #include "../PBEnemy.h"
 #include "../../PEnumHeader.h"
-#include "../../Function/PBDamagableInterface.h"
-#include "../../Function/PBDamageSystem.h"
+#include "../../EnemyHeader.h"
+#include "../../Function/Combat/PBDamagableInterface.h"
+#include "../../Function/Combat/PBDamageSystem.h"
+#include "../../Function/Combat/CombatComponent.h"
+#include "../../Function/Combat/CombatInterface.h"
+#include "MotionWarpingComponent.h"
+#include "Engine/DataTable.h"
 #include "PBEHuman.generated.h"
 
 /**
@@ -18,56 +23,84 @@ class UPBDamageSystem;
 DECLARE_MULTICAST_DELEGATE(FOnActionDelegate);
 
 UCLASS()
-class UE5PROJECT_API APBEHuman : public APBEnemy, public IPBDamagableInterface
+class UE5PROJECT_API APBEHuman : public APBEnemy, public IPBDamagableInterface, public ICombatInterface
 {
 	GENERATED_BODY()
-	
+
 public:
 	APBEHuman();
 
 	void SetMovementSpeed(float speed);
 	FRangeInfo GetIdealRange();
 
-	virtual bool TakeDamage_Implementation(FDamageInfo DamageInfo) override;
-	virtual float Heal_Implementation(float amount) override;
-	virtual float GetHealth_Implementation() override;
-	virtual float GetMaxHealth_Implementation() override;
+	virtual void TakeDamage_Implementation(FAttackInfo DamageInfo);
+	virtual float Heal_Implementation(float amount);
+	virtual float GetHealth_Implementation();
+	virtual float GetMaxHealth_Implementation();
 
-	virtual void Attack() override;
+	virtual UStaticMeshComponent* GetWeapon_Implementation();
+
+	virtual void Attack(FName AttackName, ACharacter* Target = nullptr) override;
 	virtual void Summon();
 	virtual void Appear();
 	virtual void Swoop();
+	virtual void Dash(FVector TargetLocation);
+	virtual void Block(bool IsDefenseMode);
 	UFUNCTION()
 		virtual void Death();
-	UFUNCTION()
-		virtual void Block(bool CanParried);
-	UFUNCTION()
-		virtual void DamageResponse(HitResponse Response);
 
 	virtual void Teleport();
 
-private:
-	FDamageInfo AttackInfo;
+	FString GetName();
+	int32 GetMaxHP();
+	int32 GetOffensePower();
+	int32 GetDefenseCap();
+	int32 GetDownPercent();
+
+	// Focus
+	bool IsLookingAt();
+	AActor* GetLookingTarget();
+	void SetLookingTarget(AActor* Target);
+	void SetIsLook(bool isLook);
 
 protected:
 	virtual void PostInitializeComponents() override;
+	virtual void BeginPlay() override;
 
 	UFUNCTION()
 		virtual void IsMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
-	void AttackTimer();
-	void SetAttackInfo(float Amount, AttackType Type, HitResponse Response, bool Invincible = false, bool CanBlocked = false, bool CanParried = false, bool ForceInterrupt = true);
+	UFUNCTION()
+		virtual void OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
+
+	UFUNCTION()
+		virtual void OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 
 public:
-	FOnActionDelegate OnTeleport; // ¸¶¹ý»ç ÀûÀÇ ÅÚ·¹Æ÷Æ® Behavior Tree Task¸¦ À§ÇÑ µ¨¸®°ÔÀÌÆ®
+	FOnActionDelegate OnTeleport; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½ï¿½ï¿½Æ® Behavior Tree Taskï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	FOnActionDelegate OnSummonEnd;
 	FOnActionDelegate OnAttackEnd;
+	FOnActionDelegate OnAttackStart;
+	FOnActionDelegate OnAttackFin;
 	FOnActionDelegate OnAppearEnd;
 	FOnActionDelegate OnSwoopEnd;
+	FOnActionDelegate OnBlockEnd;
+	FOnActionDelegate OnDashEnd;
 
 protected:
+	FEnemyInfo EnemyInfo;
+
 	UPROPERTY(VisibleAnywhere, Category = Combat)
 		UPBDamageSystem* DamageSystem;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat)
+		UCombatComponent* CombatComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat)
+		UMotionWarpingComponent* MotionWarpComp;
+
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
+		class UDataTable* AttackDT;
 
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		UStaticMeshComponent* Weapon;
@@ -79,6 +112,9 @@ protected:
 	bool IsSummon;
 	bool IsAction;
 	bool IsAppear;
+	bool IsHit;
+	bool IsBlock;
+	bool IsParried;
 
 	MovementMode CurrentMovement;
 	float MeleeRadius;
@@ -86,4 +122,7 @@ protected:
 	float RangedRadius;
 
 	FTimerHandle AttackTimerHandle;
+
+	bool IsLookAt = false;
+	AActor* LookAtTarget;
 };

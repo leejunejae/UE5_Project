@@ -1,9 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
+ // Fill out your copyright notice in the Description page of Project Settings.
 #include "PBEHHereticSoldier.h"
 #include "PBEHHereticSoldierAI.h"
 #include "PBEHHSAnimInstance.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/MaterialParameterCollection.h"
@@ -14,99 +13,21 @@ APBEHHereticSoldier::APBEHHereticSoldier()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MAIN_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/SK_full_body.SK_full_body"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MAIN_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/SK_Fallen_Knight.SK_Fallen_Knight"));
 	if (MAIN_MESH.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(MAIN_MESH.Object);
 	}
 
-	BodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Body"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BODY_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_chain_armor.S_chain_armor"));
-	if (BODY_MESH.Succeeded())
-	{
-		BodyMesh->SetSkeletalMesh(BODY_MESH.Object);
-	}
-	BodyMesh->SetupAttachment(GetMesh());
-	BodyMesh->SetLeaderPoseComponent(GetMesh());
-
-	PantMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Pant"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> PANT_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_pants.S_pants"));
-	if (PANT_MESH.Succeeded())
-	{
-		PantMesh->SetSkeletalMesh(PANT_MESH.Object);
-	}
-	PantMesh->SetupAttachment(GetMesh());
-	PantMesh->SetLeaderPoseComponent(GetMesh());
-
-	BootMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Boot"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BOOT_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_boots.S_boots"));
-	if (BOOT_MESH.Succeeded())
-	{
-		BootMesh->SetSkeletalMesh(BOOT_MESH.Object);
-	}
-	BootMesh->SetupAttachment(GetMesh());
-	BootMesh->SetLeaderPoseComponent(GetMesh());
-
-	BracerMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Bracer"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BRACER_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_bracers.S_bracers"));
-	if (BRACER_MESH.Succeeded())
-	{
-		BracerMesh->SetSkeletalMesh(BRACER_MESH.Object);
-	}
-	BracerMesh->SetupAttachment(GetMesh());
-	BracerMesh->SetLeaderPoseComponent(GetMesh());
-	
-	GloveMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Glove"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> GLOVE_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_gloves.S_gloves"));
-	if (GLOVE_MESH.Succeeded())
-	{
-		GloveMesh->SetSkeletalMesh(GLOVE_MESH.Object);
-	}
-	GloveMesh->SetupAttachment(GetMesh());
-	GloveMesh->SetLeaderPoseComponent(GetMesh());
-
-	CapeMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Cape"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CAPE_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_Cape_with_Hood.S_Cape_with_Hood"));
-	if (CAPE_MESH.Succeeded())
-	{
-		CapeMesh->SetSkeletalMesh(CAPE_MESH.Object);
-	}
-	CapeMesh->SetupAttachment(GetMesh());
-	CapeMesh->SetLeaderPoseComponent(GetMesh());
-
-	ShoulderMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Shoulder"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SHOULDER_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_shoulder.S_shoulder"));
-	if (SHOULDER_MESH.Succeeded())
-	{
-		ShoulderMesh->SetSkeletalMesh(SHOULDER_MESH.Object);
-	}
-	ShoulderMesh->SetupAttachment(GetMesh());
-	ShoulderMesh->SetLeaderPoseComponent(GetMesh());
-
-	GorgetMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Gorget"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> GORGET_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_gorget.S_gorget"));
-	if (GORGET_MESH.Succeeded())
-	{
-		GorgetMesh->SetSkeletalMesh(GORGET_MESH.Object);
-	}
-	GorgetMesh->SetupAttachment(GetMesh());
-	GorgetMesh->SetLeaderPoseComponent(GetMesh());
-
-	ArmorMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Armor"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> ARMOR_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/S_breastplate.S_breastplate"));
-	if (ARMOR_MESH.Succeeded())
-	{
-		ArmorMesh->SetSkeletalMesh(ARMOR_MESH.Object);
-	}
-	ArmorMesh->SetupAttachment(GetMesh());
-	ArmorMesh->SetLeaderPoseComponent(GetMesh());
-
 	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponComponent"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> WEAPON_MESH(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/Sword.Sword"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> WEAPON_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/Separated_Mesh/Weapon/SM_Sword.SM_Sword"));
 	if (WEAPON_MESH.Succeeded())
 	{
 		Weapon->SetStaticMesh(WEAPON_MESH.Object);
 	}
+
+	Weapon->SetCollisionProfileName("Weapon");
+	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
@@ -116,7 +37,7 @@ APBEHHereticSoldier::APBEHHereticSoldier()
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance>HS_ANIM(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Animation/EHHS_BP/EHHS_AnimBlueprint1.EHHS_AnimBlueprint1_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance>HS_ANIM(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Animation/EHHS_BP/EHHS_AnimBlueprint.EHHS_AnimBlueprint_C"));
 	if (HS_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(HS_ANIM.Class);
@@ -126,7 +47,7 @@ APBEHHereticSoldier::APBEHHereticSoldier()
 
 	if (Weapon)
 	{
-		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocket);
+		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
 		Weapon->SetCanEverAffectNavigation(false);
 	}
 
@@ -162,7 +83,36 @@ APBEHHereticSoldier::APBEHHereticSoldier()
 	{
 		DisORSpawnCurve = DISORSPAWNCURVE.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> DashCurveAsset(TEXT("/Game/Enemy/E_Human/EH_HereticSoldier/EHHS_Resource/DashCurve.DashCurve"));
+	if (DashCurveAsset.Succeeded())
+	{
+		DashCurve = DashCurveAsset.Object;
+	}
+
+	Tags.Add("HereticSoldier");
+	ResetCombo();
 	
+	EnemyInfo.SetName("HereticKnight");
+	EnemyInfo.SetMaxHP(1000);
+	EnemyInfo.SetOffensePower(10);
+	EnemyInfo.SetDefenseCap(10);
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> AttackDT_Asset(TEXT("DataTable'/Game/Enemy/E_Human/EH_HereticSoldier/HSoldierAttackDT.HSoldierAttackDT'"));
+	if (AttackDT_Asset.Succeeded())
+	{
+		AttackDT = AttackDT_Asset.Object;
+	}
+
+	CombatComponent->SetAttackDT(AttackDT);
+}
+
+void APBEHHereticSoldier::BeginPlay()
+{
+	Super::BeginPlay();
+
+	//HSoldierSpawn->Activate(true);
+	/*
 	BootMesh->CreateDynamicMaterialInstance(0);
 	BracerMesh->CreateDynamicMaterialInstance(0);
 	BodyMesh->CreateDynamicMaterialInstance(0);
@@ -174,15 +124,7 @@ APBEHHereticSoldier::APBEHHereticSoldier()
 	ShoulderMesh->CreateDynamicMaterialInstance(0);
 	PantMesh->CreateDynamicMaterialInstance(0);
 	Weapon->CreateDynamicMaterialInstance(0);
-
-	Tags.Add("HereticSoldier");
-}
-
-void APBEHHereticSoldier::BeginPlay()
-{
-	Super::BeginPlay();
-
-	HSoldierSpawn->Activate(true);
+	*/
 
 	if (DisORSpawnCurve)
 	{	
@@ -193,18 +135,33 @@ void APBEHHereticSoldier::BeginPlay()
 		DisORSpawnTimeline.AddInterpFloat(DisORSpawnCurve, DisORSpawnCallback);
 		DisORSpawnTimeline.SetTimelineFinishedFunc(DisORSpawnCallbackFin);
 	}
+
+	if (DashCurve)
+	{
+		PreviousCurveValue = 0.0f;
+		FOnTimelineFloat DashUpdateCallback;
+		FOnTimelineEventStatic DashUpdateFinCallback;
+		DashUpdateCallback.BindUFunction(this, FName("DashUpdate"));
+		DashUpdateFinCallback.BindUFunction(this, FName("DashUpdateFin"));
+		DashTimeline.AddInterpFloat(DashCurve, DashUpdateCallback);
+		DashTimeline.SetTimelineFinishedFunc(DashUpdateFinCallback);
+		DashTimeline.SetLooping(false);
+	}
+
+	//GetController()->SetControlRotation
 }
 
 void APBEHHereticSoldier::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	DisORSpawnTimeline.TickTimeline(DeltaTime);
+	DashTimeline.TickTimeline(DeltaTime);
 }
 
 void APBEHHereticSoldier::DisORSpawnUpdate(float Value)
 {
 	float NewValue = FMath::Lerp(-6.0f, 1.0f, Value);
-
+	/*
 	BootMesh->SetScalarParameterValueOnMaterials(FName("Amount"), NewValue);
 	BracerMesh->SetScalarParameterValueOnMaterials(FName("Amount"), NewValue);
 	BodyMesh->SetScalarParameterValueOnMaterials(FName("Amount"), NewValue);
@@ -215,6 +172,7 @@ void APBEHHereticSoldier::DisORSpawnUpdate(float Value)
 	ShoulderMesh->SetScalarParameterValueOnMaterials(FName("Amount"), NewValue);
 	PantMesh->SetScalarParameterValueOnMaterials(FName("Amount"), NewValue);
 	Weapon->SetScalarParameterValueOnMaterials(FName("Amount"), NewValue);
+	*/
 }
 
 void APBEHHereticSoldier::DisORSpawnFin()
@@ -222,7 +180,6 @@ void APBEHHereticSoldier::DisORSpawnFin()
 	if (HSoldierAura->IsActive())
 	{
 		HSoldierAura->Deactivate();
-		Destroy();
 	}
 	else
 		HSoldierAura->Activate();
@@ -236,11 +193,70 @@ void APBEHHereticSoldier::PostInitializeComponents()
 	if (HSoldierAnim != nullptr)
 	{
 		HSoldierAnim->OnMontageEnded.AddDynamic(this, &APBEHHereticSoldier::IsMontageEnded);
+		HSoldierAnim->OnPlayMontageNotifyBegin.AddDynamic(this, &APBEHHereticSoldier::OnMontageNotifyBegin);
+		HSoldierAnim->OnPlayMontageNotifyEnd.AddDynamic(this, &APBEHHereticSoldier::OnMontageNotifyEnd);
+		
+		/*
+		HSoldierAnim->OnNextCombo.AddLambda([this]()->void {
+				CanAttack = true;
+				CurrentCombo++;
+				OnNextAttack.Broadcast();
+				Attack(FName(" "));
+			});
+			*/
 
+		HSoldierAnim->OnEndCombo.AddLambda([this]()->void {
+			OnAttackFin.Broadcast();
+			});
+
+
+		HSoldierAnim->OnStartAttack.AddLambda([this]()->void {
+			OnAttackStart.Broadcast();
+			});
+
+		HSoldierAnim->OnEndAttack.AddLambda([this]()->void {
+			OnAttackEnd.Broadcast();
+			});
+
+		HSoldierAnim->OnHitEnd.AddLambda([this]()->void {
+			IsHit = false;
+			});
+
+		HSoldierAnim->OnHitLargeEnd.AddLambda([this]()->void {
+			IsHitLarge = false;
+			});
+
+		HSoldierAnim->OnBlockBreakEnd.AddLambda([this]()->void {
+			IsBlockBreak = false;
+			});
+
+		HSoldierAnim->OnDashEnd.AddLambda([this]()->void {
+			IsDash = false;
+			OnDashEnd.Broadcast();
+			GetWorldTimerManager().ClearTimer(DashTimerHandle);
+			});
+
+		HSoldierAnim->OnEnterLocomotion.AddLambda([this]()->void {
+			IsLookAt = true;
+			});
+
+		HSoldierAnim->OnLeftLocomotion.AddLambda([this]()->void {
+			IsLookAt = false;
+			});
 	}
 
-	HSoldierAnim->OnRush.AddUObject(this, &APBEHHereticSoldier::Rush);
-	HSoldierAnim->OnTeleport.AddUObject(this, &APBEHHereticSoldier::Stealth);
+	/*
+	CombatComponent->OnMotionWarp.BindLambda([this]()->void {
+		FVector TargetLoc = Target->GetActorLocation();
+		FVector CharLoc = GetActorLocation();
+
+		FVector TargetDirection = (TargetLoc - CharLoc).GetSafeNormal();
+		FRotator TargetRotation = TargetDirection.Rotation();
+
+		MotionWarpComp->AddOrUpdateWarpTargetFromLocation(TEXT("Warp"), Target->GetActorLocation());
+		MotionWarpComp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("Focus"), TargetDirection * 300.0f + TargetLoc, TargetRotation);
+		});
+		*/
 }
 
 void APBEHHereticSoldier::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -250,45 +266,86 @@ void APBEHHereticSoldier::IsMontageEnded(UAnimMontage* Montage, bool bInterrupte
 	MontageType Type = HSoldierAnim->CheckMontage(Montage);
 	switch (Type)
 	{
-	case MontageType::Attack:
-		IsAttack = false;
-		OnAttackEnd.Broadcast();
-		break;
 	case MontageType::Appear:
-		UE_LOG(LogTemp, Warning, TEXT("Appear2"));
 		IsAppear = false;
 		OnAppearEnd.Broadcast();
-		break;
-	case MontageType::Swoop:
-		IsSwoop = false;
-		OnSwoopEnd.Broadcast();
 		break;
 	}
 }
 
-void APBEHHereticSoldier::Attack()
+void APBEHHereticSoldier::ResetCombo()
 {
-	if (IsAttack)
-		return;
-	HSoldierDissolve->Activate(true);
-	HSoldierAnim->PlayMontage(MontageType::Attack);
-	IsAttack = true;
+	CanAttack = true;
+	CurrentCombo = 0;
+	IsAttack = false;
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	CurSkill = HSoldierSkill::None;
 }
 
-void APBEHHereticSoldier::Rush()
+void APBEHHereticSoldier::Attack(FName AttackName, ACharacter* Target)
 {
-	ACharacter* Target = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	FVector TargetLocation = Target->GetActorLocation();
-	FVector RushDirection = (GetActorLocation() - TargetLocation).GetSafeNormal();
-	SetActorLocation(TargetLocation + RushDirection * 200.0f);
+	//HSoldierAnim->PlayMontage(FName("Combo1"));
+	CombatComponent->AnalysisAttackData(AttackName);
+	MotionWarpComp->AddOrUpdateWarpTargetFromLocation(TEXT("Warp"), Target->GetActorLocation());
+	MotionWarpComp->AddOrUpdateWarpTargetFromLocation(TEXT("Smash"), Target->GetActorLocation());
+	
+	/*
+	if (CanAttack)
+	{
+		CanAttack = false;
+		if (!IsAttack)
+		{
+			CurrentCombo++;
+			IsAttack = true;
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+			int32 RandCombo = 0; //FMath::RandRange(2, 3);
+			switch (RandCombo)
+			{
+			case 0:
+				CurSkill = HSoldierSkill::Combo1;
+				break;
+			case 1:
+				CurSkill = HSoldierSkill::Combo2;
+				break;
+			}
+		}
+	}
+	*/
+}
+
+void APBEHHereticSoldier::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
+{
+	if (NotifyName == FName("Slash"))
+	{
+		for (int i = -1; i <= 1; i++)
+		{
+			CombatComponent->Detect_Circular(NotifyName, GetActorLocation() + GetActorForwardVector() * 150.0f + GetActorRightVector() * 30.0f * i - FVector(0.0f, 0.0f, 90.0f), GetActorForwardVector(), -GetActorUpVector(), 0.0f, 30.0f, 1050.0f, 10);
+		}
+	}
+	else if (NotifyName == FName("Rush"))
+	{
+		for (int i = -1; i <= 1; i++)
+		{
+			CombatComponent->Detect_Circular(NotifyName, GetActorLocation() + GetActorForwardVector() * 150.0f + GetActorRightVector() * 30.0f * i - FVector(0.0f, 0.0f, 90.0f), GetActorForwardVector(), GetActorRightVector(), 0.0f, 30.0f, 1050.0f, 10);
+		}
+	}
+	else if (NotifyName == FName("Sweep"))
+	{
+		CombatComponent->Detect_Circular(NotifyName, GetActorLocation(), GetActorForwardVector(), GetActorRightVector(), -180.0f, 180.0f, 800.0f, 72, false);
+	}
+}
+
+void APBEHHereticSoldier::OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
+{
+
 }
 
 void APBEHHereticSoldier::Appear()
 {
 	if (IsAppear)
 		return;
-	DisORSpawnTimeline.ReverseFromEnd();
-	HSoldierAnim->PlayMontage(MontageType::Appear);
+	//DisORSpawnTimeline.ReverseFromEnd();
+	//HSoldierAnim->PlayMontage(MontageType::Appear);
 	IsAppear = true;
 }
 
@@ -300,22 +357,116 @@ void APBEHHereticSoldier::Death()
 	HSoldierAI->StopAI();
 }
 
-void APBEHHereticSoldier::Swoop()
+void APBEHHereticSoldier::Block(bool DefenseMode)
 {
-	if (IsSwoop)
-		return;
-	ACharacter* Target = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	FVector TargetLocation = Target->GetActorLocation();
-	FVector AppearDirection = (TargetLocation - GetActorLocation()).GetSafeNormal();
-	SetActorLocation(TargetLocation + AppearDirection * 200.0f);
-	HSoldierAnim->PlayMontage(MontageType::Swoop);
-	IsSwoop = true;
+	IsBlock = true;
+	DamageSystem->SetBlocking(true);
+	IsDefenseMode = DefenseMode;
 }
 
-void APBEHHereticSoldier::Stealth()
+void APBEHHereticSoldier::Dash(FVector TargetLocation)
 {
-	ACharacter* Target = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	FVector TargetLocation = Target->GetActorLocation();
-	FVector AppearDirection = (TargetLocation - GetActorLocation()).GetSafeNormal();
-	SetActorLocation(TargetLocation + AppearDirection * 200.0f + GetActorUpVector() * 300.0f);
+	//MotionWarpComp->AddOrUpdateWarpTargetFromLocation(TEXT("Dash"), TargetLocation);
+	//HSoldierAnim->PlayMontage(FName("Dash"));
+	DashDirection = TargetLocation - GetActorLocation();
+	DashDirection.Z = 0.0f;
+
+	DashTimerDelegate.BindUObject(this, &APBEHHereticSoldier::SetDashDirection, TargetLocation);
+	GetWorldTimerManager().SetTimer(DashTimerHandle, DashTimerDelegate, 0.01f, true);
+
+	DashTimeline.PlayFromStart();
+	//GetCharacterMovement()->MoveUpdatedComponent(DashDirection, GetActorRotation(), false);
+	IsDash = true;
+}
+
+void APBEHHereticSoldier::SetDashDirection(FVector TargetLocation)
+{
+	const FRotator Rotation = GetControlRotation();
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+	FVector DirectionVector = TargetLocation - GetActorLocation();
+	DirectionVector.Z = 0.0f;
+	FVector DirectionVectorNormal = DirectionVector.GetSafeNormal();
+	FVector ValueX = UKismetMathLibrary::GetForwardVector(YawRotation) * DirectionVectorNormal.X;
+	FVector ValueY = UKismetMathLibrary::GetRightVector(YawRotation) * DirectionVectorNormal.Y;
+	FVector Direction = ValueY + ValueX;
+	FVector InputDegree = GetActorTransform().InverseTransformVectorNoScale(Direction);
+	float InputY = InputDegree.X;
+	float InputX = InputDegree.Y;
+
+	DashVector = FVector(InputX, InputY, 0.0f);
+}
+
+void APBEHHereticSoldier::DashUpdate(float Value)
+{
+	float AdaptCurveValue = Value - PreviousCurveValue;
+	AddActorWorldOffset(DashDirection * AdaptCurveValue);
+	PreviousCurveValue = Value;
+}
+
+void APBEHHereticSoldier::DashUpdateFin()
+{
+	PreviousCurveValue = 0.0f;
+}
+
+void APBEHHereticSoldier::SetHSoldierMode(HSoldierMode NextMode)
+{
+	if (NextMode != CurMode)
+	{
+		if (NextMode == HSoldierMode::OffenseMode)
+		{
+			IsDefenseMode = false;
+			IsBlock = false;
+			DamageSystem->SetBlocking(false);
+		}
+		else
+		{
+			IsDefenseMode = true;
+			IsBlock = true;
+			DamageSystem->SetBlocking(true);
+		}
+		CurMode = NextMode;
+	}
+}
+
+bool APBEHHereticSoldier::CheckBool(HSoldierVar CheckVar)
+{
+	switch (CheckVar)
+	{
+	case HSoldierVar::IsAttack:
+		return IsAttack;
+	case HSoldierVar::IsHit:
+		return IsHit;
+	case HSoldierVar::IsHitLarge:
+		return IsHitLarge;
+	case HSoldierVar::IsBlock:
+		return IsBlock;
+	case HSoldierVar::IsBlockBreak:
+		return IsBlockBreak;
+	case HSoldierVar::IsParried:
+		return IsParried;
+	case HSoldierVar::IsDefenseMode:
+		return IsDefenseMode;
+	default:
+		return false;
+	}
+}
+
+bool APBEHHereticSoldier::IsDashing()
+{
+	return IsDash;
+}
+
+HSoldierSkill APBEHHereticSoldier::CheckSkill()
+{
+	return CurSkill;
+}
+
+int32 APBEHHereticSoldier::CheckCombo()
+{
+	return CurrentCombo;
+}
+
+FVector APBEHHereticSoldier::GetDashDirection()
+{
+	return DashVector;
 }

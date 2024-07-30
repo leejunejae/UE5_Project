@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "../../PEnumHeader.h"
+#include "../../EnemyHeader.h"
 #include "PBEHAnimInstance.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnStartHitDelegate);
@@ -22,7 +23,7 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	virtual void PlayMontage(MontageType Type);
+	virtual void PlayMontage(FName MontageName);
 	virtual MontageType CheckMontage(UAnimMontage* Montage);
 
 public:
@@ -60,7 +61,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsInAir;
 
-private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		float Speed;
 

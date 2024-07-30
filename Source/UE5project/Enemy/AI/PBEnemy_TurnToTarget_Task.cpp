@@ -2,7 +2,7 @@
 #include "PBEnemy_TurnToTarget_Task.h"
 #include "../PBEnemyAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "../../Character/PBCharacter.h"
+#include "../Human/PBEHuman.h"
 
 UPBEnemy_TurnToTarget_Task::UPBEnemy_TurnToTarget_Task()
 {
@@ -13,16 +13,24 @@ EBTNodeResult::Type UPBEnemy_TurnToTarget_Task::ExecuteTask(UBehaviorTreeCompone
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
 
-	auto ControllingPawn = OwnerComp.GetAIOwner()->GetPawn();
+	auto ControllingPawn = Cast<APBEHuman>(OwnerComp.GetAIOwner()->GetPawn());
 	if (nullptr == ControllingPawn)
 		return EBTNodeResult::Failed;
 
 	auto ControllingAI = OwnerComp.GetAIOwner();
-	auto Target = Cast<APBCharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
+	auto Target = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
 	if (nullptr == Target)
 		return EBTNodeResult::Failed;
-
-	ControllingAI->SetFocus(Target);
-
+	
+	if (IsMove)
+	{
+		ControllingAI->SetFocus(Target);
+		//ControllingPawn->bUseControllerRotationYaw;
+	}
+	else
+	{
+		ControllingPawn->SetLookingTarget(Target);
+		ControllingPawn->SetIsLook(true);
+	}
 	return EBTNodeResult::Succeeded;
 }

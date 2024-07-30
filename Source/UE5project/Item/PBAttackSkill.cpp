@@ -2,14 +2,14 @@
 
 
 #include "PBAttackSkill.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/PlayerController.h"
 
 APBAttackSkill::APBAttackSkill()
 {
 	SkillMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("SkillMovement"));
 	SkillMovement->SetUpdatedComponent(SkillCol);
 	SkillMovement->ProjectileGravityScale = 0.0f;
+	SkillCol->SetCollisionProfileName(TEXT("Projectile"));
+	SkillMesh->SetCollisionProfileName(TEXT("NoCollision"));
 }
 
 void APBAttackSkill::BeginPlay()
@@ -23,17 +23,27 @@ void APBAttackSkill::BeginPlay()
 		if (ActorHasTag("Homing"))
 		{
 			SkillMovement->bIsHomingProjectile = true;
-			SkillMovement->HomingAccelerationMagnitude = 2700.0f;
+			SkillMovement->HomingAccelerationMagnitude = 1000.0f;
 			SkillMovement->HomingTargetComponent = Target->GetRootComponent();
 		}
-		else
+		else if(ActorHasTag("Projectile"))
 		{
 			FVector StartDir = GetActorLocation();
 			FVector DestDir = Target->GetActorLocation();
 			FVector Direction = (DestDir - StartDir).GetSafeNormal();
 			SkillMovement->SetVelocityInLocalSpace(Direction * Speed);
-			SkillCol->SetWorldRotation(Direction.Rotation());
+			//SkillCol->SetWorldRotation(Direction.Rotation());
 		}
+		/*
+		else
+		{
+			FVector StartDir = GetActorLocation();
+			FVector DestDir = Target->GetActorLocation();
+			FVector Direction = (DestDir - StartDir).GetSafeNormal();
+			FRotator RotationDir = UKismetMathLibrary::MakeRotFromX(Direction);
+			SkillCol->SetRelativeRotation(RotationDir);
+		}
+		*/
 	}
 }
 
@@ -45,7 +55,5 @@ void APBAttackSkill::PostInitializeComponents()
 
 void APBAttackSkill::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor->ActorHasTag("Enemy") || OtherActor->ActorHasTag("Projectile"))
-		return;
-	Destroy();
+
 }

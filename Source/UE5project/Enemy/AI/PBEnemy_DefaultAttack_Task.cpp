@@ -22,10 +22,28 @@ EBTNodeResult::Type UPBEnemy_DefaultAttack_Task::ExecuteTask(UBehaviorTreeCompon
 		return EBTNodeResult::Failed;
 	}
 
-	ControllingPawn->Attack();
+	auto ControllingAI = OwnerComp.GetAIOwner();
+	ControllingAI->ClearFocus(EAIFocusPriority::Gameplay);
+	
+	auto Target = Cast<ACharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
+
+	ControllingPawn->Attack(AttackName, Target);
+	
 	IsAttacking = true;
 
 	ControllingPawn->OnAttackEnd.AddLambda([this]() -> void
+		{
+			IsFocusing = true;
+			ChangeFocus = true;
+		});
+
+	ControllingPawn->OnAttackStart.AddLambda([this]() -> void
+		{
+			IsFocusing = false;
+			ChangeFocus = true;
+		});
+
+	ControllingPawn->OnAttackFin.AddLambda([this]() -> void
 		{
 			IsAttacking = false;
 		});
@@ -39,5 +57,21 @@ void UPBEnemy_DefaultAttack_Task::TickTask(UBehaviorTreeComponent& OwnerComp, ui
 	if (!IsAttacking)
 	{
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+	}
+
+	if (ChangeFocus)
+	{
+		if (IsFocusing)
+		{
+			auto Target = Cast<ACharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
+			OwnerComp.GetAIOwner()->SetFocus(Target);
+			UE_LOG(LogTemp, Warning, TEXT("SetFocus"));
+		}
+		else
+		{
+			OwnerComp.GetAIOwner()->ClearFocus(EAIFocusPriority::Gameplay);
+			UE_LOG(LogTemp, Warning, TEXT("ClearFocus"));
+		}
+		ChangeFocus = false;
 	}
 }

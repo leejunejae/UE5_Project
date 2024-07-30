@@ -22,7 +22,7 @@ EBTNodeResult::Type UPBEnemy_Teleport_Task::ExecuteTask(UBehaviorTreeComponent& 
 		return EBTNodeResult::Failed;
 	}
 
-	// ÇöÀç À§Ä¡¸¦ ºí·¢º¸µå¿¡ ÀúÀå ÇÏ°í ÀÌµ¿ÇÒ À§Ä¡¸¦ ÀúÀåÇÒ º¯¼öµé
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï°ï¿½ ï¿½Ìµï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	//FVector TelePortPos = OwnerComp.GetBlackboardComponent()->GetValueAsVector(FName(TEXT("NextPos")));
 	
 	ControllingPawn->Teleport();

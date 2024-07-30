@@ -16,4 +16,14 @@ class UE5PROJECT_API APBSkill_DarkTornado : public APBAttackSkill
 	
 public:
 	APBSkill_DarkTornado();
+
+protected:
+	void BeginPlay() override;
+
+private:
+	UFUNCTION()
+		void ActiveTimer();
+
+private:
+	FTimerHandle ActiveTimerHandle;
 };

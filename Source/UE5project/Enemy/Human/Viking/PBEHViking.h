@@ -20,10 +20,9 @@ class UE5PROJECT_API APBEHViking : public APBEHuman
 public:
 	APBEHViking();
 	virtual void Tick(float DeltaTime) override;
-	virtual void Attack() override;
+	virtual void Attack(FName AttackName, ACharacter* Target = nullptr) override;
 	virtual void Death() override;
-	virtual void Block(bool CanParried) override;
-	virtual void DamageResponse(HitResponse Response) override;
+	//virtual void Block(bool CanParried) override;
 
 public:
 

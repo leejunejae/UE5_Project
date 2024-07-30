@@ -14,6 +14,9 @@ APBEnemy::APBEnemy()
 
 	RootComponent = GetCapsuleComponent();
 
+	NavigationInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavigationInvokerComponent"));
+	NavigationInvokerComponent->SetGenerationRadii(500.0f, 500.0f);
+
 	IsAttack = false;
 }
 
@@ -38,7 +41,7 @@ void APBEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
-void APBEnemy::Attack()
+void APBEnemy::Attack(FName AttackName, ACharacter* Target)
 {
 	
 }

@@ -6,6 +6,9 @@
 #include "PBSkill.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/PlayerController.h"
 #include "PBAttackSkill.generated.h"
 
 class UProjectileMovementComponent;
@@ -33,6 +36,6 @@ protected:
 		ACharacter* Target;
 
 	UPROPERTY(EditAnywhere, Category = Projectile)
-		float Speed = 500.0f;
+		float Speed = 1000.0f;
 private:
 };

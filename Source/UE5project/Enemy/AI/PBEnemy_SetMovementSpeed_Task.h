@@ -23,5 +23,5 @@ public:
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (ExposeOnSpawn = "true", OverrideNativeName = "bOnHand"))
-	MovementMode CurrentMovement;
+	float CurrentMovement;
 };

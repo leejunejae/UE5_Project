@@ -13,5 +13,4 @@ APBPWSword::APBPWSword()
 
 	WeaponStat.AttackRange = 200.0f;
 	WeaponStat.StrikingPower = 10.0f;
-	WeaponStat.WeaponType = AttackType::Sword;
 }

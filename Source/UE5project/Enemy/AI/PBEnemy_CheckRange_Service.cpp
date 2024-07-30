@@ -3,7 +3,7 @@
 
 #include "PBEnemy_CheckRange_Service.h"
 #include "../Human/PBEHumanAI.h"
-#include "../../Character/PBCharacter.h"
+#include "../../Character/CharacterBase.h"
 
 UPBEnemy_CheckRange_Service::UPBEnemy_CheckRange_Service()
 {
@@ -19,12 +19,13 @@ void UPBEnemy_CheckRange_Service::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	if (ControllingPawn == nullptr)
 		return;
 
-	auto Target = Cast<APBCharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
+	auto Target = Cast<ACharacterBase>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
 	if (Target == nullptr)
 		return;
 
 	auto Range = OwnerComp.GetBlackboardComponent()->GetValueAsFloat(IdealRange.SelectedKeyName);
 
+	/*
 	if (ControllingPawn->ActorHasTag("Heretic"))
 	{
 		if(Target->GetDistanceTo(ControllingPawn) < 300.0f)
@@ -41,6 +42,9 @@ void UPBEnemy_CheckRange_Service::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		else
 			OwnerComp.GetBlackboardComponent()->SetValueAsBool(FName(TEXT("IsIdealRange")), false);
 	}
+	*/
+
+	OwnerComp.GetBlackboardComponent()->SetValueAsFloat(FName(TEXT("DistanceToTarget")), Target->GetDistanceTo(ControllingPawn));
 
 	return;
 }

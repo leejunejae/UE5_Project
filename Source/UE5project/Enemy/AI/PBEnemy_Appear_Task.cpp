@@ -37,6 +37,7 @@ void UPBEnemy_Appear_Task::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* No
 	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
 	if (!IsAppearing)
 	{
+		OwnerComp.GetBlackboardComponent()->SetValueAsBool(FName(TEXT("IsAppear")), true);
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 	}
 }
