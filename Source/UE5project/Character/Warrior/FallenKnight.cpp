@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#include "Warrior.h"
-#include "PCWAnimInstance.h"
+#include "FallenKnight.h"
+#include "FallenKnightAnimInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-AWarrior::AWarrior()
+AFallenKnight::AFallenKnight()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	
@@ -62,8 +62,11 @@ AWarrior::AWarrior()
 		SubEquipMesh->SetStaticMesh(SUBEQUIP_MESH.Object);
 	}
 
+	SheatheMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Sheathe"));
+
 	FName WeaponSocket(TEXT("S_Sword"));
 	FName ShieldSocket(TEXT("S_Shield"));
+	FName SheatheSocket(TEXT("S_Sheathe"));
 
 	if (WeaponMesh)
 	{
@@ -74,12 +77,17 @@ AWarrior::AWarrior()
 	{
 		SubEquipMesh->SetupAttachment(GetMesh(), ShieldSocket);
 	}
+
+	if (SheatheMesh)
+	{
+		SheatheMesh->SetupAttachment(GetMesh(), SheatheSocket);
+	}
 	
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	static ConstructorHelpers::FClassFinder<UAnimInstance>WARRIOR_ANIM(TEXT("/Game/Character/C_Warrior/CW_Animation/CWA_BP/ABP_Warrior.ABP_Warrior_C"));
-	if (WARRIOR_ANIM.Succeeded())
+	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/Character/C_Warrior/CW_Animation/CWA_BP/ABP_FallenKnight.ABP_FallenKnight_C"));
+	if (FallenKnight_ANIM.Succeeded())
 	{
-		GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
+		GetMesh()->SetAnimInstanceClass(FallenKnight_ANIM.Class);
 	}
 
 	static ConstructorHelpers::FObjectFinder<UCurveFloat> DodgeCurveAsset(TEXT("/Game/Character/C_Source/DodgeCurve.DodgeCurve"));
@@ -106,7 +114,7 @@ AWarrior::AWarrior()
 	CharInfo.SetDefenseCap(10);
 }
 
-void AWarrior::BeginPlay()
+void AFallenKnight::BeginPlay()
 {
 	Super::BeginPlay();
 	
@@ -123,54 +131,51 @@ void AWarrior::BeginPlay()
 	}
 }
 
-void AWarrior::Tick(float DeltaTime)
+void AFallenKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	DodgeTimeline.TickTimeline(DeltaTime);
 }
 
-void AWarrior::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AFallenKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Ongoing, this, &AWarrior::Attack);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AWarrior::AttackInputEnd);
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Ongoing, this, &AWarrior::OnBlock);
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &AWarrior::OffBlock);
-		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Triggered, this, &AWarrior::Parrying);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Ongoing, this, &AFallenKnight::Attack);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AFallenKnight::AttackInputEnd);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Ongoing, this, &AFallenKnight::OnBlock);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &AFallenKnight::OffBlock);
+		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Triggered, this, &AFallenKnight::Parrying);
 	}
 }
 
-void AWarrior::PostInitializeComponents()
+void AFallenKnight::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
-	WarriorAnim = Cast<UPCWAnimInstance>(GetMesh()->GetAnimInstance());
+	FallenKnightAnim = Cast<UFallenKnightAnimInstance>(GetMesh()->GetAnimInstance());
+	//FallenKnightAnim = Cast<UCharacterBaseAnimInstance>(GetMesh()->GetAnimInstance());
 
-	if (WarriorAnim)
+	if (FallenKnightAnim)
 	{
-		WarriorAnim->OnMontageEnded.AddDynamic(this, &AWarrior::IsMontageEnded);
-		WarriorAnim->OnMontageBlendingOut.AddDynamic(this, &AWarrior::IsMontageBlendingOut);
+		FallenKnightAnim->OnMontageEnded.AddDynamic(this, &AFallenKnight::IsMontageEnded);
+		FallenKnightAnim->OnMontageBlendingOut.AddDynamic(this, &AFallenKnight::IsMontageBlendingOut);
 
-		WarriorAnim->OnSetAttackDirection.AddLambda([this]()->void {
+		FallenKnightAnim->OnSetAttackDirection.AddLambda([this]()->void {
 			FVector LastMovementInput = GetLastMovementInputVector();
-			// 이동 방향이 0 벡터가 아닌 경우에만 회전을 수행합니다.
 			if (!LastMovementInput.IsNearlyZero())
 			{
-				// 이동 방향을 회전으로 변환합니다.
 				TargetRotation = LastMovementInput.Rotation();
-				// 캐릭터의 회전 값을 설정합니다.
 				SetActorRotation(TargetRotation);
-				UE_LOG(LogTemp, Warning, TEXT("SetRotation"));
 			}
 			});
 
-		WarriorAnim->OnNextAttackCheck.AddLambda([this]()->void {
+		FallenKnightAnim->OnNextAttackCheck.AddLambda([this]()->void {
 			CanAttack = true;
 			});
 
-		WarriorAnim->OnEndAttack.AddLambda([this]()->void {
+		FallenKnightAnim->OnEndAttack.AddLambda([this]()->void {
 			CurrentCombo = 0;
 			IsAction = false;
 			IsAttack = false;
@@ -179,14 +184,13 @@ void AWarrior::PostInitializeComponents()
 			//bUseControllerRotationYaw = true;
 			});
 
-		WarriorAnim->OnParryEnd.AddLambda([this]()->void {
+		FallenKnightAnim->OnParryEnd.AddLambda([this]()->void {
 			IsParry = false;
 			CanDodge = true;
 			});
 
 
-
-		WarriorAnim->OnEnterLocomotion.AddLambda([this]()->void {
+		FallenKnightAnim->OnEnterLocomotion.AddLambda([this]()->void {
 			IsLocomotion = true;
 			//IsAttack = false;
 			CurResponse = HitResponse::None;
@@ -194,12 +198,12 @@ void AWarrior::PostInitializeComponents()
 			//UE_LOG(LogTemp, Warning, TEXT("EnterLocomotion"));
 			});
 
-		WarriorAnim->OnLeftLocomotion.AddLambda([this]()->void {
+		FallenKnightAnim->OnLeftLocomotion.AddLambda([this]()->void {
 			IsLocomotion = false;
 			//UE_LOG(LogTemp, Warning, TEXT("LeftLocomotion"));
 			});
 
-		WarriorAnim->OnResetHurt.AddLambda([this]()->void {
+		FallenKnightAnim->OnResetHurt.AddLambda([this]()->void {
 			IsAttack = false;
 			CurResponse = HitResponse::None;
 			IsDodge = false;
@@ -208,14 +212,14 @@ void AWarrior::PostInitializeComponents()
 			IsInvincible = false;
 			});
 
-		WarriorAnim->OnDodgeEnd.AddLambda([this]()->void {
+		FallenKnightAnim->OnDodgeEnd.AddLambda([this]()->void {
 			CanDodge = true;
 			IsDodge = false;
 			GetCharacterMovement()->bOrientRotationToMovement = true;
-			//WarriorAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
+			//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
 			});
 
-		WarriorAnim->OnDodgeStart.AddLambda([this]()->void {
+		FallenKnightAnim->OnDodgeStart.AddLambda([this]()->void {
 			/*
 			if (RollSounds.Num() > 0)
 			{
@@ -231,7 +235,7 @@ void AWarrior::PostInitializeComponents()
 			IsRoll = false;
 			});
 
-		WarriorAnim->OnAttackStart.AddLambda([this]()->void {
+		FallenKnightAnim->OnAttackStart.AddLambda([this]()->void {
 			FVector LastMovementInput = GetLastMovementInputVector();
 			// 이동 방향이 0 벡터가 아닌 경우에만 회전을 수행합니다.
 			if (!LastMovementInput.IsNearlyZero())
@@ -246,33 +250,48 @@ void AWarrior::PostInitializeComponents()
 			CanDodge = false;
 			});
 
-		WarriorAnim->OnCanDodge.AddLambda([this]()->void {
+		FallenKnightAnim->OnCanDodge.AddLambda([this]()->void {
 			IsDodge = false;
 			CanDodge = true;
 			});
 
 		/*
-		WarriorAnim->OnEquipEnd.AddLambda([this]()->void {
+		FallenKnightAnim->OnEquipEnd.AddLambda([this]()->void {
 			CanAttack = true;
 			CanDodge = true;
 			});
 
-		WarriorAnim->OnHolsterEnd.AddLambda([this]()->void {
+		FallenKnightAnim->OnHolsterEnd.AddLambda([this]()->void {
 			CanAttack = true;
 			CanDodge = true;
 			});
 		*/
 
-		WarriorAnim->OnMountEnd.AddUObject(this, &AWarrior::MountEnd);
-		WarriorAnim->OnDisMountEnd.AddUObject(this, &AWarrior::DisMountEnd);
+		FallenKnightAnim->OnMountEnd.AddUObject(this, &AFallenKnight::MountEnd);
+		FallenKnightAnim->OnDisMountEnd.AddUObject(this, &AFallenKnight::DisMountEnd);
+
+		// Ladder Binding
+		FallenKnightAnim->OnClimbEnd.AddUObject(this, &AFallenKnight::DecideLadderStance);
+
+		FallenKnightAnim->OnEnterWalkState.AddLambda([this]()->void {
+			CurrentState = ECharacterState::Ground;
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			});
+
+		FallenKnightAnim->OnEnterLadderState.AddLambda([this]()->void {
+			CurrentState = ECharacterState::Ladder;
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			});
 	}
 }
 
-void AWarrior::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void AFallenKnight::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (nullptr==WarriorAnim)
+	if (nullptr==FallenKnightAnim)
 		return;
-	MontageType Type = WarriorAnim->CheckMontage(Montage);
+	MontageType Type = FallenKnightAnim->CheckMontage(Montage);
 	
 	switch (Type)
 	{
@@ -287,11 +306,11 @@ void AWarrior::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	}
 }
 
-void AWarrior::IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+void AFallenKnight::IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (nullptr == WarriorAnim)
+	if (nullptr == FallenKnightAnim)
 		return;
-	MontageType Type = WarriorAnim->CheckMontage(Montage);
+	MontageType Type = FallenKnightAnim->CheckMontage(Montage);
 
 	switch (Type)
 	{
@@ -304,15 +323,21 @@ void AWarrior::IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
 	}
 }
 
-void AWarrior::MoveSpeedToggle()
+void AFallenKnight::OnMoveEndToLadder()
 {
-	Super::MoveSpeedToggle();
+	Super::OnMoveEndToLadder();
+	CurStance = WarriorStance::UA;
+}
+
+void AFallenKnight::Sprint()
+{
+	Super::Sprint();
 	/*
 	if (!IsRun)
 	{
 		GetCharacterMovement()->MaxAcceleration = 0.0f;
 		GetCharacterMovement()->BrakingDecelerationWalking = 1024.0f;
-		GetWorldTimerManager().SetTimer(MoveSpeedTimerHandle, this, &AWarrior::MoveSpeedTimer, 0.1f, true);
+		GetWorldTimerManager().SetTimer(MoveSpeedTimerHandle, this, &AFallenKnight::MoveSpeedTimer, 0.1f, true);
 	}
 	else
 	{
@@ -325,7 +350,7 @@ void AWarrior::MoveSpeedToggle()
 	*/
 }
 
-void AWarrior::MoveSpeedTimer()
+void AFallenKnight::MoveSpeedTimer()
 {
 	/*
 	if (GetVelocity().Size() <= 300.0f)
@@ -338,7 +363,7 @@ void AWarrior::MoveSpeedTimer()
 }
 
 
-void AWarrior::Attack()
+void AFallenKnight::Attack()
 {
 	/*
 	if (!CanAttack)
@@ -360,14 +385,14 @@ void AWarrior::Attack()
 	//}
 }
 
-void AWarrior::AttackInputEnd()
+void AFallenKnight::AttackInputEnd()
 {
 	IsAttack = false;
 	AttackInput = false;
 	UE_LOG(LogTemp, Warning, TEXT("inputend"));
 }
 
-void AWarrior::AttackTimer()
+void AFallenKnight::AttackTimer()
 {
 	FVector StartLoc = GetMesh()->GetSocketLocation("S_RangeStart");
 	FVector EndLoc = GetMesh()->GetSocketLocation("S_RangeEnd");
@@ -397,26 +422,26 @@ void AWarrior::AttackTimer()
 	*/
 }
 
-void AWarrior::OnBlock()
+void AFallenKnight::OnBlock()
 {
 	IsBlock = true;
 	//UE_LOG(LogTemp, Warning, TEXT("Block on"));
 }
 
-void AWarrior::OffBlock()
+void AFallenKnight::OffBlock()
 {
 	IsBlock = false;
 	//UE_LOG(LogTemp, Warning, TEXT("Block off"));
 }
 
-void AWarrior::SwitchStance()
+void AFallenKnight::SwitchStance()
 {
 	CurStance = CurStance == WarriorStance::UA ? WarriorStance::SNS : WarriorStance::UA;
 	CanAttack = false;
 	CanDodge = false;
 }
 
-void AWarrior::ResetAttackState()
+void AFallenKnight::ResetAttackState()
 {
 	CurrentCombo = 0;
 	IsAttack = false;
@@ -424,7 +449,7 @@ void AWarrior::ResetAttackState()
 	bUseControllerRotationYaw = true;
 }
 
-void AWarrior::Dodge()
+void AFallenKnight::Dodge()
 {
 	if (!CanDodge)
 		return;
@@ -446,14 +471,14 @@ void AWarrior::Dodge()
 	//CanDodge = false;
 	
 	/*
-	WarriorAnim->PlayMontage(MontageType::Dodge);
+	FallenKnightAnim->PlayMontage(MontageType::Dodge);
 	switch (CurStance)
 	{
 	case WarriorStance::UA:
-		WarriorAnim->Montage_JumpToSection("Default");
+		FallenKnightAnim->Montage_JumpToSection("Default");
 		break;
 	default:
-		WarriorAnim->Montage_JumpToSection("Combat");
+		FallenKnightAnim->Montage_JumpToSection("Combat");
 		break;
 	}
 	*/
@@ -465,7 +490,7 @@ void AWarrior::Dodge()
 	DodgeTimeline.PlayFromStart();
 }
 
-void AWarrior::DodgeUpdate(float Value)
+void AFallenKnight::DodgeUpdate(float Value)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("DodgeUpdateFunc"));
 
@@ -504,20 +529,20 @@ void AWarrior::DodgeUpdate(float Value)
 	//SetActorLocation(InitPosition + NewLocation, true, &BlockResult);
 }
 
-void AWarrior::DodgeUpdateFin()
+void AFallenKnight::DodgeUpdateFin()
 {
 	PreviousCurveValue = 0.0f;
 }
 
-void AWarrior::Death()
+void AFallenKnight::Death()
 {
 	Super::Death();
-	if (nullptr == WarriorAnim)
+	if (nullptr == FallenKnightAnim)
 		return;
-	WarriorAnim->PlayMontage(MontageType::Death);
+	FallenKnightAnim->PlayMontage(MontageType::Death);
 }
 
-void AWarrior::Block(bool CanParried)
+void AFallenKnight::Block(bool CanParried)
 {
 	Super::Block(CanParried);
 	if (CanParried)
@@ -530,7 +555,7 @@ void AWarrior::Block(bool CanParried)
 	}
 }
 
-void AWarrior::TakeDamage_Implementation(FAttackInfo DamageInfo)
+void AFallenKnight::TakeDamage_Implementation(FAttackInfo DamageInfo)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Take Damage"));
 	const HitResponse Response = CharResponse(DamageInfo.CanBlocked, DamageInfo.CanAvoid, DamageInfo.CanParried);
@@ -564,7 +589,7 @@ void AWarrior::TakeDamage_Implementation(FAttackInfo DamageInfo)
 	}
 }
 
-HitResponse AWarrior::CharResponse(bool CanBlocked, bool CanAvoid, bool CanParry)
+HitResponse AFallenKnight::CharResponse(bool CanBlocked, bool CanAvoid, bool CanParry)
 {
 	const CharState CurState = GetCharState();
 	switch (CurState)
@@ -599,7 +624,7 @@ HitResponse AWarrior::CharResponse(bool CanBlocked, bool CanAvoid, bool CanParry
 	}
 }
 
-CharState AWarrior::GetCharState()
+CharState AFallenKnight::GetCharState()
 {
 	if (IsInvincible)
 		return CharState::Invincible;
@@ -613,78 +638,78 @@ CharState AWarrior::GetCharState()
 		return CharState::None;
 }
 
-HitResponse AWarrior::GetCharResponse()
+HitResponse AFallenKnight::GetCharResponse()
 {
 	return CurResponse;
 }
 
-void AWarrior::ResetResponse()
+void AFallenKnight::ResetResponse()
 {
 	CurResponse = HitResponse::None;
 }
 
-void AWarrior::Parrying()
+void AFallenKnight::Parrying()
 {
 	IsParry = true;
 	CanDodge = false;
 }
 
-int AWarrior::GetAttackSeed()
+int AFallenKnight::GetAttackSeed()
 {
 	return AttackSeed;
 }
 
-bool AWarrior::IsAttackInput()
+bool AFallenKnight::IsAttackInput()
 {
 	return AttackInput;
 }
 
-bool AWarrior::IsAttacking()
+bool AFallenKnight::IsAttacking()
 {
 	return IsAttack;
 }
 
-bool AWarrior::IsRolling()
+bool AFallenKnight::IsRolling()
 {
 	return IsRoll;
 }
 
-bool AWarrior::IsBlocking()
+bool AFallenKnight::IsBlocking()
 {
 	return IsBlock;
 }
 
-bool AWarrior::IsParrying()
+bool AFallenKnight::IsParrying()
 {
 	return IsParry;
 }
 
-bool AWarrior::IsHit()
+bool AFallenKnight::IsHit()
 {
 	return Hit;
 }
 
-bool AWarrior::IsGuard()
+bool AFallenKnight::IsGuard()
 {
 	return Guard;
 }
 
-bool AWarrior::GetCurHand()
+bool AFallenKnight::GetCurHand()
 {
 	return CurHandRight;
 }
 
-bool AWarrior::GetNextDodge()
+bool AFallenKnight::GetNextDodge()
 {
 	return NextDodge;
 }
 
-int32 AWarrior::CheckCombo()
+int32 AFallenKnight::CheckCombo()
 {
 	return CurrentCombo;
 }
 
-WarriorStance AWarrior::GetStance()
+WarriorStance AFallenKnight::GetStance()
 {
 	return CurStance;
 }

@@ -5,21 +5,21 @@
 #include "CoreMinimal.h"
 #include "../CharacterBase.h"
 #include "Components/TimeLineComponent.h"
-#include "Warrior.generated.h"
+#include "FallenKnight.generated.h"
 
 /**
  * 
  */
 
-class UPCWAnimInstance;
+class UCharacterBaseAnimInstance;
 
 UCLASS()
-class UE5PROJECT_API AWarrior : public ACharacterBase
+class UE5PROJECT_API AFallenKnight : public ACharacterBase
 {
 	GENERATED_BODY()
 	
 public:
-	AWarrior();
+	AFallenKnight();
 
 	virtual void BeginPlay() override;
 
@@ -70,6 +70,10 @@ private:
 		USkeletalMeshComponent* HatMesh;
 
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
+		UStaticMeshComponent* SheatheMesh;
+
+	/*
+	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		USkeletalMeshComponent* BracerMesh;
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		USkeletalMeshComponent* CapeMesh;
@@ -79,6 +83,7 @@ private:
 		USkeletalMeshComponent* GorgetMesh;
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		USkeletalMeshComponent* ArmorMesh;
+		*/
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
 		UInputAction* ParryAction;
@@ -86,10 +91,10 @@ private:
 	FTimerHandle MoveSpeedTimerHandle;
 
 	UPROPERTY(VisibleAnywhere, Category = Animation)
-		class UPCWAnimInstance* WarriorAnim;
+		class UCharacterBaseAnimInstance* FallenKnightAnim;
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
-		class UPBDamageSystem* WarriorDMGSystem;
+		class UPBDamageSystem* FallenKnightDMGSystem;
 
 	//Dodge TImeline
 	UPROPERTY(VisibleAnywhere, Category = Timeline)
@@ -135,7 +140,7 @@ private:
 private:
 	void MoveSpeedTimer();
 
-	virtual void MoveSpeedToggle() override;
+	virtual void Sprint() override;
 	virtual void Attack() override;
 
 	void AttackInputEnd();
@@ -159,6 +164,8 @@ private:
 
 	UFUNCTION()
 		void IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
+
+	void OnMoveEndToLadder() override;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")

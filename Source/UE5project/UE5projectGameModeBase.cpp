@@ -2,13 +2,13 @@
 
 
 #include "UE5projectGameModeBase.h"
-#include "Character/Warrior/Warrior.h"
+#include "Character/Warrior/FallenKnight.h"
 #include "Character/ControllerBase.h"
 #include "Function/PBDefaultWidget.h"
 
 AUE5projectGameModeBase::AUE5projectGameModeBase()
 {
-	DefaultPawnClass = AWarrior::StaticClass();
+	DefaultPawnClass = AFallenKnight::StaticClass();
 	PlayerControllerClass = AControllerBase::StaticClass();
 }
 

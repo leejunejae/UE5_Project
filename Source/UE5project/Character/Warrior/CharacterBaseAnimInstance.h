@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "../../PEnumHeader.h"
+#include "../../BaseCharacterHeader.h"
 #include "../../Function/Combat/CombatStruct.h"
+#include "../../Function/IAnimInstance.h"
 #include "Animation/AnimInstance.h"
-#include "PCWAnimInstance.generated.h"
+#include "CharacterBaseAnimInstance.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnActionDelegate);
 /**
@@ -26,12 +28,12 @@ struct FFootTraceStruct
 };
 */
 UCLASS()
-class UE5PROJECT_API UPCWAnimInstance : public UAnimInstance
+class UE5PROJECT_API UCharacterBaseAnimInstance : public UAnimInstance, public IIAnimInstance
 {
 	GENERATED_BODY()
 
 public:
-	UPCWAnimInstance();
+	UCharacterBaseAnimInstance();
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
@@ -57,11 +59,14 @@ public:
 	FOnActionDelegate OnEquipEnd;
 	FOnActionDelegate OnHolsterEnd;
 
+// Ladder Delegate
+	FOnActionDelegate OnClimbEnd;
+
 private:
 	FVector PrevLoc;
 	FVector NextLoc;
 
-	class AWarrior* Character = nullptr;
+	class AFallenKnight* Character = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Classes, Meta = (AllowPrivateAccess = true))
 		class UAnimInstance* Warrior_AnimInstance;
@@ -93,6 +98,7 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsRoll;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		HitResponse Response;
@@ -143,6 +149,9 @@ private:
 		float LastDirection;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		float LastSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsAccelerating;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
@@ -171,27 +180,6 @@ private:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* DeathMontage;
-
-
-
-	// FootIK Variable for Blueprint
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		FRotator LeftFootRotator;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		FRotator RightFootRotator;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float PelvisOffset;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float LeftFootOffset;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float RightFootOffset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float PelvisStrength;
 
 
 	UFUNCTION()
@@ -244,15 +232,73 @@ private:
 		*/
 
 	FName GetAttackMontageSectionName(int32 Section);
+#pragma region State & Stance
+private:
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_EnterWalkState();
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_EnterLadderState();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
+		ECharacterState CurrentState;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
+		EGroundStance CurGroundStance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
+		ELadderStance CurLadderStance;
+
+public:
+	FOnActionDelegate OnEnterWalkState;
+	FOnActionDelegate OnEnterLadderState;
+
+#pragma region Ground
+private:
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_EnableRootLock();
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_DisableRootLock();
+
+#pragma region Movement
+	////////////////////////////////////
+	// Variables For FootIK
+	////////////////////////////////////
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
+		bool CanMovementInput = true;
+
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_EnterIdleState();
+
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_LeftIdleState();
+#pragma endregion
+
+
+#pragma region Quick Turn
+	void ResetTurn_Implementation() override;
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_TurnStart();
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_TurnEnd();
 
 private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = QuickTurn, Meta = (AllowPrivateAccess = true))
+		bool bQuickTurn;
+#pragma endregion
+
+
+#pragma region Turn In Place
+
+private:
+	// Turn In Place // 
 	void SetPitch();
 	void SetRootYawOffset();
-	
-	
+
+	// Foot IK //
 	TTuple<FVector, float> FootTrace(FName SocketName);
-	void FootRotation(float DeltaTime, FVector TargetNormal, FRotator *FootRotator, float fInterpSpeed);
+	void FootRotation(float DeltaTime, FVector TargetNormal, FRotator* FootRotator, float fInterpSpeed);
 	void FootPlacement(float DeltaTime, float TargetValue, float* FootValue, float InterpSpeed);
+
 
 private:
 	float InputDirectionX;
@@ -272,4 +318,152 @@ protected:
 	float YawMultiplier = 0.0f;
 	float TurnDirection = 0.0f;
 	bool IsMove = false;
+
+#pragma endregion
+
+#pragma endregion
+
+#pragma region Ladder
+protected:
+	//virtual void NativeNotify(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
+
+	UFUNCTION(BlueprintCallable)
+	void AnimNotify_NOT_CheckLadderStance();
+
+	UFUNCTION(BlueprintCallable)
+	void AnimNotify_NOT_EnableInputLock();
+
+	UFUNCTION(BlueprintCallable)
+	void AnimNotify_NOT_ClimbEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void AnimNotify_NOT_ClimbStart();
+
+	UFUNCTION(BlueprintCallable)
+	void AnimNotify_NOT_ResetLadder();
+
+
+	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, float CurveValue, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset = 1.0f);
+
+	void CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds);
+	TOptional<FVector> SetBodyLocationOnLadder(FName BoneName, FName MiddleBoneName, float CurveValue, FVector PrevTargetLoc, float DeltaSeconds, float AdjCoefft = 1.0f);
+	
+private:
+	bool bIsClimb;
+
+#pragma endregion 
+
+#pragma endregion 
+
+
+#pragma region Character IK
+private:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Ladder, Meta = (AllowPrivateAccess = true))
+		float LadderIKAlpha;
+
+	FName LockIK = TEXT("LockIK");
+	TMap<FName, EBodyType> BoneNameToBodyType;
+
+#pragma region FootIK
+////////////////////////////////////
+// Variables For FootIK
+////////////////////////////////////
+private:
+	// FootIK Variable for Blueprint
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FRotator LeftFootRotator;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FRotator RightFootRotator;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float PelvisOffset;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float LeftFootOffset;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float RightFootOffset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float PelvisStrength;
+
+	// For Ladder IK
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float RightFootLadderAlpha;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float LeftFootLadderAlpha;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float RightFootStateAlpha;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float LeftFootStateAlpha;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FVector LeftFootTarget;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FVector RightFootTarget;
+
+	FName Foot_L_Curve = TEXT("Enable_Footik_l");
+	FName Foot_R_Curve = TEXT("Enable_FootIK_R");
+	FName Pelvis_Curve = TEXT("Enable_Pelvis");
+
+	float CurveValue_Foot_L;
+	float CurveValue_Foot_R;
+	FVector CurveValue_Pelvis;
+	FRotator CurveValue_Pelvis_Rotator;
+
+
+#pragma endregion 
+
+#pragma region HandIK
+
+////////////////////////////////////
+// Methods For HandIK
+////////////////////////////////////
+
+////////////////////////////////////
+// Variables For HandIK
+////////////////////////////////////
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		float RightHandStateAlpha;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		float LeftHandStateAlpha;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		float LeftHandLadderAlpha;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		float RightHandLadderAlpha;
+
+	// Actual Hand Position
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		FVector LeftHandTarget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		FVector RightHandTarget;
+
+
+	// For Ladder IK
+	FName Hand_L_Curve = TEXT("Enable_HandIK_L");
+	FName Hand_R_Curve = TEXT("Enable_HandIK_R");
+
+	float CurveValue_Hand_L;
+	float CurveValue_Hand_R;
+
+#pragma endregion
+	
+
+#pragma endregion 
+
+
+
+#pragma region Debug Region
+private:
+	void DebugLadderStance();
+
+private:
+	float PelvisCurveSum = 0.0f;
+	float AdjustCurveSum = 0.0f;
+#pragma endregion
 };

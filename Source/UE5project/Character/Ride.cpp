@@ -460,9 +460,9 @@ void ARide::Interact_Implementation(ACharacter* InteractActor)
 	EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 }
 
-USceneComponent* ARide::GetInteractComponent_Implementation()
+USceneComponent* ARide::GetEnterInteractLocation_Implementation(AActor* Target)
 {
-	IPBInteractInterface::GetInteractComponent_Implementation();
+	IPBInteractInterface::GetEnterInteractLocation_Implementation(Target);
 
 	FVector DistRightLoc = Rider->GetActorLocation() - RiderMountLocRight->GetComponentLocation();
 	FVector DistLeftLoc = Rider->GetActorLocation() - RiderMountLocLeft->GetComponentLocation();
@@ -479,9 +479,9 @@ USceneComponent* ARide::GetInteractComponent_Implementation()
 	}
 }
 
-USceneComponent* ARide::GetEndInteractComponent_Implementation()
+USceneComponent* ARide::GetLeftInteractLocation_Implementation()
 {
-	IPBInteractInterface::GetEndInteractComponent_Implementation();
+	IPBInteractInterface::GetLeftInteractLocation_Implementation();
 
 	return RiderGetDownLoc;
 }

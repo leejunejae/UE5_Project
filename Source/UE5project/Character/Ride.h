@@ -135,8 +135,8 @@ public:
 
 	virtual void RegisterInteractActor_Implementation(ACharacter* InteractActor);
 	virtual void Interact_Implementation(ACharacter* InteractActor);
-	virtual USceneComponent* GetInteractComponent_Implementation();
-	virtual USceneComponent* GetEndInteractComponent_Implementation();
+	virtual USceneComponent* GetEnterInteractLocation_Implementation(AActor* Target);
+	virtual USceneComponent* GetLeftInteractLocation_Implementation();
 	virtual FComponentTransform GetCameraData_Implementation();
 
 	virtual float GetRideVertical_Implementation();

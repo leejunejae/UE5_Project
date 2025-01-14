@@ -40,11 +40,11 @@ void UAN_PlayFootStepSound::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
         {
         case SurfaceType_Default:
             SoundToPlay = GetRandomSoundCue(DefaultSounds);
-            UE_LOG(LogTemp, Warning, TEXT("DefaultSounds"));
+            //UE_LOG(LogTemp, Warning, TEXT("DefaultSounds"));
             break;
         case SurfaceType1:
             SoundToPlay = GetRandomSoundCue(SnowSounds);
-            UE_LOG(LogTemp, Warning, TEXT("SnowSounds"));
+            //UE_LOG(LogTemp, Warning, TEXT("SnowSounds"));
             break;
         case SurfaceType2:
             SoundToPlay = GetRandomSoundCue(DirtSounds);

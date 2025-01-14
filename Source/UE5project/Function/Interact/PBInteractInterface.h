@@ -33,10 +33,10 @@ public:
 		void EndInteract();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		USceneComponent* GetInteractComponent();
+		USceneComponent* GetEnterInteractLocation(AActor* Target = nullptr);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		USceneComponent* GetEndInteractComponent();
+		USceneComponent* GetLeftInteractLocation();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		FComponentTransform GetCameraData();

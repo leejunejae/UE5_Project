@@ -4,14 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "../BaseCharacterHeader.h"
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
+#include <Engine/Classes/Components/CapsuleComponent.h>
 #include "EnhancedInputComponent.h"
 #include "KismetAnimationLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "../Function/PBPlayerInterface.h"
 #include "../Function/Combat/PBDamagableInterface.h"
 #include "../Function/Combat/PBDamageSystem.h"
+#include "../Function/Interact/ClimbComponent.h"
 #include "../Enemy/Human/PBEHuman.h"
 #include "NavigationSystem.h"
 #include "NavigationInvokerComponent.h"
@@ -28,6 +31,7 @@ class UInputAction;
 class USpringArmComponent;
 class UCharacterMovementComponent;
 class UPBDamageSystem;
+class UClimbComponent;
 
 UENUM(BlueprintType)
 enum class CharState : uint8
@@ -76,17 +80,24 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionWarping", meta = (AllowPrivateAccess = "true"))
 		class UMotionWarpingComponent* MotionWarpingComponent;
 
-	TSet<ACharacter*> InteractActorList;
+	TSet<AActor*> InteractActorList;
 	//ACharacter* InteractActor;
 
 	FTimerHandle InteractTimerHandle;
 	FTimerDelegate InteractTimerDelegate;
+
+	float YAxisScale;
+
+
+	float DebugUpdateInterval = 0.1f; // 디버깅 갱신 간격
+	float TimeSinceLastDebugUpdate = 0.0f;
+	FVector PastLastInputVector;
 /* PRIVATE VARIATION */
 
 /* PRIVATE FUNCTION */
 private:
 	void Initialization();
-	void InteractTimer(USceneComponent* Target, ACharacter* InteractActor);
+	void InteractTimer(USceneComponent* Target, AActor* InteractActor);
 /* PRIVATE FUNCTION */
 
 
@@ -108,6 +119,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
 		UPBDamageSystem* DamageSystem;
+
+	UPROPERTY(VisibleAnywhere, Category = Climb)
+		UClimbComponent* ClimbComponent;
 
 	/* ĳ���� �Է� ���� ���� */
 	UPROPERTY(VisibleAnywhere, Category = Input)
@@ -138,7 +152,10 @@ protected:
 		UInputAction* BlockAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
-		UInputAction* MoveSpeedToggleAction;
+		UInputAction* WalkAction;
+
+	UPROPERTY(VisibleAnywhere, Category = Input)
+		UInputAction* SprintAction;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
 		UInputAction* SwitchStanceAction;
@@ -149,8 +166,10 @@ protected:
 	FVector2D AimOffVal;
 
 	bool IsLocomotion = true;
-	bool CanMove = true;
 	bool IsMovementInput;
+	bool IsClimb;
+	bool IsClimbUp;
+
 	//float InputX, InputY;
 	FVector InputVector;
 	FVector DodgeVector;
@@ -194,11 +213,15 @@ protected:
 	void Jump();
 	void Landed(const FHitResult& Hit) override;
 	virtual void Attack();
-	virtual void MoveSpeedToggle();
+
 	virtual void Interact();
-	void MovetoInteractPos(ACharacter* InteractActor);
+	void MovetoInteractPos(AActor* InteractActor);
 	void MountEnd();
 	void DisMountEnd();
+
+
+	UFUNCTION()
+		virtual void OnMoveEndToLadder();
 
 /* PROTECTED FUNCTION */
 
@@ -210,10 +233,11 @@ public:
 /* Public FUNCTION */
 public:
 	virtual bool IsPlayer_Implementation();
-	virtual void RegisterInteractableActor_Implementation(ACharacter* Interactable);
-	virtual void DeRegisterInteractableActor_Implementation(ACharacter* Interactable);
-	virtual void EndInteraction_Implementation(ACharacter* Interactable);
+	virtual void RegisterInteractableActor_Implementation(AActor* Interactable);
+	virtual void DeRegisterInteractableActor_Implementation(AActor* Interactable);
+	virtual void EndInteraction_Implementation(AActor* Interactable);
 	virtual FComponentTransform GetCameraData_Implementation();
+	virtual TOptional<FVector> GetCharBoneLocation(FName BoneName);
 
 	virtual void TakeDamage_Implementation(FAttackInfo DamageInfo) override;
 	virtual float Heal_Implementation(float amount) override;
@@ -226,7 +250,6 @@ public:
 		virtual void Block(bool CanParried);
 
 	bool GetIsMovementInput();
-	FVector GetInputVector();
 	bool IsRiding();
 	float GetVertical();
 	float GetHorizontal();
@@ -239,4 +262,76 @@ public:
 	int32 GetOffensePower();
 	int32 GetDefenseCap();
 /* Public FUNCTION */
+
+#pragma region Animation
+private:
+	UPROPERTY(VisibleAnywhere, Category = Animation)
+		class UCharacterBaseAnimInstance* CharacterBaseAnim;
+
+
+#pragma region State & Stance
+// 'State' is the character's situation to distinguish the character's actions.
+// 	it usually mean where the character is, like on riding, on ladder, on ground...
+
+// 'Stance' is the specific behavior of a character within a state.
+//	if character is on a ladder, 'Stance' indicates what the character is doing on the ladder, like climbup, just hanging...
+
+
+////////////////////////////////////
+// Variables For State & Stance
+////////////////////////////////////	
+protected:
+	ECharacterState CurrentState = ECharacterState::Ground;
+	ELadderStance CurLadderStance = ELadderStance::Idle;
+	EGroundStance CurGroundStance = EGroundStance::Walk;
+
+
+////////////////////////////////////
+// Methods For State & Stance
+////////////////////////////////////
+public:
+	ECharacterState GetCurrentState();
+	ELadderStance GetCurLadderStance();
+	EGroundStance GetCurGroundStance();
+	float GetClimbDistance();
+#pragma endregion
+
+#pragma region Ground
+protected:
+	virtual void Walk();
+	virtual void WalkEnd();
+	virtual void Sprint();
+	virtual void SprintEnd();
+
+private:
+	float InputTimer = 0.0f;
+#pragma endregion
+
+#pragma region Ladder
+public:
+	UClimbComponent* GetClimbComponent();
+	void SetCanMovementInput(bool CanMove);
+
+private:
+	FGripNode1D* Grip1D_Hand_R;
+	FGripNode1D* Grip1D_Hand_L;
+	FGripNode1D* Grip1D_Foot_R;
+	FGripNode1D* Grip1D_Foot_L;
+	float ClimbDistance;
+	bool CanMovementInput;
+
+protected:
+	void DecideLadderStance();
+
+#pragma endregion
+
+
+#pragma region Character Bone
+
+private:
+	EBodyType CharBone;
+
+public:
+	TOptional<FVector> GetBoneTargetLoc(EBodyType BoneType);
+#pragma endregion
 };

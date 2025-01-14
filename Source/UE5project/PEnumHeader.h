@@ -32,7 +32,8 @@ UENUM(BlueprintType)
 enum class WarriorStance : uint8
 {
 	UA UMETA(DisplayName = "UA"),
-	LS UMETA(DisplayName = "LS"),
+	OH UMETA(DisplayName = "OH"),
+	TH UMETA(DisplayName = "TH"),
 	SNS UMETA(DisplayName = "SNS"),
 };
 

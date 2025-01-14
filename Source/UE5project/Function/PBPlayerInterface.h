@@ -27,14 +27,16 @@ public:
 		bool IsPlayer();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		void RegisterInteractableActor(ACharacter* Interactable);
+		void RegisterInteractableActor(AActor* Interactable);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		void DeRegisterInteractableActor(ACharacter* Interactable);
+		void DeRegisterInteractableActor(AActor* Interactable);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		void EndInteraction(ACharacter* Interactable);
+		void EndInteraction(AActor* Interactable);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		FComponentTransform GetCameraData();
+
+	TOptional<FVector> GetCharBoneLocation(FName BoneName);
 };

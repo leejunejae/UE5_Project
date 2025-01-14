@@ -2,7 +2,7 @@
 
 
 #include "PBEnemy_CheckAttack_Decorator.h"
-#include "../../Character/Warrior/Warrior.h"
+#include "../../Character/Warrior/FallenKnight.h"
 #include "../Human/PBEHumanAI.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -19,7 +19,7 @@ bool UPBEnemy_CheckAttack_Decorator::CalculateRawConditionValue(UBehaviorTreeCom
 	if (ControllingPawn == nullptr)
 		return false;
 
-	auto Target = Cast<AWarrior>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
+	auto Target = Cast<AFallenKnight>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
 	if (Target == nullptr)
 	{
 		return false;
