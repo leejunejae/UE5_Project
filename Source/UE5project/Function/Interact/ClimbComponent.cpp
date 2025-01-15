@@ -109,20 +109,21 @@ AActor* UClimbComponent::GetClimbObject()
 
 USceneComponent* UClimbComponent::GetExitTarget()
 {
+	/*
 	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Object Has Climb Interface"));
 		return ILadderInterface::Execute_GetExitTopLocation(ClimbObject);
 	}
-
+	*/
 	return nullptr;
 }
 
-TOptional<FTransform> UClimbComponent::GetInitTopPosition()
+TOptional<FTransform> UClimbComponent::GetEnterTopPosition()
 {
 	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
 	{
-		USceneComponent* InitTopTarget = ILadderInterface::Execute_GetInitTopPosition(ClimbObject);
+		USceneComponent* InitTopTarget = ILadderInterface::Execute_GetEnterTopTarget(ClimbObject);
 		FTransform InitTopPosition = InitTopTarget->GetComponentTransform();
 		return InitTopPosition;
 	}
@@ -130,13 +131,37 @@ TOptional<FTransform> UClimbComponent::GetInitTopPosition()
 	return TOptional<FTransform>();
 }
 
+TOptional<FTransform> UClimbComponent::GetInitTopPosition()
+{
+	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
+	{
+		USceneComponent* InitTopTarget = ILadderInterface::Execute_GetInitTopTarget(ClimbObject);
+		FTransform InitTopPosition = InitTopTarget->GetComponentTransform();
+		return InitTopPosition;
+	}
+
+	return TOptional<FTransform>();
+}
+
+TOptional<FTransform> UClimbComponent::GetInitBottomPosition()
+{
+	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
+	{
+		USceneComponent* InitBottomTarget = ILadderInterface::Execute_GetInitBottomTarget(ClimbObject);
+		FTransform InitBottomPosition = InitBottomTarget->GetComponentTransform();
+		return InitBottomPosition;
+	}
+
+	return TOptional<FTransform>();
+}
+
 TOptional<FVector> UClimbComponent::GetExitLocation()
 {
-	USceneComponent* ExitTarget = GetExitTarget();
+	FVector ExitLocation = GetInitTopPosition().GetValue().GetLocation();
 	//UE_LOG(LogTemp, Warning, TEXT("ExitTarget Location : X = %f, Y = %f, Z = %f"), ExitTarget->GetComponentLocation().X, ExitTarget->GetComponentLocation().Y, ExitTarget->GetComponentLocation().Z);
 
 	float TraceDistance = 500.0f;
-	FVector StartLoc = ExitTarget->GetComponentLocation();
+	FVector StartLoc = ExitLocation;
 	FVector EndLoc = StartLoc - FVector(0.0f, 0.0f, TraceDistance);
 
 	FHitResult HitResult;

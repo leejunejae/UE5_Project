@@ -9,11 +9,6 @@ ALadderBase::ALadderBase()
 	LadderScale = FVector(1.0f, 1.0f, 1.0f);
 	AdditionalHeight = 0.0f;
 
-	ExitTopPosition = CreateDefaultSubobject<USceneComponent>(TEXT("ExitTopPosition"));
-	ExitTopPosition->SetupAttachment(ObjectRoot);
-	ExitTopPosition->ComponentTags.Add(FName("Top"));
-	ExitTopPosition->ComponentTags.Add(FName("Exit"));
-
 	EnterTopPosition = CreateDefaultSubobject<USceneComponent>(TEXT("EnterTopPosition"));
 	EnterTopPosition->SetupAttachment(ObjectRoot);
 	EnterTopPosition->ComponentTags.Add(FName("Top"));
@@ -62,6 +57,53 @@ void ALadderBase::OnConstruction(const FTransform& Transform)
 
 	ClimbTopTrigger->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + ClimbTopTrigger->Bounds.BoxExtent.Z));
 	ClimbTopLocation->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + 92.0f));
+}
+
+void ALadderBase::SetInitTopPosition()
+{
+	float TraceDistance = 500.0f;
+	FVector StartLoc = ClimbTopLocation->GetComponentLocation();
+	FVector EndLoc = StartLoc - FVector(0.0f, 0.0f, TraceDistance);
+
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(GetOwner());
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		StartLoc,
+		EndLoc,
+		FQuat::Identity,
+		ECC_Visibility,
+		FCollisionShape::MakeSphere(20.0f),
+		CollisionParams
+	);
+
+	FVector TraceVec = EndLoc - StartLoc;
+	FVector Center = StartLoc + TraceVec * 0.5f;
+	float HalfHeight = FVector::Dist(StartLoc, EndLoc) * 0.5f;
+	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
+	FColor DrawColor = bHit ? FColor::Green : FColor::Red;
+	float DebugLifeTime = 5.0f;
+
+	DrawDebugCapsule(
+		GetWorld(),
+		Center,
+		HalfHeight,
+		20.0f,
+		CapsuleRot,
+		DrawColor,
+		false,
+		DebugLifeTime
+	);
+
+	if (bHit)
+	{
+		ClimbTopLocation->SetWorldLocation(HitResult.ImpactPoint);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Trace Doesnt Hit"));
+	}
 }
 
 void ALadderBase::BeginPlay()
@@ -129,6 +171,7 @@ void ALadderBase::BeginPlay()
 
 	ClimbTopTrigger->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + ClimbTopTrigger->Bounds.BoxExtent.Z));
 	ClimbTopLocation->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + 92.0f));
+	SetInitTopPosition();
 
 	GripList1D.Sort([](const FGripNode1D& A, const FGripNode1D& B)
 		{
@@ -142,12 +185,17 @@ void ALadderBase::BeginPlay()
 	}
 }
 
-USceneComponent* ALadderBase::GetExitTopLocation_Implementation()
-{
-	return ExitTopPosition;
-}
-
-USceneComponent* ALadderBase::GetInitTopPosition_Implementation()
+USceneComponent* ALadderBase::GetEnterTopTarget_Implementation()
 {
 	return EnterTopPosition;
+}
+
+USceneComponent* ALadderBase::GetInitTopTarget_Implementation()
+{
+	return ClimbTopLocation;
+}
+
+USceneComponent* ALadderBase::GetInitBottomTarget_Implementation()
+{
+	return ClimbBottomLocation;
 }

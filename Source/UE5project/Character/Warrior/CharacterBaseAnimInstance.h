@@ -411,8 +411,9 @@ private:
 
 	float CurveValue_Foot_L;
 	float CurveValue_Foot_R;
-	FVector CurveValue_Pelvis;
-	FRotator CurveValue_Pelvis_Rotator;
+	float CurveValue_Root_Z;
+	float CurveValue_Root_Y;
+	float CurveValue_Root_Rotator;
 
 
 #pragma endregion 

@@ -18,13 +18,17 @@ class UE5PROJECT_API ALadderBase : public AClimbableObjectBase, public ILadderIn
 public:
 	ALadderBase();
 
-	virtual USceneComponent* GetExitTopLocation_Implementation();
-	virtual USceneComponent* GetInitTopPosition_Implementation();
+	virtual USceneComponent* GetEnterTopTarget_Implementation();
+	virtual USceneComponent* GetInitTopTarget_Implementation();
+	virtual USceneComponent* GetInitBottomTarget_Implementation();
 
 #pragma region Ladder Basic Composition
 ////////////////////////////////////
 // Methods For Ladder Basic Composition
 ////////////////////////////////////
+private:
+	void SetInitTopPosition();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -34,9 +38,6 @@ protected:
 // Variables For Ladder Basic Composition
 ////////////////////////////////////
 protected:
-	UPROPERTY(VisibleAnywhere, Category = Interact)
-		USceneComponent* ExitTopPosition;
-
 	UPROPERTY(VisibleAnywhere, Category = Interact)
 		USceneComponent* EnterTopPosition;
 

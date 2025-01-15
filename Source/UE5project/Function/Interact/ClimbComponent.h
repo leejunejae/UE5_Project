@@ -64,7 +64,9 @@ public:
 	ELadderStance GetELadderStance();
 
 	USceneComponent* GetExitTarget();
+	TOptional<FTransform> GetEnterTopPosition();
 	TOptional<FTransform> GetInitTopPosition();
+	TOptional<FTransform> GetInitBottomPosition();
 
 private:
 	AActor* ClimbObject;
