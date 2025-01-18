@@ -33,6 +33,8 @@ class UCharacterMovementComponent;
 class UPBDamageSystem;
 class UClimbComponent;
 
+DECLARE_DELEGATE(FOnSingleDelegate);
+
 UENUM(BlueprintType)
 enum class CharState : uint8
 {
@@ -312,16 +314,17 @@ public:
 	UClimbComponent* GetClimbComponent();
 	void SetCanMovementInput(bool CanMove);
 
+protected:
+	void DecideLadderStance();
+
 private:
+
 	FGripNode1D* Grip1D_Hand_R;
 	FGripNode1D* Grip1D_Hand_L;
 	FGripNode1D* Grip1D_Foot_R;
 	FGripNode1D* Grip1D_Foot_L;
 	float ClimbDistance;
 	bool CanMovementInput;
-
-protected:
-	void DecideLadderStance();
 
 #pragma endregion
 

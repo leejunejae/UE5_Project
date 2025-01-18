@@ -29,6 +29,7 @@ void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 	Character = Cast<AFallenKnight>(TryGetPawnOwner());
+
 	SeedSwitch = true;
 }
 
@@ -150,7 +151,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 			if (GetCurveValue(LockIK) > 0.0f && bIsClimb)
 			{
-				const float Translation_CurveValue_Z = GetCurveValue(FName("root_translation_Z"));
+				const float Translation_CurveValue_Z = GetCurveValue(FName("Char_Translation_Z"));
 					//GetCurveValue(Pelvis_Curve);
 				const float Hand_L_CurveValue = GetCurveValue(Hand_L_Curve);
 				const float Hand_R_CurveValue = GetCurveValue(Hand_R_Curve);
@@ -210,18 +211,63 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			{
 				if (CurLadderStance == ELadderStance::Enter_From_Top)
 				{
-					const float Translation_CurveValue_Y = GetCurveValue(FName("root_translation_Y"));
-					const float Rotation_CurveValue = GetCurveValue(FName("root_rotation_Z"));
-					FTransform InitClimbPosition;
-					InitClimbPosition = Character->GetClimbComponent()->GetInitTopPosition().GetValue();
+					const FVector InitLocation = Character->GetClimbComponent()->GetInitTopPosition().GetValue().GetLocation();
+					const FVector TargetLocation = Character->GetClimbComponent()->GetEnterTopPosition().GetValue().GetLocation();
+					const float Translation_CurveValue_Y = GetCurveValue(FName("Char_Translation_Y"));
+					const float Translation_Value_Y = Character->GetClimbComponent()->GetLadderTopTransitionDistance();
+					const float Rotation_CurveValue = GetCurveValue(FName("Char_Rotation_Z"));
+					
+					const FVector EnterDirection = FVector(TargetLocation.X - InitLocation.X, TargetLocation.Y - InitLocation.Y, 0.0f).GetSafeNormal();
+					//UE_LOG(LogTemp, Warning, TEXT("Translation_CurveValue_Y = %f"), Translation_CurveValue_Y);
+					//InitClimbPosition = Character->GetClimbComponent()->GetLadderTopTransitionDistance();
+					if (Translation_CurveValue_Y > 0.0f)
+					{
+						float Prev_CurveValue_Root_Y = CurveValue_Root_Y;
+						CurveValue_Root_Y = Translation_CurveValue_Y;
+						float CurveValue_Root_Y_Difference = CurveValue_Root_Y - Prev_CurveValue_Root_Y;
+						FVector NewCharLocation = Character->GetActorLocation() + (EnterDirection * Translation_Value_Y * CurveValue_Root_Y_Difference);
+						//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
+						Character->SetActorLocation(NewCharLocation);
+						//UE_LOG(LogTemp, Warning, TEXT("Y Movement Offset = %f"), EnterDirection * Translation_Value_Y* CurveValue_Root_Y_Difference);
+					}
 
+					if (Rotation_CurveValue > 0.0f)
+					{
+						const FRotator InitRotator = Character->GetClimbComponent()->GetInitTopPosition().GetValue().GetRotation().Rotator();
+						const FRotator TargetRotator = Character->GetClimbComponent()->GetEnterTopPosition().GetValue().GetRotation().Rotator();
+						const float InitYaw = InitRotator.Yaw > 0.0f ? FMath::Fmod(InitRotator.Yaw, 360.0f) : FMath::Fmod(InitRotator.Yaw, 360.0f) + 360.0f;
+						const float TargetYaw = TargetRotator.Yaw > 0.0f ? FMath::Fmod(TargetRotator.Yaw, 360.0f) : FMath::Fmod(TargetRotator.Yaw, 360.0f) + 360.0f;
+
+						UE_LOG(LogTemp, Warning, TEXT("InitRotator Pitch = %f, Yaw = %f, Roll = %f"), InitRotator.Pitch, InitRotator.Yaw, InitRotator.Roll);
+						UE_LOG(LogTemp, Warning, TEXT("TargetRotator Pitch = %f, Yaw = %f, Roll = %f"), TargetRotator.Pitch, TargetRotator.Yaw, TargetRotator.Roll);
+						UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+						const float NewRotatorYaw = FMath::Lerp(InitYaw, TargetYaw, Rotation_CurveValue);
+						const FRotator NewRotator = FRotator(Character->GetActorRotation().Pitch, NewRotatorYaw, Character->GetActorRotation().Roll);
+						Character->SetActorRotation(NewRotator);
+						//float Prev_Rotation_CurveValue
+					}
 				}
 				else if(CurLadderStance == ELadderStance::Exit_From_Top)
 				{
-					const float Translation_CurveValue_Y = GetCurveValue(FName("root_translation_Y"));
+					const FVector InitLocation = Character->GetClimbComponent()->GetEnterTopPosition().GetValue().GetLocation();
+					const FVector TargetLocation = Character->GetClimbComponent()->GetInitTopPosition().GetValue().GetLocation();
+					const float Translation_CurveValue_Y = GetCurveValue(FName("Char_Translation_Y"));	
+					const float Translation_Value_Y = Character->GetClimbComponent()->GetLadderTopTransitionDistance();
+
+					const FVector EnterDirection = FVector(TargetLocation.X - InitLocation.X, TargetLocation.Y - InitLocation.Y, 0.0f).GetSafeNormal();
+
+					if (Translation_CurveValue_Y > 0.0f)
+					{
+						float Prev_CurveValue_Root_Y = CurveValue_Root_Y;
+						CurveValue_Root_Y = Translation_CurveValue_Y;
+						float CurveValue_Root_Y_Difference = CurveValue_Root_Y - Prev_CurveValue_Root_Y;
+						FVector NewCharLocation = Character->GetActorLocation() + (EnterDirection * Translation_Value_Y * CurveValue_Root_Y_Difference);
+						//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
+						Character->SetActorLocation(NewCharLocation);
+					}
 				}
 
-				const float Translation_CurveValue_Z = GetCurveValue(FName("root_translation_Z"));
+				const float Translation_CurveValue_Z = GetCurveValue(FName("Char_Translation_Z"));
 				//GetCurveValue(Pelvis_Curve);
 				const float Hand_L_CurveValue = GetCurveValue(Hand_L_Curve);
 				const float Hand_R_CurveValue = GetCurveValue(Hand_R_Curve);
@@ -238,62 +284,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 					//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
 					Character->SetActorLocation(NewCharLocation);
 				}
-
-
-				/*
-				const FVector Pelvis_CurveValue = FVector(0.0f, GetCurveValue(FName("root_translation_Y")), GetCurveValue(FName("root_translation_Z")));
-				const FRotator Pelvis_CurveValue_Rotator = FRotator(0.0f, GetCurveValue(FName("root_rotation_Z")), 0.0f);
-
-				const float Translation_CurveValue_Z = GetCurveValue(FName("root_translation_Z"));
-				const float Translation_CurveValue_Y = GetCurveValue(FName("root_translation_Y"));
-				const float Rotation_CurveValue = GetCurveValue(FName("root_rotation_Z"));
-					//GetCurveValue(Pelvis_Curve);
-				const float Hand_L_CurveValue = GetCurveValue(Hand_L_Curve);
-				const float Hand_R_CurveValue = GetCurveValue(Hand_R_Curve);
-				const float Foot_L_CurveValue = GetCurveValue(Foot_L_Curve);
-				const float Foot_R_CurveValue = GetCurveValue(Foot_R_Curve);
-
-				if (Translation_CurveValue_Z > 0.0f)// && Pelvis_CurveValue < 1.0f)
-				{
-					float Prev_Curve_Value = CurveValue_Root_Z;
-					CurveValue_Root_Z = Translation_CurveValue_Z;
-					float CurveDifference = CurveValue_Root_Z - Prev_Curve_Value;
-					FVector NewCharLocation = Character->GetActorLocation();
-					NewCharLocation.Z += Character->GetClimbDistance() * CurveDifference;
-					//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
-					Character->SetActorLocation(NewCharLocation);
-				}
-
-				if (Translation_CurveValue_Y > 0.0f)// && Pelvis_CurveValue < 1.0f)
-				{
-					float Prev_Curve_Value = CurveValue_Root_Z;
-					CurveValue_Root_Z = Translation_CurveValue_Z;
-					float CurveDifference = CurveValue_Root_Z - Prev_Curve_Value;
-					FVector NewCharLocation = Character->GetActorLocation();
-					NewCharLocation.Z += Character->GetClimbDistance() * CurveDifference;
-					//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
-					Character->SetActorLocation(NewCharLocation);
-				}
-
-				
-				if (Translation_CurveValue_Z > 0.0f && Translation_CurveValue_Z <= 1.0f)
-				{
-					float Prev_CurveValue_Pelvis = CurveValue_Root_Z;
-					CurveValue_Root_Z = Translation_CurveValue_Z;
-					FVector CurveValue_Pelvis_Difference = CurveValue_Pelvis - Prev_CurveValue_Pelvis;
-					FVector NewCharLocation = Character->GetActorLocation() + (Character->GetActorForwardVector() * CurveValue_Pelvis_Difference.Y);
-					NewCharLocation.Z += CurveValue_Pelvis_Difference.Z * Character->GetClimbDistance();
-					
-					FRotator Prev_CurveValue_Pelvis_Rotator = CurveValue_Pelvis_Rotator;
-					CurveValue_Pelvis_Rotator = Pelvis_CurveValue_Rotator;
-					FRotator CurveValue_Pelvis_Rotator_Difference = CurveValue_Pelvis_Rotator - Prev_CurveValue_Pelvis_Rotator;
-					FRotator NewCharRotation = Character->GetActorRotation() + CurveValue_Pelvis_Rotator_Difference;
-
-						//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
-					Character->SetActorLocationAndRotation(NewCharLocation, NewCharRotation);
-
-				}
-				*/
 
 				SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveValue, LeftHandTarget, LeftHandLadderAlpha, DeltaSeconds);
 				SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveValue, RightHandTarget, RightHandLadderAlpha, DeltaSeconds);

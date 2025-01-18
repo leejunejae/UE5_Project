@@ -67,6 +67,7 @@ public:
 	TOptional<FTransform> GetEnterTopPosition();
 	TOptional<FTransform> GetInitTopPosition();
 	TOptional<FTransform> GetInitBottomPosition();
+	float GetLadderTopTransitionDistance();
 
 private:
 	AActor* ClimbObject;

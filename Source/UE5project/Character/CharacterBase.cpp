@@ -404,7 +404,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 						// Exit From Top
 						if (ClimbComponent->FindGripNeighborUp(Grip1D_Hand_R, 1) == nullptr)
 						{
-							ClimbDistance = FMath::Abs((ClimbComponent->GetExitLocation().GetValue().Z + GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) - GetActorLocation().Z);
+							ClimbDistance = FMath::Abs((ClimbComponent->GetInitTopPosition().GetValue().GetLocation().Z + GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) - GetActorLocation().Z);
 							Grip1D_Hand_R = Grip1D_Hand_L;
 							Grip1D_Foot_R = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_R, 1);
 							Grip1D_Foot_L = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_L, 1);
@@ -422,10 +422,12 @@ void ACharacterBase::Move(const FInputActionValue& value)
 						GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
 						CurLadderStance = ELadderStance::Exit_From_Top;
 						CurrentState = ECharacterState::LadderToGround;
+						//OnExitTopLadder.ExecuteIfBound();
+							
 					}
 					else
 					{
-						ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Hand_L->NeighborUp.Distance + Grip1D_Foot_L->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 4.0f) / 25.0f;
+						ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Hand_L->NeighborUp.Distance + Grip1D_Foot_L->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f);
 						Grip1D_Hand_R = ClimbComponent->FindGripNeighborUp(Grip1D_Hand_R, 1);
 						Grip1D_Hand_L = ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L, 1);
 						Grip1D_Foot_R = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_R, 1);
@@ -438,13 +440,13 @@ void ACharacterBase::Move(const FInputActionValue& value)
 					if (ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1) == nullptr)
 					{
 						// Idle -> Idle_OneStep
-						ClimbDistance = Grip1D_Hand_R->NeighborDown.Distance / 25.0f;
+						ClimbDistance = Grip1D_Hand_R->NeighborDown.Distance;
 						Grip1D_Hand_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L, 1);
 						CurLadderStance = ELadderStance::ClimbDown_OneStep;
 					}
 					else
 					{
-						ClimbDistance = ((Grip1D_Hand_R->NeighborDown.Distance + Grip1D_Hand_L->NeighborDown.Distance + Grip1D_Foot_L->NeighborDown.Distance + Grip1D_Foot_R->NeighborDown.Distance) / 4.0f) / 25.0f;
+						ClimbDistance = ((Grip1D_Hand_R->NeighborDown.Distance + Grip1D_Hand_L->NeighborDown.Distance + Grip1D_Foot_L->NeighborDown.Distance + Grip1D_Foot_R->NeighborDown.Distance) / 2.0f);
 						Grip1D_Hand_R = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_R, 1);
 						Grip1D_Hand_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L, 1);
 						Grip1D_Foot_R = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1);
@@ -459,7 +461,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 			{
 				if (IsClimbUp)
 				{
-					ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f) / 25.0f;
+					ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f);
 					Grip1D_Hand_L = ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L, 1);
 					Grip1D_Foot_L = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_R);
 					CurLadderStance = ELadderStance::ClimbUp_OneStep;
@@ -790,7 +792,7 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 			{
 				CurLadderStance = ELadderStance::Enter_From_Bottom;
 				float ComparisonHeight = GetActorLocation().Z - GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-				Grip1D_Foot_R = ClimbComponent->FindGripByHeight(25.0f, ComparisonHeight);
+				Grip1D_Foot_R = ClimbComponent->FindGripByHeight(40.0f, ComparisonHeight);
 				Grip1D_Hand_L = ClimbComponent->FindGripByHeight(120.0f, ComparisonHeight);
 				Grip1D_Hand_R = Grip1D_Hand_L != nullptr ? ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L) : nullptr;
 
@@ -799,9 +801,10 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 			else
 			{
 				CurLadderStance = ELadderStance::Enter_From_Top;
-				ClimbDistance = ClimbComponent->GetInitTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
+				//OnEnterTopLadder.ExecuteIfBound();
+				ClimbDistance = ClimbComponent->GetEnterTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
 				Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
-				Grip1D_Hand_R = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L);
+				Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
 				Grip1D_Foot_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_R, 1);
 				Grip1D_Foot_R = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_L);
 				UE_LOG(LogTemp, Warning, TEXT("ClimbDistance = %f"), ClimbDistance);

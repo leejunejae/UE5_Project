@@ -347,10 +347,12 @@ protected:
 
 	void CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds);
 	TOptional<FVector> SetBodyLocationOnLadder(FName BoneName, FName MiddleBoneName, float CurveValue, FVector PrevTargetLoc, float DeltaSeconds, float AdjCoefft = 1.0f);
-	
+
 private:
 	bool bIsClimb;
-
+	float CurveValue_Root_Z;
+	float CurveValue_Root_Y;
+	float CurveValue_Root_Rotator;
 #pragma endregion 
 
 #pragma endregion 
@@ -411,9 +413,6 @@ private:
 
 	float CurveValue_Foot_L;
 	float CurveValue_Foot_R;
-	float CurveValue_Root_Z;
-	float CurveValue_Root_Y;
-	float CurveValue_Root_Rotator;
 
 
 #pragma endregion 

@@ -155,6 +155,16 @@ TOptional<FTransform> UClimbComponent::GetInitBottomPosition()
 	return TOptional<FTransform>();
 }
 
+float UClimbComponent::GetLadderTopTransitionDistance()
+{
+	if (!GetInitTopPosition().IsSet() || !GetEnterTopPosition().IsSet())
+		return 0.0f;
+
+	const FVector2D InitLocation = FVector2D(GetInitTopPosition().GetValue().GetLocation().X, GetInitTopPosition().GetValue().GetLocation().Y);
+	const FVector2D EnterLocation = FVector2D(GetEnterTopPosition().GetValue().GetLocation().X, GetEnterTopPosition().GetValue().GetLocation().Y);
+	return FVector2D::Distance(InitLocation, EnterLocation);
+}
+
 TOptional<FVector> UClimbComponent::GetExitLocation()
 {
 	FVector ExitLocation = GetInitTopPosition().GetValue().GetLocation();
