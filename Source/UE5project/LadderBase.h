@@ -28,6 +28,7 @@ public:
 ////////////////////////////////////
 private:
 	void SetInitTopPosition();
+	void SetInitBottomPosition();
 
 protected:
 	virtual void BeginPlay() override;

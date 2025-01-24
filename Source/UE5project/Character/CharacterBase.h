@@ -15,6 +15,7 @@
 #include "../Function/Combat/PBDamagableInterface.h"
 #include "../Function/Combat/PBDamageSystem.h"
 #include "../Function/Interact/ClimbComponent.h"
+#include "../Function/Interact/ClimbInterface.h"
 #include "../Enemy/Human/PBEHuman.h"
 #include "NavigationSystem.h"
 #include "NavigationInvokerComponent.h"
@@ -46,7 +47,7 @@ enum class CharState : uint8
 };
 
 UCLASS()
-class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPBPlayerInterface
+class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPBPlayerInterface, public IClimbInterface
 {
 	GENERATED_BODY()
 
@@ -313,12 +314,12 @@ private:
 public:
 	UClimbComponent* GetClimbComponent();
 	void SetCanMovementInput(bool CanMove);
+	virtual void SetNextGripDown_Implementation(FName BoneName, int32 Count) override;
 
 protected:
 	void DecideLadderStance();
 
 private:
-
 	FGripNode1D* Grip1D_Hand_R;
 	FGripNode1D* Grip1D_Hand_L;
 	FGripNode1D* Grip1D_Foot_R;

@@ -437,8 +437,17 @@ void ACharacterBase::Move(const FInputActionValue& value)
 				}
 				else
 				{
-					if (ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1) == nullptr)
+					if (ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1) == nullptr || Grip1D_Foot_R->Tag.Contains(FName("LowestGrip")))
 					{
+						if (ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1) == nullptr)
+						{
+							UE_LOG(LogTemp, Warning, TEXT("NeighborDown is nullptr"));
+						}
+						
+						if (Grip1D_Foot_R->Tag.Contains(FName("LowestGrip")))
+						{
+							UE_LOG(LogTemp, Warning, TEXT("Current Grip is LowestGrip"));
+						}
 						// Idle -> Idle_OneStep
 						ClimbDistance = Grip1D_Hand_R->NeighborDown.Distance;
 						Grip1D_Hand_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L, 1);
@@ -736,10 +745,11 @@ void ACharacterBase::Interact()
 				IsInteraction = true;
 				//GetController()->SetIgnoreMoveInput(true);
 				ClimbComponent->RegisterClimbObject(InteractActor);
-				if (ClimbComponent->CheckGripListValid())
+				if (InteractActor->ActorHasTag("Ladder") && ClimbComponent->CheckGripListValid())
 				{
 					//UE_LOG(LogTemp, Warning, TEXT("GripList is Valid"));
 					ClimbComponent->SetGrip1DRelation(15.0f, 50.0f);
+					ClimbComponent->SetLowestGrip1D(40.0f, ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z);
 				}
 				//UE_LOG(LogTemp, Warning, TEXT("Interact With Climbable Actor"));
 				MovetoInteractPos(InteractActor);
@@ -781,7 +791,6 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 			Ride = Cast<ACharacter>(InteractActor);
 			IsRide = true;
-			//GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
 		}
 		else if (InteractActor->ActorHasTag("Ladder"))
 		{
@@ -792,27 +801,20 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 			{
 				CurLadderStance = ELadderStance::Enter_From_Bottom;
 				float ComparisonHeight = GetActorLocation().Z - GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-				Grip1D_Foot_R = ClimbComponent->FindGripByHeight(40.0f, ComparisonHeight);
-				Grip1D_Hand_L = ClimbComponent->FindGripByHeight(120.0f, ComparisonHeight);
+				Grip1D_Foot_R = ClimbComponent->GetLowestGrip1D();
+				Grip1D_Hand_L = ClimbComponent->FindGripNeighborUpByRange(Grip1D_Foot_R, 75.0f);
 				Grip1D_Hand_R = Grip1D_Hand_L != nullptr ? ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L) : nullptr;
-
-				UE_LOG(LogTemp, Warning, TEXT("Bottom"));
 			}
 			else
 			{
 				CurLadderStance = ELadderStance::Enter_From_Top;
-				//OnEnterTopLadder.ExecuteIfBound();
 				ClimbDistance = ClimbComponent->GetEnterTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
 				Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
 				Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
-				Grip1D_Foot_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_R, 1);
+				FGripNode1D* CompareGrip = ClimbComponent->FindGripNeighborDownByRange(ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L), 75.0f);
+				Grip1D_Foot_L = ClimbComponent->FindGripNeighborUp(CompareGrip, 1);
 				Grip1D_Foot_R = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_L);
-				UE_LOG(LogTemp, Warning, TEXT("ClimbDistance = %f"), ClimbDistance);
-				//ClimbComponent->
-				//Grip1D_Foot_R = 
-				UE_LOG(LogTemp, Warning, TEXT("Top"));
 			}
-			//UE_LOG(LogTemp, Warning, TEXT("%s"), *ELadderStanceLog);
 		}
 
 		UKismetSystemLibrary::MoveComponentTo(
@@ -842,23 +844,6 @@ void ACharacterBase::OnMoveEndToLadder()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
 	//CanMovementInput = false;
 	IsClimb = true;
-
-	/*
-	if (CurLadderStance == ELadderStance::Enter_From_Top)
-	{
-		UKismetSystemLibrary::MoveComponentTo(
-			GetCapsuleComponent(),
-			ClimbComponent->getex,
-			Target->GetComponentRotation(),
-			false,
-			false,
-			0.1f,
-			false,
-			EMoveComponentAction::Type::Move,
-			LatentInfo
-		);
-	}
-	*/
 }
 
 void ACharacterBase::MountEnd()
@@ -971,6 +956,26 @@ float ACharacterBase::GetClimbDistance()
 UClimbComponent* ACharacterBase::GetClimbComponent()
 {
 	return ClimbComponent;
+}
+
+void ACharacterBase::SetNextGripDown_Implementation(FName BoneName, int32 Count)
+{
+	if (BoneName == FName("Hand_L"))
+	{
+		Grip1D_Hand_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L, Count);
+	}
+	else if (BoneName == FName("Hand_R"))
+	{
+		Grip1D_Hand_R = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_R, Count);
+	}
+	else if (BoneName == FName("Foot_L"))
+	{
+		Grip1D_Foot_L = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_L, Count);
+	}
+	else if (BoneName == FName("Foot_R"))
+	{
+		Grip1D_Foot_R = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, Count);
+	}
 }
 
 void ACharacterBase::DecideLadderStance()

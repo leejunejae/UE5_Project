@@ -11,6 +11,7 @@
 #include "CharacterBaseAnimInstance.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnActionDelegate);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMulOneParamDelegate, FName);
 /**
  * 
  
@@ -61,6 +62,7 @@ public:
 
 // Ladder Delegate
 	FOnActionDelegate OnClimbEnd;
+	FOnMulOneParamDelegate OnNextGrip;
 
 private:
 	FVector PrevLoc;
@@ -341,6 +343,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_NOT_ResetLadder();
+
+	UFUNCTION(BlueprintCallable)
+		void AnimNotify_NOT_NextGripRightHand();
 
 
 	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, float CurveValue, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset = 1.0f);

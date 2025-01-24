@@ -61,7 +61,7 @@ void ALadderBase::OnConstruction(const FTransform& Transform)
 
 void ALadderBase::SetInitTopPosition()
 {
-	float TraceDistance = 500.0f;
+	float TraceDistance = 300.0f;
 	FVector StartLoc = ClimbTopLocation->GetComponentLocation();
 	FVector EndLoc = StartLoc - FVector(0.0f, 0.0f, TraceDistance);
 
@@ -99,6 +99,54 @@ void ALadderBase::SetInitTopPosition()
 	if (bHit)
 	{
 		ClimbTopLocation->SetWorldLocation(HitResult.ImpactPoint);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Trace Doesnt Hit"));
+	}
+}
+
+void ALadderBase::SetInitBottomPosition()
+{
+	float TraceDistance = 300.0f;
+	FVector StartLoc = ClimbBottomLocation->GetComponentLocation();
+	StartLoc.Z += 200.0f;
+	FVector EndLoc = StartLoc - FVector(0.0f, 0.0f, TraceDistance);
+
+	FHitResult HitResult;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(GetOwner());
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		StartLoc,
+		EndLoc,
+		FQuat::Identity,
+		ECC_Visibility,
+		FCollisionShape::MakeSphere(20.0f),
+		CollisionParams
+	);
+
+	FVector TraceVec = EndLoc - StartLoc;
+	FVector Center = StartLoc + TraceVec * 0.5f;
+	float HalfHeight = FVector::Dist(StartLoc, EndLoc) * 0.5f;
+	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
+	FColor DrawColor = bHit ? FColor::Green : FColor::Red;
+	float DebugLifeTime = 5.0f;
+
+	DrawDebugCapsule(
+		GetWorld(),
+		Center,
+		HalfHeight,
+		20.0f,
+		CapsuleRot,
+		DrawColor,
+		false,
+		DebugLifeTime
+	);
+
+	if (bHit)
+	{
+		ClimbBottomLocation->SetWorldLocation(HitResult.ImpactPoint);
 	}
 	else
 	{

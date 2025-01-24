@@ -219,6 +219,9 @@ TOptional<FVector> UClimbComponent::GetExitLocation()
 
 void UClimbComponent::SetGrip1DRelation(float MinInterval, float MaxInterval)
 {
+	if (!CheckGripListValid())
+		return;
+
 	for (int32 i = 0; i < GripList1D.Num(); i++) 
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Current index = % f"), i);
@@ -280,6 +283,12 @@ FGripNode1D* UClimbComponent::GetLowestGrip1D()
 		return nullptr;
 	}
 
+	for (FGripNode1D& GripNode : GripList1D)
+	{
+		if(GripNode.Tag.Contains(FName("LowestGrip")))
+			return &GripNode;
+	}
+
 	return &GripList1D[0];
 }
 
@@ -293,7 +302,7 @@ FGripNode1D* UClimbComponent::GetHighestGrip1D()
 	return &GripList1D.Last();
 }
 
-FGripNode1D* UClimbComponent::FindGripByHeight(float MinHeight, float Comparison)
+FGripNode1D* UClimbComponent::FindGripByHeightUpWard(float MinHeight, float Comparison)
 {
 	for (FGripNode1D& GripNode : GripList1D)
 	{
@@ -306,13 +315,71 @@ FGripNode1D* UClimbComponent::FindGripByHeight(float MinHeight, float Comparison
 	return nullptr;
 }
 
-FGripNode1D* UClimbComponent::FindGripNeighborUp(const FGripNode1D* CurrentGrip, int32 Count)
-{	
-	if (CurrentGrip->NeighborUp.Neighbor == nullptr)
+FGripNode1D* UClimbComponent::FindGripByHeightDownWard(float MinHeight, float Comparison)
+{
+	for (FGripNode1D& GripNode : GripList1D)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Empty"));
+		if (Comparison - GripNode.Position.Z > MinHeight)
+		{
+			return &GripNode;
+		}
+	}
+
+	return nullptr;
+}
+
+FGripNode1D* UClimbComponent::FindGripNeighborUpByRange(const FGripNode1D* CurrentGrip, float Range)
+{
+	//check(CurrentGrip != nullptr);
+
+	if (CurrentGrip == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function FindGripNeighborDownByRange"));
 		return nullptr;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Current Index = %d"), CurrentGrip->GripIndex);
+	UE_LOG(LogTemp, Warning, TEXT("Neighbor Distance = %f"), CurrentGrip->NeighborUp.Distance);
+	UE_LOG(LogTemp, Warning, TEXT("Range = %f"), Range);
+	UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+	if (CurrentGrip->NeighborUp.Distance < Range)
+	{
+		return FindGripNeighborUpByRange(CurrentGrip->NeighborUp.Neighbor, Range - CurrentGrip->NeighborDown.Distance);
+	}
+
+	//UE_LOG(LogTemp, Warning, TEXT("GripIndex : %d"), CurrentGrip->NeighborUp.Neighbor->GripIndex);
+	return CurrentGrip->NeighborUp.Neighbor;
+}
+
+FGripNode1D* UClimbComponent::FindGripNeighborDownByRange(const FGripNode1D* CurrentGrip, float Range)
+{
+	if (CurrentGrip == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function FindGripNeighborDownByRange"));
+		return nullptr;
+	}
+	//check(CurrentGrip != nullptr);
+	//UE_LOG(LogTemp, Warning, TEXT("CurrentGrip Position: %d"), CurrentGrip->NeighborUp.Neighbor->GripIndex);
+	UE_LOG(LogTemp, Warning, TEXT("Current Index = %d"), CurrentGrip->GripIndex);
+	UE_LOG(LogTemp, Warning, TEXT("Neighbor Distance = %f"), CurrentGrip->NeighborDown.Distance);
+	UE_LOG(LogTemp, Warning, TEXT("Range = %f"), Range);
+	UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+	if (CurrentGrip->NeighborDown.Distance < Range)
+	{
+		return FindGripNeighborDownByRange(CurrentGrip->NeighborDown.Neighbor, Range - CurrentGrip->NeighborDown.Distance);
+	}
+
+	//UE_LOG(LogTemp, Warning, TEXT("GripIndex : %d"), CurrentGrip->NeighborUp.Neighbor->GripIndex);
+	return CurrentGrip->NeighborDown.Neighbor;
+}
+
+FGripNode1D* UClimbComponent::FindGripNeighborUp(const FGripNode1D* CurrentGrip, int32 Count)
+{	
+	if (CurrentGrip == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function FindGripNeighborUp"));
+		return nullptr;
+	}
+	//check(CurrentGrip->NeighborUp.Neighbor != nullptr)
 
 	//UE_LOG(LogTemp, Warning, TEXT("Count : %d"), Count);
 	if (Count > 0)
@@ -326,8 +393,9 @@ FGripNode1D* UClimbComponent::FindGripNeighborUp(const FGripNode1D* CurrentGrip,
 
 FGripNode1D* UClimbComponent::FindGripNeighborDown(const FGripNode1D* CurrentGrip, int32 Count)
 {
-	if (CurrentGrip->NeighborDown.Neighbor == nullptr)
+	if (CurrentGrip == nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function FindGripNeighborDown"));
 		return nullptr;
 	}
 
@@ -400,6 +468,17 @@ void UClimbComponent::SetGripDownward(FGripNode1D* CurrentGrip, float MinInterva
 	CurrentGrip = FindGripDownward(CurrentGrip, MinInterval);
 }
 
+void UClimbComponent::SetLowestGrip1D(float MinHeight, float Comparison)
+{
+	for (FGripNode1D& GripNode : GripList1D)
+	{
+		if (GripNode.Position.Z - Comparison > MinHeight)
+		{
+			GripNode.Tag.Add(FName("LowestGrip"));
+			return;
+		}
+	}
+}
 
 bool UClimbComponent::FindGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace)
 {

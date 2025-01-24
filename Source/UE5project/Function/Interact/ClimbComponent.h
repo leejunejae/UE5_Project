@@ -44,7 +44,10 @@ public:
 
 	FGripNode1D* GetLowestGrip1D();
 	FGripNode1D* GetHighestGrip1D();
-	FGripNode1D* FindGripByHeight(float MinHeight = 0.0f, float Comparison = 0.0f);
+	FGripNode1D* FindGripByHeightUpWard(float MinHeight = 0.0f, float Comparison = 0.0f);
+	FGripNode1D* FindGripByHeightDownWard(float MinHeight = 0.0f, float Comparison = 0.0f);
+	FGripNode1D* FindGripNeighborUpByRange(const FGripNode1D* CurrentGrip, float Range = 0);
+	FGripNode1D* FindGripNeighborDownByRange(const FGripNode1D* CurrentGrip, float Range = 0);
 	FGripNode1D* FindGripNeighborUp(const FGripNode1D* CurrentGrip, int32 Count = 0);
 	FGripNode1D* FindGripNeighborDown(const FGripNode1D* CurrentGrip, int32 Count = 0);
 	FGripNode1D* FindGripUpward(const FGripNode1D* CurrentGrip, float MinInterval = 0);
@@ -53,6 +56,7 @@ public:
 	void SetGripNeighborDown(FGripNode1D* CurrentGrip, int32 Count = 0);
 	void SetGripUpward(FGripNode1D* CurrentGrip, float MinInterval = 0);
 	void SetGripDownward(FGripNode1D* CurrentGrip, float MinInterval = 0);
+	void SetLowestGrip1D(float MinHeight = 0.0f, float Comparision = 0.0f);
 
 	bool FindGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace = false);
 

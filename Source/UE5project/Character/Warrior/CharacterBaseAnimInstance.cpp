@@ -218,7 +218,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 					const float Rotation_CurveValue = GetCurveValue(FName("Char_Rotation_Z"));
 					
 					const FVector EnterDirection = FVector(TargetLocation.X - InitLocation.X, TargetLocation.Y - InitLocation.Y, 0.0f).GetSafeNormal();
-					//UE_LOG(LogTemp, Warning, TEXT("Translation_CurveValue_Y = %f"), Translation_CurveValue_Y);
+					//UE_LOG(LogTemp, Warning, TEXT("Hand_R_CurveValue = %f"), GetCurveValue(Hand_R_Curve));
 					//InitClimbPosition = Character->GetClimbComponent()->GetLadderTopTransitionDistance();
 					if (Translation_CurveValue_Y > 0.0f)
 					{
@@ -238,9 +238,9 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 						const float InitYaw = InitRotator.Yaw > 0.0f ? FMath::Fmod(InitRotator.Yaw, 360.0f) : FMath::Fmod(InitRotator.Yaw, 360.0f) + 360.0f;
 						const float TargetYaw = TargetRotator.Yaw > 0.0f ? FMath::Fmod(TargetRotator.Yaw, 360.0f) : FMath::Fmod(TargetRotator.Yaw, 360.0f) + 360.0f;
 
-						UE_LOG(LogTemp, Warning, TEXT("InitRotator Pitch = %f, Yaw = %f, Roll = %f"), InitRotator.Pitch, InitRotator.Yaw, InitRotator.Roll);
-						UE_LOG(LogTemp, Warning, TEXT("TargetRotator Pitch = %f, Yaw = %f, Roll = %f"), TargetRotator.Pitch, TargetRotator.Yaw, TargetRotator.Roll);
-						UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+						//UE_LOG(LogTemp, Warning, TEXT("InitRotator Pitch = %f, Yaw = %f, Roll = %f"), InitRotator.Pitch, InitRotator.Yaw, InitRotator.Roll);
+						//UE_LOG(LogTemp, Warning, TEXT("TargetRotator Pitch = %f, Yaw = %f, Roll = %f"), TargetRotator.Pitch, TargetRotator.Yaw, TargetRotator.Roll);
+						//UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
 						const float NewRotatorYaw = FMath::Lerp(InitYaw, TargetYaw, Rotation_CurveValue);
 						const FRotator NewRotator = FRotator(Character->GetActorRotation().Pitch, NewRotatorYaw, Character->GetActorRotation().Roll);
 						Character->SetActorRotation(NewRotator);
@@ -359,11 +359,33 @@ void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName&
 		const TOptional<FVector> LimbTarget = SetBodyLocationOnLadder(BoneName, MiddleBoneName, CurveValue, BoneTarget, DeltaSeconds, Offset);
 		BoneTarget = LimbTarget.IsSet() ? LimbTarget.GetValue() : BoneTarget;
 		LimbLadderAlpha = CurveValue < 0.5f ? FMath::Lerp(1.0f, 0.0f, CurveValue * 2.0f) : FMath::Lerp(0.0f, 1.0f, CurveValue * 2.0f - 1);
+
+		/*
+		if (BoneName == FName("Foot_L"))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Curve Set"));
+			UE_LOG(LogTemp, Warning, TEXT("CurveValue = %f"), CurveValue);
+			UE_LOG(LogTemp, Warning, TEXT("Bone Target : X = %f, Y = %f, Z = %f"), BoneTarget.X, BoneTarget.Y, BoneTarget.Z);
+			UE_LOG(LogTemp, Warning, TEXT("IK Alpha = %f"), LimbLadderAlpha);
+			UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+		}
+		*/
 	}
 	else
 	{
 		BoneTarget = Character->GetMesh()->GetSocketLocation(BoneName);
 		LimbLadderAlpha = FMath::FInterpTo(LimbLadderAlpha, 1.0f, DeltaSeconds, 3.0f);
+
+		/*
+		if (BoneName == FName("Foot_L"))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Curve Not Set"));
+			UE_LOG(LogTemp, Warning, TEXT("CurveValue = %f"), CurveValue);
+			UE_LOG(LogTemp, Warning, TEXT("Bone Target : X = %f, Y = %f, Z = %f"), BoneTarget.X, BoneTarget.Y, BoneTarget.Z);
+			UE_LOG(LogTemp, Warning, TEXT("IK Alpha = %f"), LimbLadderAlpha);
+			UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+		}
+		*/
 	}
 }
 
@@ -618,6 +640,11 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_ClimbStart()
 void UCharacterBaseAnimInstance::AnimNotify_NOT_ResetLadder()
 {
 
+}
+
+void UCharacterBaseAnimInstance::AnimNotify_NOT_NextGripRightHand()
+{
+	
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_MountEnd()
