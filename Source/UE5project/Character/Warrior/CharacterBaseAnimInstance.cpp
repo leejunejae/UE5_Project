@@ -167,6 +167,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 					NewCharLocation.Z += Character->GetClimbDistance() * CurveDifference;
 						//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
 					Character->SetActorLocation(NewCharLocation);
+					UE_LOG(LogTemp, Warning, TEXT("Char_Translation_Z = %f"), Translation_CurveValue_Z);
 				}
 
 				SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveValue, LeftHandTarget, LeftHandLadderAlpha, DeltaSeconds);

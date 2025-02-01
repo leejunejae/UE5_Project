@@ -319,6 +319,13 @@ public:
 protected:
 	void DecideLadderStance();
 
+	UPROPERTY(EditAnywhere)
+		float MinGripInterval = 15.0f;
+	UPROPERTY(EditAnywhere)
+		float MaxGripInterval = 50.0f;
+	UPROPERTY(EditAnywhere)
+		float MinFirstGripHeight = 40.0f;
+
 private:
 	FGripNode1D* Grip1D_Hand_R;
 	FGripNode1D* Grip1D_Hand_L;

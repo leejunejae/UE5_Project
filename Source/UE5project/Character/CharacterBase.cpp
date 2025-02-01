@@ -117,6 +117,10 @@ ACharacterBase::ACharacterBase()
 	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
 
+	ClimbComponent->SetMinGripInterval(MinGripInterval);
+	ClimbComponent->SetMaxGripInterval(MaxGripInterval);
+	ClimbComponent->SetMinFirstGripHeight(MinFirstGripHeight);
+
 	CameraSetting();
 	Tags.Add("Player");
 }
@@ -439,15 +443,6 @@ void ACharacterBase::Move(const FInputActionValue& value)
 				{
 					if (ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1) == nullptr || Grip1D_Foot_R->Tag.Contains(FName("LowestGrip")))
 					{
-						if (ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1) == nullptr)
-						{
-							UE_LOG(LogTemp, Warning, TEXT("NeighborDown is nullptr"));
-						}
-						
-						if (Grip1D_Foot_R->Tag.Contains(FName("LowestGrip")))
-						{
-							UE_LOG(LogTemp, Warning, TEXT("Current Grip is LowestGrip"));
-						}
 						// Idle -> Idle_OneStep
 						ClimbDistance = Grip1D_Hand_R->NeighborDown.Distance;
 						Grip1D_Hand_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L, 1);
@@ -745,12 +740,14 @@ void ACharacterBase::Interact()
 				IsInteraction = true;
 				//GetController()->SetIgnoreMoveInput(true);
 				ClimbComponent->RegisterClimbObject(InteractActor);
+				/*
 				if (InteractActor->ActorHasTag("Ladder") && ClimbComponent->CheckGripListValid())
 				{
 					//UE_LOG(LogTemp, Warning, TEXT("GripList is Valid"));
 					ClimbComponent->SetGrip1DRelation(15.0f, 50.0f);
-					ClimbComponent->SetLowestGrip1D(40.0f, ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z);
+					ClimbComponent->SetLowestGrip1D(45.0f, ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z);
 				}
+				*/
 				//UE_LOG(LogTemp, Warning, TEXT("Interact With Climbable Actor"));
 				MovetoInteractPos(InteractActor);
 			}
@@ -802,7 +799,8 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 				CurLadderStance = ELadderStance::Enter_From_Bottom;
 				float ComparisonHeight = GetActorLocation().Z - GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 				Grip1D_Foot_R = ClimbComponent->GetLowestGrip1D();
-				Grip1D_Hand_L = ClimbComponent->FindGripNeighborUpByRange(Grip1D_Foot_R, 75.0f);
+				Grip1D_Hand_L = ClimbComponent->FindGripByHeightUpWard(130.0f, ComparisonHeight);
+					//ClimbComponent->FindGripNeighborUpByRange(Grip1D_Foot_R, 70.0f);
 				Grip1D_Hand_R = Grip1D_Hand_L != nullptr ? ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L) : nullptr;
 			}
 			else
@@ -811,7 +809,7 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 				ClimbDistance = ClimbComponent->GetEnterTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
 				Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
 				Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
-				FGripNode1D* CompareGrip = ClimbComponent->FindGripNeighborDownByRange(ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L), 75.0f);
+				FGripNode1D* CompareGrip = ClimbComponent->FindGripNeighborDownByRange(ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L), 70.0f);
 				Grip1D_Foot_L = ClimbComponent->FindGripNeighborUp(CompareGrip, 1);
 				Grip1D_Foot_R = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_L);
 			}

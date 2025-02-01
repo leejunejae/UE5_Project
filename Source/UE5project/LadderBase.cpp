@@ -220,6 +220,7 @@ void ALadderBase::BeginPlay()
 	ClimbTopTrigger->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + ClimbTopTrigger->Bounds.BoxExtent.Z));
 	ClimbTopLocation->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + 92.0f));
 	SetInitTopPosition();
+	SetInitBottomPosition();
 
 	GripList1D.Sort([](const FGripNode1D& A, const FGripNode1D& B)
 		{

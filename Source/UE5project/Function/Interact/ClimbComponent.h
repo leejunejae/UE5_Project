@@ -60,6 +60,20 @@ public:
 
 	bool FindGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace = false);
 
+#pragma region Setting Value
+private:
+	float MinFirstGripHeight = 0.0f;
+	float MinGripInterval = 0.0f;
+	float MaxGripInterval = TNumericLimits<float>::Max();
+
+/// <summary>
+/// Setter Function For Setting Value
+/// </summary>
+public:
+	void SetMinFirstGripHeight(float MinValue);
+	void SetMinGripInterval(float MinInterval);
+	void SetMaxGripInterval(float MaxInterval);
+
 #pragma endregion
 
 #pragma region Ladder Climbing

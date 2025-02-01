@@ -82,6 +82,11 @@ void UClimbComponent::RegisterClimbObject(AActor* RegistObject)
 		if (ClimbObject->ActorHasTag(FName("Ladder")))
 		{
 			GripList1D = IClimbObjectInterface::Execute_GetGripList1D(ClimbObject);
+			if (!GripList1D.IsEmpty())
+			{
+				SetGrip1DRelation(MinGripInterval, MaxGripInterval);
+				SetLowestGrip1D(MinFirstGripHeight, GetInitBottomPosition().GetValue().GetLocation().Z);
+			}
 		}
 		/*
 		if (GripList1D.IsEmpty())
@@ -105,6 +110,21 @@ void UClimbComponent::DeRegisterClimbObject()
 AActor* UClimbComponent::GetClimbObject()
 {
 	return ClimbObject == nullptr ? nullptr : ClimbObject;
+}
+
+void UClimbComponent::SetMinFirstGripHeight(float MinValue)
+{
+	MinFirstGripHeight = MinValue;
+}
+
+void UClimbComponent::SetMinGripInterval(float MinInterval)
+{
+	MinGripInterval = MinInterval;
+}
+
+void UClimbComponent::SetMaxGripInterval(float MaxInterval)
+{
+	MaxGripInterval = MaxInterval;
 }
 
 USceneComponent* UClimbComponent::GetExitTarget()
@@ -343,7 +363,7 @@ FGripNode1D* UClimbComponent::FindGripNeighborUpByRange(const FGripNode1D* Curre
 	UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
 	if (CurrentGrip->NeighborUp.Distance < Range)
 	{
-		return FindGripNeighborUpByRange(CurrentGrip->NeighborUp.Neighbor, Range - CurrentGrip->NeighborDown.Distance);
+		return FindGripNeighborUpByRange(CurrentGrip->NeighborUp.Neighbor, Range - CurrentGrip->NeighborUp.Distance);
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("GripIndex : %d"), CurrentGrip->NeighborUp.Neighbor->GripIndex);
