@@ -6,13 +6,18 @@
 #include "GameFramework/Actor.h"
 #include "ClimbHeader.generated.h"
 
-USTRUCT(BlueprintType)
+USTRUCT(Atomic, BlueprintType)
 struct FNeighborInfo
 {
 	GENERATED_BODY()
 
 	FGripNode1D* Neighbor;
 	float Distance;
+
+	inline bool operator==(const FNeighborInfo& Other) const
+	{
+		return Neighbor == Other.Neighbor;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -28,7 +33,7 @@ struct FGripNode2D
 	TArray<FGripNode2D*> NeighborsLeft;
 };
 
-USTRUCT(BlueprintType)
+USTRUCT(Atomic,BlueprintType)
 struct FGripNode1D
 {
 	GENERATED_BODY()
@@ -39,6 +44,12 @@ struct FGripNode1D
 	TArray<FName> Tag;
 	FNeighborInfo NeighborUp;
 	FNeighborInfo NeighborDown;
+	FGripNode1D* PrevGrip;
+
+	inline bool operator==(const FGripNode1D& Other) const
+	{
+		return Position == Other.Position;
+	}
 };
 
 UCLASS()

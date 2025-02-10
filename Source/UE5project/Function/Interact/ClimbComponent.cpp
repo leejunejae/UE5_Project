@@ -322,7 +322,7 @@ FGripNode1D* UClimbComponent::GetHighestGrip1D()
 	return &GripList1D.Last();
 }
 
-FGripNode1D* UClimbComponent::FindGripByHeightUpWard(float MinHeight, float Comparison)
+FGripNode1D* UClimbComponent::GetGripByHeightUpWard(float MinHeight, float Comparison)
 {
 	for (FGripNode1D& GripNode : GripList1D)
 	{
@@ -335,7 +335,7 @@ FGripNode1D* UClimbComponent::FindGripByHeightUpWard(float MinHeight, float Comp
 	return nullptr;
 }
 
-FGripNode1D* UClimbComponent::FindGripByHeightDownWard(float MinHeight, float Comparison)
+FGripNode1D* UClimbComponent::GetGripByHeightDownWard(float MinHeight, float Comparison)
 {
 	for (FGripNode1D& GripNode : GripList1D)
 	{
@@ -348,13 +348,13 @@ FGripNode1D* UClimbComponent::FindGripByHeightDownWard(float MinHeight, float Co
 	return nullptr;
 }
 
-FGripNode1D* UClimbComponent::FindGripNeighborUpByRange(const FGripNode1D* CurrentGrip, float Range)
+FGripNode1D* UClimbComponent::GetGripNeighborUpByRange(const FGripNode1D* CurrentGrip, float Range)
 {
 	//check(CurrentGrip != nullptr);
 
 	if (CurrentGrip == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function FindGripNeighborDownByRange"));
+		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDownByRange"));
 		return nullptr;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Current Index = %d"), CurrentGrip->GripIndex);
@@ -363,18 +363,18 @@ FGripNode1D* UClimbComponent::FindGripNeighborUpByRange(const FGripNode1D* Curre
 	UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
 	if (CurrentGrip->NeighborUp.Distance < Range)
 	{
-		return FindGripNeighborUpByRange(CurrentGrip->NeighborUp.Neighbor, Range - CurrentGrip->NeighborUp.Distance);
+		return GetGripNeighborUpByRange(CurrentGrip->NeighborUp.Neighbor, Range - CurrentGrip->NeighborUp.Distance);
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("GripIndex : %d"), CurrentGrip->NeighborUp.Neighbor->GripIndex);
 	return CurrentGrip->NeighborUp.Neighbor;
 }
 
-FGripNode1D* UClimbComponent::FindGripNeighborDownByRange(const FGripNode1D* CurrentGrip, float Range)
+FGripNode1D* UClimbComponent::GetGripNeighborDownByRange(const FGripNode1D* CurrentGrip, float Range)
 {
 	if (CurrentGrip == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function FindGripNeighborDownByRange"));
+		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDownByRange"));
 		return nullptr;
 	}
 	//check(CurrentGrip != nullptr);
@@ -385,51 +385,51 @@ FGripNode1D* UClimbComponent::FindGripNeighborDownByRange(const FGripNode1D* Cur
 	UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
 	if (CurrentGrip->NeighborDown.Distance < Range)
 	{
-		return FindGripNeighborDownByRange(CurrentGrip->NeighborDown.Neighbor, Range - CurrentGrip->NeighborDown.Distance);
+		return GetGripNeighborDownByRange(CurrentGrip->NeighborDown.Neighbor, Range - CurrentGrip->NeighborDown.Distance);
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("GripIndex : %d"), CurrentGrip->NeighborUp.Neighbor->GripIndex);
 	return CurrentGrip->NeighborDown.Neighbor;
 }
 
-FGripNode1D* UClimbComponent::FindGripNeighborUp(const FGripNode1D* CurrentGrip, int32 Count)
+FGripNode1D* UClimbComponent::GetGripNeighborUp(const FGripNode1D* CurrentGrip, int32 Count)
 {	
 	if (CurrentGrip == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function FindGripNeighborUp"));
+		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborUp"));
 		return nullptr;
 	}
 	//check(CurrentGrip->NeighborUp.Neighbor != nullptr)
 
 	//UE_LOG(LogTemp, Warning, TEXT("Count : %d"), Count);
-	if (Count > 0)
+	if (Count > 1)
 	{
-		return FindGripNeighborUp(CurrentGrip->NeighborUp.Neighbor, Count - 1);
+		return GetGripNeighborUp(CurrentGrip->NeighborUp.Neighbor, Count - 1);
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("GripIndex : %d"), CurrentGrip->NeighborUp.Neighbor->GripIndex);
 	return CurrentGrip->NeighborUp.Neighbor;
 }
 
-FGripNode1D* UClimbComponent::FindGripNeighborDown(const FGripNode1D* CurrentGrip, int32 Count)
+FGripNode1D* UClimbComponent::GetGripNeighborDown(const FGripNode1D* CurrentGrip, int32 Count)
 {
 	if (CurrentGrip == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function FindGripNeighborDown"));
+		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDown"));
 		return nullptr;
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("Count : %d"), Count);
-	if (Count > 0)
+	if (Count > 1)
 	{
-		return FindGripNeighborDown(CurrentGrip->NeighborDown.Neighbor, Count - 1);
+		return GetGripNeighborDown(CurrentGrip->NeighborDown.Neighbor, Count - 1);
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("GripIndex : %d"), CurrentGrip->GripIndex);
 	return CurrentGrip->NeighborDown.Neighbor;
 }
 
-FGripNode1D* UClimbComponent::FindGripUpward(const FGripNode1D* CurrentGrip, float MinInterval)
+FGripNode1D* UClimbComponent::GetGripUpward(const FGripNode1D* CurrentGrip, float MinInterval)
 {
 	int32 SearchIndex = CurrentGrip->GripIndex + 1;
 	
@@ -449,7 +449,7 @@ FGripNode1D* UClimbComponent::FindGripUpward(const FGripNode1D* CurrentGrip, flo
 	return nullptr;
 }
 
-FGripNode1D* UClimbComponent::FindGripDownward(const FGripNode1D* CurrentGrip, float MinInterval)
+FGripNode1D* UClimbComponent::GetGripDownward(const FGripNode1D* CurrentGrip, float MinInterval)
 {
 	int32 SearchIndex = CurrentGrip->GripIndex - 1;
 
@@ -468,24 +468,32 @@ FGripNode1D* UClimbComponent::FindGripDownward(const FGripNode1D* CurrentGrip, f
 	return nullptr;
 }
 
-void UClimbComponent::SetGripNeighborUp(FGripNode1D* CurrentGrip, int32 Count)
+TOptional<int32> UClimbComponent::FindGripLevelDifference(const FGripNode1D* StartGrip, const FGripNode1D* DestGrip)
 {
-	CurrentGrip = FindGripNeighborUp(CurrentGrip, Count);
+	if (StartGrip == nullptr || DestGrip == nullptr)
+	{
+		if (StartGrip == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("StartGrip Null"));
+		}
+
+		if (DestGrip == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("DestGrip Null"));
+		}
+		return TOptional<int32>();
+	}
+	
+
+	return FMath::Abs(DestGrip->GripIndex - StartGrip->GripIndex);
 }
 
-void UClimbComponent::SetGripNeighborDown(FGripNode1D* CurrentGrip, int32 Count)
+TOptional<float> UClimbComponent::FindGripDistance(const FGripNode1D* StartGrip, const FGripNode1D* DestGrip)
 {
-	CurrentGrip = FindGripNeighborDown(CurrentGrip, Count);
-}
+	if (StartGrip == nullptr || DestGrip == nullptr)
+		return TOptional<float>();
 
-void UClimbComponent::SetGripUpward(FGripNode1D* CurrentGrip, float MinInterval)
-{
-	CurrentGrip = FindGripUpward(CurrentGrip, MinInterval);
-}
-
-void UClimbComponent::SetGripDownward(FGripNode1D* CurrentGrip, float MinInterval)
-{
-	CurrentGrip = FindGripDownward(CurrentGrip, MinInterval);
+	return DestGrip->Position.Z - StartGrip->Position.Z;
 }
 
 void UClimbComponent::SetLowestGrip1D(float MinHeight, float Comparison)
@@ -500,7 +508,48 @@ void UClimbComponent::SetLowestGrip1D(float MinHeight, float Comparison)
 	}
 }
 
-bool UClimbComponent::FindGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace)
+void UClimbComponent::SetGripNeighborUpByRange(FGripNode1D* CurrentGrip, float Range)
+{
+
+}
+
+void UClimbComponent::SetGripNeighborDownByRange(FGripNode1D* CurrentGrip, float Range)
+{
+}
+
+void UClimbComponent::SetGripNeighborUp(FGripNode1D*& CurrentGrip, int32 Count)
+{
+	if (!CurrentGrip)
+	{
+		return;
+	}
+
+	FGripNode1D* PrevGrip = CurrentGrip;
+	CurrentGrip = GetGripNeighborUp(CurrentGrip, Count);
+
+	if (CurrentGrip)
+	{
+		CurrentGrip->PrevGrip = PrevGrip;
+	}
+}
+
+void UClimbComponent::SetGripNeighborDown(FGripNode1D*& CurrentGrip, int32 Count)
+{
+	if (!CurrentGrip)
+	{
+		return;
+	}
+
+	FGripNode1D* PrevGrip = CurrentGrip;
+	CurrentGrip = GetGripNeighborDown(CurrentGrip, Count);
+
+	if (CurrentGrip)
+	{
+		CurrentGrip->PrevGrip = PrevGrip;
+	}
+}
+
+bool UClimbComponent::SetGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace)
 {
 	FVector End = Start + FVector(0.0f, 0.0f, TraceDistance);
 

@@ -348,10 +348,11 @@ protected:
 		void AnimNotify_NOT_NextGripRightHand();
 
 
-	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, float CurveValue, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset = 1.0f);
+	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, float CurveValue, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
 
 	void CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds);
-	TOptional<FVector> SetBodyLocationOnLadder(FName BoneName, FName MiddleBoneName, float CurveValue, FVector PrevTargetLoc, float DeltaSeconds, float AdjCoefft = 1.0f);
+	TOptional<FVector> SetIKTargetLocation(FName BoneName, FName MiddleBoneName, float CurveValue, float DeltaSeconds, float AdjCoefft = 1.0f);
+	TOptional<FVector> SetIKTargetLocation(FVector StartLoc,FName BoneName, FName MiddleBoneName, float CurveValue, float DeltaSeconds, float AdjCoefft = 1.0f);
 
 private:
 	bool bIsClimb;
@@ -412,9 +413,14 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
 		FVector RightFootTarget;
 
-	FName Foot_L_Curve = TEXT("Enable_Footik_l");
-	FName Foot_R_Curve = TEXT("Enable_FootIK_R");
+	FName Foot_L_Curve = TEXT("Foot_L_Translation_Z");
+	FName Foot_R_Curve = TEXT("Foot_R_Translation_Z");
 	FName Pelvis_Curve = TEXT("Enable_Pelvis");
+	
+
+	//FName Foot_L_Curve = TEXT("Enable_Footik_l");
+	//FName Foot_R_Curve = TEXT("Enable_FootIK_R");
+	//FName Pelvis_Curve = TEXT("Enable_Pelvis");
 
 	float CurveValue_Foot_L;
 	float CurveValue_Foot_R;
@@ -448,10 +454,12 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
 		FVector RightHandTarget;
 
+	FName Hand_L_Curve = TEXT("Hand_L_Translation_Z");
+	FName Hand_R_Curve = TEXT("Hand_R_Translation_Z");
 
 	// For Ladder IK
-	FName Hand_L_Curve = TEXT("Enable_HandIK_L");
-	FName Hand_R_Curve = TEXT("Enable_HandIK_R");
+	//FName Hand_L_Curve = TEXT("Enable_HandIK_L");
+	//FName Hand_R_Curve = TEXT("Enable_HandIK_R");
 
 	float CurveValue_Hand_L;
 	float CurveValue_Hand_R;
