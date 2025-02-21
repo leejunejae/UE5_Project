@@ -343,6 +343,6 @@ private:
 	EBodyType CharBone;
 
 public:
-	TOptional<FVector> GetBoneTargetLoc(EBodyType BoneType);
+	TOptional<TTuple<FVector, FVector>> GetBoneTargetLoc(EBodyType BoneType);
 #pragma endregion
 };

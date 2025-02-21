@@ -531,6 +531,8 @@ void UClimbComponent::SetGripNeighborUp(FGripNode1D*& CurrentGrip, int32 Count)
 	{
 		CurrentGrip->PrevGrip = PrevGrip;
 	}
+
+	PrevGrip->PrevGrip = nullptr;
 }
 
 void UClimbComponent::SetGripNeighborDown(FGripNode1D*& CurrentGrip, int32 Count)
@@ -547,6 +549,8 @@ void UClimbComponent::SetGripNeighborDown(FGripNode1D*& CurrentGrip, int32 Count
 	{
 		CurrentGrip->PrevGrip = PrevGrip;
 	}
+
+	PrevGrip->PrevGrip = nullptr;
 }
 
 bool UClimbComponent::SetGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace)

@@ -28,6 +28,20 @@ struct FFootTraceStruct
 		float IK;
 };
 */
+struct FIKCurveData
+{
+	FName CurveName;
+	float CurveValue = 0.0f;
+	float PrevCurve = 0.0f;
+};
+
+struct FIKCurveDataSet
+{
+	FIKCurveData& CurveDataX;
+	FIKCurveData& CurveDataY;
+	FIKCurveData& CurveDataZ;
+};
+
 UCLASS()
 class UE5PROJECT_API UCharacterBaseAnimInstance : public UAnimInstance, public IIAnimInstance
 {
@@ -348,11 +362,11 @@ protected:
 		void AnimNotify_NOT_NextGripRightHand();
 
 
-	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, float CurveValue, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
+	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FIKCurveDataSet CurveList, FVector& BoneTarget, float LimbYDistance, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
+	//void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, TArray<FName> CurveList, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
 
 	void CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds);
 	TOptional<FVector> SetIKTargetLocation(FName BoneName, FName MiddleBoneName, float CurveValue, float DeltaSeconds, float AdjCoefft = 1.0f);
-	TOptional<FVector> SetIKTargetLocation(FVector StartLoc,FName BoneName, FName MiddleBoneName, float CurveValue, float DeltaSeconds, float AdjCoefft = 1.0f);
 
 private:
 	bool bIsClimb;
@@ -413,17 +427,43 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
 		FVector RightFootTarget;
 
-	FName Foot_L_Curve = TEXT("Foot_L_Translation_Z");
-	FName Foot_R_Curve = TEXT("Foot_R_Translation_Z");
+	FIKCurveData Hand_L_X_CurveData = { TEXT("Hand_L_Translation_X")};
+	FIKCurveData Hand_L_Y_CurveData = { TEXT("Hand_L_Translation_Y")};
+	FIKCurveData Hand_L_Z_CurveData = { TEXT("Hand_L_Translation_Z")};
+
+	FIKCurveData Hand_R_X_CurveData = { TEXT("Hand_R_Translation_X")};
+	FIKCurveData Hand_R_Y_CurveData = { TEXT("Hand_R_Translation_Y")};
+	FIKCurveData Hand_R_Z_CurveData = { TEXT("Hand_R_Translation_Z")};
+
+	FIKCurveData Foot_L_X_CurveData = { TEXT("Foot_L_Translation_X")};
+	FIKCurveData Foot_L_Y_CurveData = { TEXT("Foot_L_Translation_Y")};
+	FIKCurveData Foot_L_Z_CurveData = { TEXT("Foot_L_Translation_Z")};
+
+	FIKCurveData Foot_R_X_CurveData = { TEXT("Foot_R_Translation_X")};
+	FIKCurveData Foot_R_Y_CurveData = { TEXT("Foot_R_Translation_Y")};
+	FIKCurveData Foot_R_Z_CurveData = { TEXT("Foot_R_Translation_Z")};
+
+	float Hand_L_Y_Distance;
+	float Hand_R_Y_Distance;
+	float Foot_L_Y_Distance;
+	float Foot_R_Y_Distance;
+
+
+	FName Foot_L_Translation_Z = TEXT("Foot_L_Translation_Z");
+	FName Foot_R_Translation_Z = TEXT("Foot_R_Translation_Z");
+	FName Foot_L_Translation_Y = TEXT("Foot_L_Translation_Y");
+	FName Foot_R_Translation_Y = TEXT("Foot_R_Translation_Y");
+
+
 	FName Pelvis_Curve = TEXT("Enable_Pelvis");
 	
 
-	//FName Foot_L_Curve = TEXT("Enable_Footik_l");
-	//FName Foot_R_Curve = TEXT("Enable_FootIK_R");
+	//FName Foot_L_Translation_Z = TEXT("Enable_Footik_l");
+	//FName Foot_R_Translation_Z = TEXT("Enable_FootIK_R");
 	//FName Pelvis_Curve = TEXT("Enable_Pelvis");
 
-	float CurveValue_Foot_L;
-	float CurveValue_Foot_R;
+	FVector CurveValue_Foot_L;
+	FVector CurveValue_Foot_R;
 
 
 #pragma endregion 
@@ -432,7 +472,7 @@ private:
 
 ////////////////////////////////////
 // Methods For HandIK
-////////////////////////////////////
+////////////////////////////////////Foot_L_Translation_Z
 
 ////////////////////////////////////
 // Variables For HandIK
@@ -454,15 +494,18 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
 		FVector RightHandTarget;
 
-	FName Hand_L_Curve = TEXT("Hand_L_Translation_Z");
-	FName Hand_R_Curve = TEXT("Hand_R_Translation_Z");
+	FName Hand_L_Translation_Z = TEXT("Hand_L_Translation_Z");
+	FName Hand_R_Translation_Z = TEXT("Hand_R_Translation_Z");
+
+	FName Hand_L_Translation_Y = TEXT("Hand_L_Translation_Y");
+	FName Hand_R_Translation_Y = TEXT("Hand_R_Translation_Y");
 
 	// For Ladder IK
-	//FName Hand_L_Curve = TEXT("Enable_HandIK_L");
-	//FName Hand_R_Curve = TEXT("Enable_HandIK_R");
+	//FName Hand_L_Translation_Z = TEXT("Enable_HandIK_L");
+	//FName Hand_R_Translation_Z = TEXT("Enable_HandIK_R");
 
-	float CurveValue_Hand_L;
-	float CurveValue_Hand_R;
+	FVector CurveValue_Hand_L;
+	FVector CurveValue_Hand_R;
 
 #pragma endregion
 	

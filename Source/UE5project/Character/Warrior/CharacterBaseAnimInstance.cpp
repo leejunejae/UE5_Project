@@ -59,10 +59,10 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			CurGroundStance = Character->GetCurGroundStance();
 
-			RightHandLadderAlpha = FMath::FInterpTo(RightHandLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
-			LeftHandLadderAlpha = FMath::FInterpTo(LeftHandLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
-			RightFootLadderAlpha = FMath::FInterpTo(RightFootLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
-			LeftFootLadderAlpha = FMath::FInterpTo(LeftFootLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
+			//RightHandLadderAlpha = FMath::FInterpTo(RightHandLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
+			//LeftHandLadderAlpha = FMath::FInterpTo(LeftHandLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
+			//RightFootLadderAlpha = FMath::FInterpTo(RightFootLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
+			//LeftFootLadderAlpha = FMath::FInterpTo(LeftFootLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
 
 			RightHandStateAlpha = FMath::FInterpTo(RightHandStateAlpha, 0.0f, DeltaSeconds, 5.0f);
 			LeftHandStateAlpha = FMath::FInterpTo(LeftHandStateAlpha, 0.0f, DeltaSeconds, 5.0f);
@@ -141,38 +141,32 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			CheckIKValid(FName("Disable_FootIK_R"), RightFootStateAlpha, DeltaSeconds);
 			CheckIKValid(FName("Disable_HandIK_L"), LeftHandStateAlpha, DeltaSeconds);
 			CheckIKValid(FName("Disable_HandIK_R"), RightHandStateAlpha, DeltaSeconds);
-
-			const TOptional<FVector> Grip_Hand_R = Character->GetBoneTargetLoc(EBodyType::Hand_R);
-			const TOptional<FVector> Grip_Hand_L = Character->GetBoneTargetLoc(EBodyType::Hand_L);
-			const TOptional<FVector> Grip_Foot_R = Character->GetBoneTargetLoc(EBodyType::Foot_R);
-			const TOptional<FVector> Grip_Foot_L = Character->GetBoneTargetLoc(EBodyType::Foot_L);
 			
 			CurLadderStance = Character->GetCurLadderStance();
 
 			if (GetCurveValue(LockIK) > 0.0f && bIsClimb)
 			{
 				const float Translation_CurveValue_Z = GetCurveValue(FName("Char_Translation_Z"));
-					//GetCurveValue(Pelvis_Curve);
-				const float Hand_L_CurveValue = GetCurveValue(Hand_L_Curve);
-				const float Hand_R_CurveValue = GetCurveValue(Hand_R_Curve);
-				const float Foot_L_CurveValue = GetCurveValue(Foot_L_Curve);
-				const float Foot_R_CurveValue = GetCurveValue(Foot_R_Curve);
 
-				if (Translation_CurveValue_Z > 0.0f)// && Pelvis_CurveValue < 1.0f)
+				if (Translation_CurveValue_Z > 0.0f)
 				{
 					float Prev_Curve_Value = CurveValue_Root_Z;
 					CurveValue_Root_Z = Translation_CurveValue_Z;
 					float CurveDifference = CurveValue_Root_Z - Prev_Curve_Value;
 					FVector NewCharLocation = Character->GetActorLocation();
 					NewCharLocation.Z += Character->GetClimbDistance() * CurveDifference;
-						//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
 					Character->SetActorLocation(NewCharLocation);
 				}
+
+				FIKCurveDataSet Hand_L_CurveDataSet = { Hand_L_X_CurveData, Hand_L_Y_CurveData, Hand_L_Z_CurveData };
+				FIKCurveDataSet Hand_R_CurveDataSet = { Hand_R_X_CurveData, Hand_R_Y_CurveData, Hand_R_Z_CurveData };
+				FIKCurveDataSet Foot_L_CurveDataSet = { Foot_L_X_CurveData, Foot_L_Y_CurveData, Foot_L_Z_CurveData };
+				FIKCurveDataSet Foot_R_CurveDataSet = { Foot_R_X_CurveData, Foot_R_Y_CurveData, Foot_R_Z_CurveData };
 				
-				SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveValue, LeftHandTarget, LeftHandLadderAlpha, DeltaSeconds);
-				SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveValue, RightHandTarget, RightHandLadderAlpha, DeltaSeconds);
-				SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveValue, LeftFootTarget, LeftFootLadderAlpha, DeltaSeconds, 0.5f);
-				SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveValue, RightFootTarget, RightFootLadderAlpha, DeltaSeconds, 0.5f);
+				SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveDataSet, LeftHandTarget, Hand_L_Y_Distance, DeltaSeconds, 1.0f);
+				SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveDataSet, RightHandTarget, Hand_R_Y_Distance, DeltaSeconds);
+				SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveDataSet, LeftFootTarget, Foot_L_Y_Distance, DeltaSeconds, 0.5f);
+				SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveDataSet, RightFootTarget, Foot_R_Y_Distance, DeltaSeconds, 0.5f);
 			}
 			else
 			{
@@ -200,11 +194,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			CheckIKValid(FName("Disable_HandIK_L"), LeftHandStateAlpha, DeltaSeconds);
 			CheckIKValid(FName("Disable_HandIK_R"), RightHandStateAlpha, DeltaSeconds);
 
-			const TOptional<FVector> Grip_Hand_R = Character->GetBoneTargetLoc(EBodyType::Hand_R);
-			const TOptional<FVector> Grip_Hand_L = Character->GetBoneTargetLoc(EBodyType::Hand_L);
-			const TOptional<FVector> Grip_Foot_R = Character->GetBoneTargetLoc(EBodyType::Foot_R);
-			const TOptional<FVector> Grip_Foot_L = Character->GetBoneTargetLoc(EBodyType::Foot_L);
-
 			CurLadderStance = Character->GetCurLadderStance();
 
 			if (GetCurveValue(LockIK) > 0.0f && bIsClimb)
@@ -218,7 +207,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 					const float Rotation_CurveValue = GetCurveValue(FName("Char_Rotation_Z"));
 					
 					const FVector EnterDirection = FVector(TargetLocation.X - InitLocation.X, TargetLocation.Y - InitLocation.Y, 0.0f).GetSafeNormal();
-					//UE_LOG(LogTemp, Warning, TEXT("Hand_R_CurveValue = %f"), GetCurveValue(Hand_R_Curve));
+					//UE_LOG(LogTemp, Warning, TEXT("Curve_Hand_R_Z = %f"), GetCurveValue(Hand_R_Translation_Z));
 					//InitClimbPosition = Character->GetClimbComponent()->GetLadderTopTransitionDistance();
 					if (Translation_CurveValue_Y > 0.0f)
 					{
@@ -268,11 +257,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				}
 
 				const float Translation_CurveValue_Z = GetCurveValue(FName("Char_Translation_Z"));
-				//GetCurveValue(Pelvis_Curve);
-				const float Hand_L_CurveValue = GetCurveValue(Hand_L_Curve);
-				const float Hand_R_CurveValue = GetCurveValue(Hand_R_Curve);
-				const float Foot_L_CurveValue = GetCurveValue(Foot_L_Curve);
-				const float Foot_R_CurveValue = GetCurveValue(Foot_R_Curve);
 
 				if (Translation_CurveValue_Z > 0.0f)// && Pelvis_CurveValue < 1.0f)
 				{
@@ -284,11 +268,16 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 					//FMath::Lerp(0.0f, Character->GetClimbDistance(), CurveDifference);
 					Character->SetActorLocation(NewCharLocation);
 				}
-				UE_LOG(LogTemp, Warning, TEXT("State Alpha = %f"), RightHandStateAlpha);
-				SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveValue, LeftHandTarget, LeftHandLadderAlpha, DeltaSeconds);
-				SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveValue, RightHandTarget, RightHandLadderAlpha, DeltaSeconds, 1.0f, true);
-				SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveValue, LeftFootTarget, LeftFootLadderAlpha, DeltaSeconds, 0.5f);
-				SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveValue, RightFootTarget, RightFootLadderAlpha, DeltaSeconds, 0.5f);
+
+				FIKCurveDataSet Hand_L_CurveDataSet = { Hand_L_X_CurveData, Hand_L_Y_CurveData, Hand_L_Z_CurveData };
+				FIKCurveDataSet Hand_R_CurveDataSet = { Hand_R_X_CurveData, Hand_R_Y_CurveData, Hand_R_Z_CurveData };
+				FIKCurveDataSet Foot_L_CurveDataSet = { Foot_L_X_CurveData, Foot_L_Y_CurveData, Foot_L_Z_CurveData };
+				FIKCurveDataSet Foot_R_CurveDataSet = { Foot_R_X_CurveData, Foot_R_Y_CurveData, Foot_R_Z_CurveData };
+				//UE_LOG(LogTemp, Warning, TEXT("State Alpha = %f"), RightHandStateAlpha);
+				SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveDataSet, LeftHandTarget, Hand_L_Y_Distance, DeltaSeconds);
+				SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveDataSet, RightHandTarget, Hand_R_Y_Distance, DeltaSeconds, 1.0f);
+				SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveDataSet, LeftFootTarget, Foot_L_Y_Distance, DeltaSeconds, 0.5f, true);
+				SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveDataSet, RightFootTarget, Foot_R_Y_Distance, DeltaSeconds, 0.5f);
 			}
 			else
 			{
@@ -352,14 +341,208 @@ void UCharacterBaseAnimInstance::FootPlacement(float DeltaTime, float TargetValu
 ///////// Ladder Placement /////////////
  
 
-void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, float CurveValue, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset, bool IsDebug)
+void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FIKCurveDataSet CurveList, FVector& BoneTarget, float LimbYDistance, float DeltaSeconds, float Offset, bool IsDebug)
+{
+	if (!BoneNameToBodyType.Contains(BoneName) || !Character->GetMesh()->DoesSocketExist(BoneName))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Bone Type or Bone is not valid"));
+		return;
+	}
+
+	const TOptional<TTuple<FVector, FVector>> GripLoc = Character->GetBoneTargetLoc(BoneNameToBodyType[BoneName]);
+
+	// 본 설정이 잘못되거나 손잡이에 대한 정보가 없는 경우
+	// EX) 사다리에 올라타지 않은 상태, 본 이름이 잘못 입력된 상태
+	if (!GripLoc.IsSet())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Target Grip Not Set"));
+		return;
+	}
+
+	FVector TargetLoc, TargetCurveX, TargetCurveY, TargetCurveZ;
+	FVector ForwardVector = Character->GetActorForwardVector();
+	FVector RightVector = Character->GetActorRightVector();
+
+	TArray<FName> ActiveCurveNames;
+	// 현재 애니메이션에서 활성화된 Float 커브 목록 가져오기
+	GetActiveCurveNames(EAnimCurveType::AttributeCurve, ActiveCurveNames);
+	//for (const FName& CurveName : ActiveCurveNames)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("Active Curve: %s"), *CurveName.ToString());
+	//}
+
+	if (ActiveCurveNames.Contains(CurveList.CurveDataX.CurveName))
+	{
+		if (IsDebug)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CurveDataX Exist"));
+		}
+		CurveList.CurveDataX.CurveValue = GetCurveValue(CurveList.CurveDataX.CurveName);
+
+		TargetCurveX = RightVector * CurveList.CurveDataX.CurveValue;
+	}
+	else
+	{
+		CurveList.CurveDataX.CurveValue = GetCurveValue(CurveList.CurveDataX.CurveName);
+		TargetCurveX = FVector::ZeroVector;
+	}
+
+	if (ActiveCurveNames.Contains(CurveList.CurveDataY.CurveName))
+	{
+		float Prev_Curve = CurveList.CurveDataY.CurveValue;
+		CurveList.CurveDataY.CurveValue = GetCurveValue(CurveList.CurveDataY.CurveName);
+
+		if (IsDebug)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CurveDataY Exist"));
+			UE_LOG(LogTemp, Warning, TEXT("Prev_CurveValue = %f"), Prev_Curve);
+			UE_LOG(LogTemp, Warning, TEXT("Cur_CurveValue = %f"), CurveList.CurveDataY.CurveValue);
+		}
+		//TargetCurveY = CurveList.CurveDataY.DeltaCurve > 0.0f
+			//? ForwardVector * LimbYDistance
+			//: FMath::Lerp(GripLoc.GetValue().Get<0>(), GripLoc.GetValue().Get<1>() + (ForwardVector * LimbYDistance), CurveList.CurveDataY.CurveValue) - GripLoc.GetValue().Get<1>();
+
+		if (Prev_Curve < CurveList.CurveDataY.CurveValue)
+		{
+			if (IsDebug)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Away"));
+			}
+			TargetCurveY = (ForwardVector * LimbYDistance) * CurveList.CurveDataY.CurveValue;
+		}
+		else
+		{
+			if (IsDebug)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Approach"));
+			}
+			TargetCurveY = FMath::Lerp(GripLoc.GetValue().Get<0>(), GripLoc.GetValue().Get<1>() + (ForwardVector * LimbYDistance), CurveList.CurveDataY.CurveValue) - GripLoc.GetValue().Get<1>();
+		}
+
+		TargetCurveY.Z = 0.0f;
+	}
+	else
+	{
+		CurveList.CurveDataY.CurveValue = GetCurveValue(CurveList.CurveDataY.CurveName);
+
+		TargetCurveY = FVector::ZeroVector;
+	}
+
+	if (ActiveCurveNames.Contains(CurveList.CurveDataZ.CurveName))
+	{
+		if (IsDebug)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CurveDataZ Exist"));
+		}
+		CurveList.CurveDataZ.CurveValue = GetCurveValue(CurveList.CurveDataZ.CurveName);
+
+		TargetCurveZ = (GripLoc.GetValue().Get<0>() - GripLoc.GetValue().Get<1>()) * CurveList.CurveDataZ.CurveValue;
+			//FMath::Lerp(GripLoc.GetValue().Get<1>(), GripLoc.GetValue().Get<0>(), CurveList.CurveDataZ.CurveValue);
+	}
+	else
+	{
+		TargetCurveZ = FVector::ZeroVector;
+	}
+
+	TargetLoc = GripLoc.GetValue().Get<1>() + TargetCurveX + TargetCurveY + TargetCurveZ;
+	FVector BoneLoc = Character->GetMesh()->GetSocketLocation(BoneName);
+	FVector AdjustBoneLoc = FVector::ZeroVector;
+
+	if (Character->GetMesh()->DoesSocketExist(MiddleBoneName))
+	{
+		FVector MiddleBoneLoc = Character->GetMesh()->GetSocketLocation(MiddleBoneName);
+		AdjustBoneLoc = (MiddleBoneLoc - BoneLoc) * Offset;
+	}
+
+	BoneTarget = TargetLoc - AdjustBoneLoc;
+
+	if (IsDebug)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("X Target : X = %f, Y = %f, Z = %f"), TargetCurveX.X, TargetCurveX.Y, TargetCurveX.Z);
+		UE_LOG(LogTemp, Warning, TEXT("Y Target : X = %f, Y = %f, Z = %f"), TargetCurveY.X, TargetCurveY.Y, TargetCurveY.Z);
+		UE_LOG(LogTemp, Warning, TEXT("Z Target : X = %f, Y = %f, Z = %f"), TargetCurveZ.X, TargetCurveZ.Y, TargetCurveZ.Z);
+		UE_LOG(LogTemp, Warning, TEXT("TargetLoc : X = %f, Y = %f, Z = %f"), TargetLoc.X, TargetLoc.Y, TargetLoc.Z);
+		UE_LOG(LogTemp, Warning, TEXT("Bone Target : X = %f, Y = %f, Z = %f"), BoneTarget.X, BoneTarget.Y, BoneTarget.Z);
+		UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+	}
+
+	/*
+	if (CurveValue.Z > 0.0f)
+	{
+		if (!BoneNameToBodyType.Contains(BoneName))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Bone Type Doesnt exist in Map"));
+			return;
+		}
+
+		const TOptional<TTuple<FVector, TOptional<FVector>>> GripLoc = Character->GetBoneTargetLoc(BoneNameToBodyType[BoneName]);
+
+		// 본 설정이 잘못되거나 손잡이에 대한 정보가 없는 경우
+		// EX) 사다리에 올라타지 않은 상태, 본 이름이 잘못 입력된 상태
+		if (!Character->GetMesh()->DoesSocketExist(BoneName) || !GripLoc.IsSet())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Bone Doesnt exist"));
+			return;
+		}
+
+		FVector BoneLoc = Character->GetMesh()->GetSocketLocation(BoneName);
+
+		FVector AdjustBoneLoc = FVector::ZeroVector;
+
+		if (Character->GetMesh()->DoesSocketExist(MiddleBoneName))
+		{
+			FVector MiddleBoneLoc = Character->GetMesh()->GetSocketLocation(MiddleBoneName);
+			AdjustBoneLoc = (MiddleBoneLoc - BoneLoc) * Offset;
+		}
+
+		if (GripLoc.GetValue().Get<1>().IsSet()) // 이전에 잡았던 손잡이가 존재하는 경우, EX) 이미 사다리에 탑승한 상태로 위 또는 아래로 이동 할 때
+		{
+			// 초기 위치와 목표 위치 사이의 값에서 커브 값에 맞춰 IK타겟 위치 설정
+			FVector TargetLoc = FMath::Lerp(GripLoc.GetValue().Get<1>().GetValue(), GripLoc.GetValue().Get<0>(), CurveValue.Z);
+
+			BoneTarget = TargetLoc - AdjustBoneLoc;
+		}
+		else // 이전에 잡았던 손잡이가 존재하지 않는 경우, EX) 처음 사다리에 올라탈 때
+		{
+			FVector DifferenceGripAndBone = GripLoc.GetValue().Get<0>() - (BoneLoc + AdjustBoneLoc);
+			FVector TargetLoc = FMath::Lerp(FVector::ZeroVector, DifferenceGripAndBone, CurveValue);
+			BoneTarget = BoneLoc + TargetLoc;
+		}
+
+		//LimbLadderAlpha = CurveValue.Z < 0.5f ? FMath::Lerp(1.0f, 0.0f, CurveValue.Z * 2.0f) : FMath::Lerp(0.0f, 1.0f, CurveValue.Z * 2.0f - 1);
+		if (IsDebug)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Curve Set"));
+			UE_LOG(LogTemp, Warning, TEXT("CurveValue = %f"), CurveValue.Z);
+			UE_LOG(LogTemp, Warning, TEXT("Bone Target : X = %f, Y = %f, Z = %f"), BoneTarget.X, BoneTarget.Y, BoneTarget.Z);
+			UE_LOG(LogTemp, Warning, TEXT("IK Alpha = %f"), LimbLadderAlpha);
+			UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+		}
+	}
+	else
+	{
+		BoneTarget = Character->GetMesh()->GetSocketLocation(BoneName);
+		LimbLadderAlpha = FMath::FInterpTo(LimbLadderAlpha, 1.0f, DeltaSeconds, 3.0f);
+		if (IsDebug)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Curve Not Set"));
+			UE_LOG(LogTemp, Warning, TEXT("CurveValue = %f"), CurveValue.Z);
+			UE_LOG(LogTemp, Warning, TEXT("Bone Target : X = %f, Y = %f, Z = %f"), BoneTarget.X, BoneTarget.Y, BoneTarget.Z);
+			UE_LOG(LogTemp, Warning, TEXT("IK Alpha = %f"), LimbLadderAlpha);
+			UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+		}
+	}
+	*/
+}
+
+/*
+void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FVector CurveValue, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset, bool IsDebug)
 {
 	if (CurveValue > 0.0f)
 	{
-		const TOptional<FVector> LimbTarget = SetIKTargetLocation(BoneName, MiddleBoneName, CurveValue, BoneTarget, DeltaSeconds, Offset);
+		const TOptional<FVector> LimbTarget = SetIKTargetLocation(BoneName, MiddleBoneName, CurveValue, DeltaSeconds, Offset);
 		BoneTarget = LimbTarget.IsSet() ? LimbTarget.GetValue() : BoneTarget;
 		LimbLadderAlpha = CurveValue < 0.5f ? FMath::Lerp(1.0f, 0.0f, CurveValue * 2.0f) : FMath::Lerp(0.0f, 1.0f, CurveValue * 2.0f - 1);
-
 		if (IsDebug)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Curve Set"));
@@ -373,7 +556,6 @@ void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName&
 	{
 		BoneTarget = Character->GetMesh()->GetSocketLocation(BoneName);
 		LimbLadderAlpha = FMath::FInterpTo(LimbLadderAlpha, 1.0f, DeltaSeconds, 3.0f);
-
 		if (IsDebug)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Curve Not Set"));
@@ -384,6 +566,7 @@ void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName&
 		}
 	}
 }
+*/
 
 void UCharacterBaseAnimInstance::CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds)
 {
@@ -401,15 +584,19 @@ TOptional<FVector> UCharacterBaseAnimInstance::SetIKTargetLocation(FName BoneNam
 {
 	if (!BoneNameToBodyType.Contains(BoneName))
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Bone Type Doesnt exist in Map"));
+		UE_LOG(LogTemp, Warning, TEXT("Bone Type Doesnt exist in Map"));
 		return TOptional<FVector>();
 	}
 
-	const TOptional<FVector> GripLoc = Character->GetBoneTargetLoc(BoneNameToBodyType[BoneName]);
+	return TOptional<FVector>();
+	/*
+	const TOptional<TTuple<FVector, FVector>> GripLoc = Character->GetBoneTargetLoc(BoneNameToBodyType[BoneName]);
 
+	// 본 설정이 잘못되거나 손잡이에 대한 정보가 없는 경우
+	// EX) 사다리에 올라타지 않은 상태, 본 이름이 잘못 입력된 상태
 	if (!Character->GetMesh()->DoesSocketExist(BoneName) || !GripLoc.IsSet())
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Bone Doesnt exist"));
+		UE_LOG(LogTemp, Warning, TEXT("Bone Doesnt exist"));
 		return TOptional<FVector>();
 	}
 
@@ -422,57 +609,25 @@ TOptional<FVector> UCharacterBaseAnimInstance::SetIKTargetLocation(FName BoneNam
 		FVector MiddleBoneLoc = Character->GetMesh()->GetSocketLocation(MiddleBoneName);
 		AdjustBoneLoc = (MiddleBoneLoc - BoneLoc) * AdjCoefft;
 	}
-
-	FVector DifferenceGripAndBone = GripLoc.GetValue() - (BoneLoc + AdjustBoneLoc);
-	FVector TargetLoc = FMath::Lerp(FVector::ZeroVector, DifferenceGripAndBone, CurveValue);
-
-	if (BoneName == FName("Hand_R"))
+	
+	if (GripLoc.GetValue().Get<1>().IsSet()) // 이전에 잡았던 손잡이가 존재하는 경우, EX) 이미 사다리에 탑승한 상태로 위 또는 아래로 이동 할 때
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Target Grip : X = %f, Y = %f, Z = %f"), GripLoc.GetValue().X, GripLoc.GetValue().Y, GripLoc.GetValue().Z);
-		UE_LOG(LogTemp, Warning, TEXT("DifferenceGripAndBone : X = %f, Y = %f, Z = %f"), DifferenceGripAndBone.X, DifferenceGripAndBone.Y, DifferenceGripAndBone.Z);
-		UE_LOG(LogTemp, Warning, TEXT("TargetLoc : X = %f, Y = %f, Z = %f"), TargetLoc.X, TargetLoc.Y, TargetLoc.Z);
+		// 초기 위치와 목표 위치 사이의 값에서 커브 값에 맞춰 IK타겟 위치 설정
+		FVector TargetLoc = FMath::Lerp(GripLoc.GetValue().Get<1>().GetValue(), GripLoc.GetValue().Get<0>(), CurveValue);
+
+		return TargetLoc - AdjustBoneLoc;
 	}
-
-	return BoneLoc + TargetLoc;
-}
-
-TOptional<FVector> UCharacterBaseAnimInstance::SetIKTargetLocation(FVector StartLoc, FName BoneName, FName MiddleBoneName, float CurveValue, float DeltaSeconds, float AdjCoefft)
-{
-	if (!BoneNameToBodyType.Contains(BoneName))
+	else // 이전에 잡았던 손잡이가 존재하지 않는 경우, EX) 처음 사다리에 올라탈 때
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Bone Type Doesnt exist in Map"));
-		return TOptional<FVector>();
+		FVector DifferenceGripAndBone = GripLoc.GetValue().Get<0>() - (BoneLoc + AdjustBoneLoc);
+		FVector TargetLoc = FMath::Lerp(FVector::ZeroVector, DifferenceGripAndBone, CurveValue);
+		if (BoneName == FName("Foot_L"))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Target Loc : X = %f, Y = %f, Z = %f"), TargetLoc.X, TargetLoc.Y, TargetLoc.Z);
+		}
+		return BoneLoc + TargetLoc;
 	}
-
-	const TOptional<FVector> GripLoc = Character->GetBoneTargetLoc(BoneNameToBodyType[BoneName]);
-
-	if (!Character->GetMesh()->DoesSocketExist(BoneName) || !GripLoc.IsSet())
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Bone Doesnt exist"));
-		return TOptional<FVector>();
-	}
-
-	FVector BoneLoc = Character->GetMesh()->GetSocketLocation(BoneName);
-
-	FVector AdjustBoneLoc = FVector::ZeroVector;
-
-	if (Character->GetMesh()->DoesSocketExist(MiddleBoneName))
-	{
-		FVector MiddleBoneLoc = Character->GetMesh()->GetSocketLocation(MiddleBoneName);
-		AdjustBoneLoc = (MiddleBoneLoc - BoneLoc) * AdjCoefft;
-	}
-
-	FVector DifferenceGripAndBone = GripLoc.GetValue() - (BoneLoc + AdjustBoneLoc);
-	FVector TargetLoc = FMath::Lerp(FVector::ZeroVector, DifferenceGripAndBone, CurveValue);
-
-	if (BoneName == FName("Hand_R"))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Target Grip : X = %f, Y = %f, Z = %f"), GripLoc.GetValue().X, GripLoc.GetValue().Y, GripLoc.GetValue().Z);
-		UE_LOG(LogTemp, Warning, TEXT("DifferenceGripAndBone : X = %f, Y = %f, Z = %f"), DifferenceGripAndBone.X, DifferenceGripAndBone.Y, DifferenceGripAndBone.Z);
-		UE_LOG(LogTemp, Warning, TEXT("TargetLoc : X = %f, Y = %f, Z = %f"), TargetLoc.X, TargetLoc.Y, TargetLoc.Z);
-	}
-
-	return BoneLoc + TargetLoc;
+	*/
 }
 
 void UCharacterBaseAnimInstance::DebugLadderStance()
@@ -675,6 +830,10 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_ClimbStart()
 {
 	CurveValue_Root_Z = 0.0f;
 	CurveValue_Root_Y = 0.0f;
+	Hand_L_Y_Distance = FMath::RandRange(-15.0f, -30.0f);
+	Hand_R_Y_Distance = FMath::RandRange(-15.0f, -30.0f);
+	Foot_L_Y_Distance = FMath::RandRange(-15.0f, -30.0f);
+	Foot_R_Y_Distance = FMath::RandRange(-15.0f, -30.0f);
 	bIsClimb = true;
 	UE_LOG(LogTemp, Warning, TEXT("ClimbStart"));
 }

@@ -413,17 +413,14 @@ void ACharacterBase::Move(const FInputActionValue& value)
 							ClimbComponent->SetGripNeighborUp(Grip1D_Hand_R, 1);
 							ClimbComponent->SetGripNeighborUp(Grip1D_Foot_R, 2);
 							ClimbComponent->SetGripNeighborUp(Grip1D_Foot_L, 2);
-							//Grip1D_Hand_R = Grip1D_Hand_L;
-							//Grip1D_Foot_R = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_R, 2);
-							//Grip1D_Foot_L = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_L, 2);
 						}
 						else
 						{
 							ClimbDistance = Grip1D_Foot_L->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance;
-							Grip1D_Hand_R = ClimbComponent->GetGripNeighborUp(Grip1D_Hand_R, 2);
-							Grip1D_Hand_L = Grip1D_Hand_R;
-							Grip1D_Foot_R = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_R, 2);
-							Grip1D_Foot_L = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_L, 2);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Hand_R, 2);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Hand_L, 1);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Foot_R, 2);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Foot_L, 2);
 						}
 
 						//ClimbDistance -= 140.0f;
@@ -436,10 +433,10 @@ void ACharacterBase::Move(const FInputActionValue& value)
 					else
 					{
 						ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Hand_L->NeighborUp.Distance + Grip1D_Foot_L->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f);
-						Grip1D_Hand_R = ClimbComponent->GetGripNeighborUp(Grip1D_Hand_R, 2);
-						Grip1D_Hand_L = ClimbComponent->GetGripNeighborUp(Grip1D_Hand_L, 2);
-						Grip1D_Foot_R = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_R, 2);
-						Grip1D_Foot_L = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_L, 2);
+						ClimbComponent->SetGripNeighborUp(Grip1D_Hand_R, 2);
+						ClimbComponent->SetGripNeighborUp(Grip1D_Hand_L, 2);
+						ClimbComponent->SetGripNeighborUp(Grip1D_Foot_R, 2);
+						ClimbComponent->SetGripNeighborUp(Grip1D_Foot_L, 2);
 						CurLadderStance = ELadderStance::ClimbUp;
 					}
 				}
@@ -449,16 +446,16 @@ void ACharacterBase::Move(const FInputActionValue& value)
 					{
 						// Idle -> Idle_OneStep
 						ClimbDistance = Grip1D_Hand_R->NeighborDown.Distance;
-						Grip1D_Hand_L = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_L, 2);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, 2);
 						CurLadderStance = ELadderStance::ClimbDown_OneStep;
 					}
 					else
 					{
 						ClimbDistance = ((Grip1D_Hand_R->NeighborDown.Distance + Grip1D_Hand_L->NeighborDown.Distance + Grip1D_Foot_L->NeighborDown.Distance + Grip1D_Foot_R->NeighborDown.Distance) / 2.0f);
-						Grip1D_Hand_R = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_R, 2);
-						Grip1D_Hand_L = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_L, 2);
-						Grip1D_Foot_R = ClimbComponent->GetGripNeighborDown(Grip1D_Foot_R, 2);
-						Grip1D_Foot_L = ClimbComponent->GetGripNeighborDown(Grip1D_Foot_L, 2);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Hand_R, 2);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, 2);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Foot_R, 2);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Foot_L, 2);
 						CurLadderStance = ELadderStance::ClimbDown;
 					}
 					ClimbDistance *= -1.0f;
@@ -470,7 +467,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 				if (IsClimbUp)
 				{
 					ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f);
-					Grip1D_Hand_L = ClimbComponent->GetGripNeighborUp(Grip1D_Hand_L, 2);
+					ClimbComponent->SetGripNeighborUp(Grip1D_Hand_L, 2);
 					Grip1D_Foot_L = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_R);
 					CurLadderStance = ELadderStance::ClimbUp_OneStep;
 				}
@@ -968,19 +965,19 @@ void ACharacterBase::SetNextGripDown_Implementation(FName BoneName, int32 Count)
 {
 	if (BoneName == FName("Hand_L"))
 	{
-		Grip1D_Hand_L = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_L, Count);
+		ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, Count);
 	}
 	else if (BoneName == FName("Hand_R"))
 	{
-		Grip1D_Hand_R = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_R, Count);
+		ClimbComponent->SetGripNeighborDown(Grip1D_Hand_R, Count);
 	}
 	else if (BoneName == FName("Foot_L"))
 	{
-		Grip1D_Foot_L = ClimbComponent->GetGripNeighborDown(Grip1D_Foot_L, Count);
+		ClimbComponent->SetGripNeighborDown(Grip1D_Foot_L, Count);
 	}
 	else if (BoneName == FName("Foot_R"))
 	{
-		Grip1D_Foot_R = ClimbComponent->GetGripNeighborDown(Grip1D_Foot_R, Count);
+		ClimbComponent->SetGripNeighborDown(Grip1D_Foot_R, Count);
 	}
 }
 
@@ -1038,54 +1035,62 @@ void ACharacterBase::DecideLadderStance()
 	//GetController()->SetIgnoreMoveInput(false);
 }
 
-TOptional<FVector> ACharacterBase::GetBoneTargetLoc(EBodyType BoneType)
+TOptional<TTuple<FVector, FVector>> ACharacterBase::GetBoneTargetLoc(EBodyType BoneType)
 {
 	AActor* LadderObject = ClimbComponent->GetClimbObject();
 
 	if (LadderObject == nullptr)
-		return TOptional<FVector>();
+		return TOptional<TTuple<FVector, FVector>>();
 
 	FVector LadderRight = LadderObject->GetActorForwardVector();
+	float DirectionScale = 20.0f;
+
+	LadderRight *= DirectionScale;
 
 	switch (BoneType)
 	{
 	case EBodyType::Hand_R:
 	{
 		if(Grip1D_Hand_R == nullptr)
-			return TOptional<FVector>();
+			return TOptional<TTuple<FVector, FVector>>();
 
-		//UE_LOG(LogTemp, Warning, TEXT("LadderRight Value = X : %f, Y : %f, Z : %f"), LadderRight.X, LadderRight.Y, LadderRight.Z);
-		//UE_LOG(LogTemp, Warning, TEXT("HandRightGrip Value = X : %f, Y : %f, Z : %f"), Grip1D_Hand_R->Position.X, Grip1D_Hand_R->Position.Y, Grip1D_Hand_R->Position.Z);
+		if (Grip1D_Hand_R->PrevGrip == nullptr)
+			return TTuple<FVector, FVector>(Grip1D_Hand_R->Position + LadderRight, GetMesh()->GetSocketLocation(FName("Palm_R")));
 
-		return Grip1D_Hand_R->Position + (LadderRight * 20.0f);
+		return TTuple<FVector, FVector>(Grip1D_Hand_R->Position + LadderRight, Grip1D_Hand_R->PrevGrip->Position + LadderRight);
 	}
 	case EBodyType::Hand_L:
 	{
 		if (Grip1D_Hand_L == nullptr)
-			return TOptional<FVector>();
+			return TOptional<TTuple<FVector, FVector>>();
 
-		return Grip1D_Hand_L->Position - (LadderRight * 20.0f);
+		if (Grip1D_Hand_L->PrevGrip == nullptr)
+			return TTuple<FVector, FVector>(Grip1D_Hand_L->Position - LadderRight, GetMesh()->GetSocketLocation(FName("Palm_L")));
+
+		return TTuple<FVector, FVector>(Grip1D_Hand_L->Position - LadderRight, Grip1D_Hand_L->PrevGrip->Position - LadderRight);
 	}
 	case EBodyType::Foot_R:
 	{
 		if (Grip1D_Foot_R == nullptr)
-			return TOptional<FVector>();
+			return TOptional<TTuple<FVector, FVector>>();
 
-		FVector AdjustGrip1D_Foot_R = Grip1D_Foot_R->Position + (LadderRight * 20.0f);
-		//AdjustGrip1D_Foot_R.Z += 20.0f;
-		return AdjustGrip1D_Foot_R;
+		if (Grip1D_Foot_R->PrevGrip == nullptr)
+			return TTuple<FVector, FVector>(Grip1D_Foot_R->Position + LadderRight, GetMesh()->GetSocketLocation(FName("ball_r")));
+
+		return TTuple<FVector, FVector>(Grip1D_Foot_R->Position + LadderRight, Grip1D_Foot_R->PrevGrip->Position + LadderRight);
 	}
 	case EBodyType::Foot_L:
 	{
 		if (Grip1D_Foot_L == nullptr)
-			return TOptional<FVector>();
+			return TOptional<TTuple<FVector, FVector>>();
 
-		FVector AdjustGrip1D_Foot_L = Grip1D_Foot_L->Position - (LadderRight * 20.0f);
-		//AdjustGrip1D_Foot_L.Z += 5.0f;
-		return AdjustGrip1D_Foot_L;
+		if (Grip1D_Foot_L->PrevGrip == nullptr)
+			return TTuple<FVector, FVector>(Grip1D_Foot_L->Position - LadderRight, GetMesh()->GetSocketLocation(FName("ball_l")));
+
+		return TTuple<FVector, FVector>(Grip1D_Foot_L->Position - LadderRight, Grip1D_Foot_L->PrevGrip->Position - LadderRight);
 	}
 	default:
-		return TOptional<FVector>();
+		return TOptional<TTuple<FVector, FVector>>();
 	}
 }
 
