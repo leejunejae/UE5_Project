@@ -152,55 +152,6 @@ void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	/*
-	if (CurrentState == ECharacterState::Ladder)
-	{
-		switch (CurLadderStance)
-		{
-		case ELadderStance::Idle_OneStep:
-		{
-			UE_LOG(LogTemp, Error, TEXT("Idle_OneStep"));
-			break;
-		}
-		case ELadderStance::Idle:
-		{
-			UE_LOG(LogTemp, Error, TEXT("Idle"));
-			break;
-		}
-		case ELadderStance::ClimbUp_OneStep:
-		{
-			UE_LOG(LogTemp, Error, TEXT("ClimbUp_OneStep"));
-			break;
-		}
-		case ELadderStance::ClimbUp:
-		{
-			UE_LOG(LogTemp, Error, TEXT("ClimbUp"));
-			break;
-		}
-		case ELadderStance::ClimbDown_OneStep:
-		{
-			UE_LOG(LogTemp, Error, TEXT("ClimbDown_OneStep"));
-			break;
-		}
-		case ELadderStance::ClimbDown:
-		{
-			UE_LOG(LogTemp, Error, TEXT("ClimbDown"));
-			break;
-		}
-		case ELadderStance::Enter_From_Bottom:
-		{
-			UE_LOG(LogTemp, Error, TEXT("Enter_From_Bottom"));
-			break;
-		}
-		case ELadderStance::Enter_From_Top:
-		{
-			UE_LOG(LogTemp, Error, TEXT("Enter_From_Top"));
-			break;
-		}
-		}
-	}
-	*/
-	//UE_LOG(LogTemp, Error, TEXT("%f"), GetCharacterMovement()->MaxWalkSpeed);
 
 	if (CurGroundStance == EGroundStance::Sprint)
 	{
@@ -349,6 +300,8 @@ void ACharacterBase::PostInitializeComponents()
 	CharacterBaseAnim = Cast<UCharacterBaseAnimInstance>(GetMesh()->GetAnimInstance());
 
 	DamageSystem->OnDeath.BindUFunction(this, FName("Death"));
+
+	CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
 }
 
 /* Input Action */
@@ -426,7 +379,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 						//ClimbDistance -= 140.0f;
 						GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
 						CurLadderStance = ELadderStance::Exit_From_Top;
-						CurrentState = ECharacterState::LadderToGround;
+						//CurrentState = ECharacterState::LadderToGround;
 						//OnExitTopLadder.ExecuteIfBound();
 							
 					}
@@ -477,7 +430,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 					GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 					//GetController()->SetIgnoreMoveInput(true);
 					CurLadderStance = ELadderStance::Exit_From_Bottom;
-					CurrentState = ECharacterState::LadderToGround;
+					//CurrentState = ECharacterState::LadderToGround;
 				}
 				break;	
 			}
@@ -842,7 +795,7 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 void ACharacterBase::OnMoveEndToLadder()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Move completed!"));
-	CurrentState = ECharacterState::GroundToLadder;
+	CurrentState = ECharacterState::Ladder;
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
 	//CanMovementInput = false;
@@ -1020,11 +973,13 @@ void ACharacterBase::DecideLadderStance()
 	}
 	case ELadderStance::Exit_From_Top:
 	{
+		CurrentState = ECharacterState::Ground;
 		CurLadderStance = ELadderStance::Idle;
 		break;
 	}
 	case ELadderStance::Exit_From_Bottom:
 	{
+		CurrentState = ECharacterState::Ground;
 		CurLadderStance = ELadderStance::Idle;
 		break;
 	}

@@ -275,6 +275,11 @@ private:
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_DisableRootLock();
 
+protected:
+	// Foot IK //
+	TTuple<FVector, float> FootTrace(FName SocketName);
+	void FootRotation(float DeltaTime, FVector TargetNormal, FRotator* FootRotator, float fInterpSpeed);
+
 #pragma region Movement
 	////////////////////////////////////
 	// Variables For FootIK
@@ -309,12 +314,6 @@ private:
 	// Turn In Place // 
 	void SetPitch();
 	void SetRootYawOffset();
-
-	// Foot IK //
-	TTuple<FVector, float> FootTrace(FName SocketName);
-	void FootRotation(float DeltaTime, FVector TargetNormal, FRotator* FootRotator, float fInterpSpeed);
-	void FootPlacement(float DeltaTime, float TargetValue, float* FootValue, float InterpSpeed);
-
 
 private:
 	float InputDirectionX;
