@@ -28,18 +28,11 @@ struct FFootTraceStruct
 		float IK;
 };
 */
-struct FIKCurveData
+struct FVectorCurveNameSet
 {
-	FName CurveName;
-	float CurveValue = 0.0f;
-	float PrevCurve = 0.0f;
-};
-
-struct FIKCurveDataSet
-{
-	FIKCurveData& CurveDataX;
-	FIKCurveData& CurveDataY;
-	FIKCurveData& CurveDataZ;
+	FName CurveNameX;
+	FName CurveNameY;
+	FName CurveNameZ;
 };
 
 UCLASS()
@@ -357,13 +350,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_NOT_ResetLadder();
 
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_NextGripRightHand();
 
-
-	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FIKCurveDataSet CurveList, FVector& BoneTarget, float LimbYDistance, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
-	//void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, TArray<FName> CurveList, FVector& BoneTarget, float& LimbLadderAlpha, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
-
+	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FVectorCurveNameSet CurveNameList, FVector& BoneTarget, float LimbYDistance, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
+	
 	void CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds);
 	TOptional<FVector> SetIKTargetLocation(FName BoneName, FName MiddleBoneName, float CurveValue, float DeltaSeconds, float AdjCoefft = 1.0f);
 
@@ -372,6 +361,8 @@ private:
 	float CurveValue_Root_Z;
 	float CurveValue_Root_Y;
 	float CurveValue_Root_Rotator;
+
+	float RootCurveDifferenceSum = 0.0f;
 #pragma endregion 
 
 #pragma endregion 
@@ -407,9 +398,6 @@ private:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
 		float RightFootOffset;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float PelvisStrength;
-
 	// For Ladder IK
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
 		float RightFootLadderAlpha;
@@ -426,27 +414,15 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
 		FVector RightFootTarget;
 
-	FIKCurveData Hand_L_X_CurveData = { TEXT("Hand_L_Translation_X")};
-	FIKCurveData Hand_L_Y_CurveData = { TEXT("Hand_L_Translation_Y")};
-	FIKCurveData Hand_L_Z_CurveData = { TEXT("Hand_L_Translation_Z")};
-
-	FIKCurveData Hand_R_X_CurveData = { TEXT("Hand_R_Translation_X")};
-	FIKCurveData Hand_R_Y_CurveData = { TEXT("Hand_R_Translation_Y")};
-	FIKCurveData Hand_R_Z_CurveData = { TEXT("Hand_R_Translation_Z")};
-
-	FIKCurveData Foot_L_X_CurveData = { TEXT("Foot_L_Translation_X")};
-	FIKCurveData Foot_L_Y_CurveData = { TEXT("Foot_L_Translation_Y")};
-	FIKCurveData Foot_L_Z_CurveData = { TEXT("Foot_L_Translation_Z")};
-
-	FIKCurveData Foot_R_X_CurveData = { TEXT("Foot_R_Translation_X")};
-	FIKCurveData Foot_R_Y_CurveData = { TEXT("Foot_R_Translation_Y")};
-	FIKCurveData Foot_R_Z_CurveData = { TEXT("Foot_R_Translation_Z")};
+	FVectorCurveNameSet Hand_L_CurveNameSet = { TEXT("Hand_L_Translation_X"), TEXT("Hand_L_Translation_Y") , TEXT("Hand_L_Translation_Z") };
+	FVectorCurveNameSet Hand_R_CurveNameSet = { TEXT("Hand_R_Translation_X"), TEXT("Hand_R_Translation_Y") , TEXT("Hand_R_Translation_Z") };
+	FVectorCurveNameSet Foot_L_CurveNameSet = { TEXT("Foot_L_Translation_X"), TEXT("Foot_L_Translation_Y") , TEXT("Foot_L_Translation_Z") };
+	FVectorCurveNameSet Foot_R_CurveNameSet = { TEXT("Foot_R_Translation_X"), TEXT("Foot_R_Translation_Y") , TEXT("Foot_R_Translation_Z") };
 
 	float Hand_L_Y_Distance;
 	float Hand_R_Y_Distance;
 	float Foot_L_Y_Distance;
 	float Foot_R_Y_Distance;
-
 
 	FName Foot_L_Translation_Z = TEXT("Foot_L_Translation_Z");
 	FName Foot_R_Translation_Z = TEXT("Foot_R_Translation_Z");

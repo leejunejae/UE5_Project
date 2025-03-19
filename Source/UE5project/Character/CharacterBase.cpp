@@ -428,9 +428,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 				{
 					// Exit from Bottom
 					GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-					//GetController()->SetIgnoreMoveInput(true);
 					CurLadderStance = ELadderStance::Exit_From_Bottom;
-					//CurrentState = ECharacterState::LadderToGround;
 				}
 				break;	
 			}
@@ -764,7 +762,8 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 				else
 				{
 					CurLadderStance = ELadderStance::Enter_From_Top;
-					ClimbDistance = ClimbComponent->GetEnterTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
+					//ClimbDistance = ClimbComponent->GetEnterTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
+					UE_LOG(LogTemp, Warning, TEXT("ClimbDistance = %f"), ClimbDistance);
 					Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
 					Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
 					Grip1D_Foot_L = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_L, GripInterval.GetValue() - 1);
@@ -1010,7 +1009,7 @@ TOptional<TTuple<FVector, FVector>> ACharacterBase::GetBoneTargetLoc(EBodyType B
 			return TOptional<TTuple<FVector, FVector>>();
 
 		if (Grip1D_Hand_R->PrevGrip == nullptr)
-			return TTuple<FVector, FVector>(Grip1D_Hand_R->Position + LadderRight, GetMesh()->GetSocketLocation(FName("Palm_R")));
+			return TTuple<FVector, FVector>(Grip1D_Hand_R->Position + LadderRight, GetMesh()->GetSocketLocation(FName("Hand_R_Init")));
 
 		return TTuple<FVector, FVector>(Grip1D_Hand_R->Position + LadderRight, Grip1D_Hand_R->PrevGrip->Position + LadderRight);
 	}
@@ -1020,7 +1019,7 @@ TOptional<TTuple<FVector, FVector>> ACharacterBase::GetBoneTargetLoc(EBodyType B
 			return TOptional<TTuple<FVector, FVector>>();
 
 		if (Grip1D_Hand_L->PrevGrip == nullptr)
-			return TTuple<FVector, FVector>(Grip1D_Hand_L->Position - LadderRight, GetMesh()->GetSocketLocation(FName("Palm_L")));
+			return TTuple<FVector, FVector>(Grip1D_Hand_L->Position - LadderRight, GetMesh()->GetSocketLocation(FName("Hand_L_Init")));
 
 		return TTuple<FVector, FVector>(Grip1D_Hand_L->Position - LadderRight, Grip1D_Hand_L->PrevGrip->Position - LadderRight);
 	}
@@ -1030,7 +1029,7 @@ TOptional<TTuple<FVector, FVector>> ACharacterBase::GetBoneTargetLoc(EBodyType B
 			return TOptional<TTuple<FVector, FVector>>();
 
 		if (Grip1D_Foot_R->PrevGrip == nullptr)
-			return TTuple<FVector, FVector>(Grip1D_Foot_R->Position + LadderRight, GetMesh()->GetSocketLocation(FName("ball_r")));
+			return TTuple<FVector, FVector>(Grip1D_Foot_R->Position + LadderRight, GetMesh()->GetSocketLocation(FName("Foot_R_Init")));
 
 		return TTuple<FVector, FVector>(Grip1D_Foot_R->Position + LadderRight, Grip1D_Foot_R->PrevGrip->Position + LadderRight);
 	}
@@ -1040,7 +1039,7 @@ TOptional<TTuple<FVector, FVector>> ACharacterBase::GetBoneTargetLoc(EBodyType B
 			return TOptional<TTuple<FVector, FVector>>();
 
 		if (Grip1D_Foot_L->PrevGrip == nullptr)
-			return TTuple<FVector, FVector>(Grip1D_Foot_L->Position - LadderRight, GetMesh()->GetSocketLocation(FName("ball_l")));
+			return TTuple<FVector, FVector>(Grip1D_Foot_L->Position - LadderRight, GetMesh()->GetSocketLocation(FName("Foot_L_Init")));
 
 		return TTuple<FVector, FVector>(Grip1D_Foot_L->Position - LadderRight, Grip1D_Foot_L->PrevGrip->Position - LadderRight);
 	}
