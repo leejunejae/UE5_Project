@@ -24,7 +24,9 @@ protected:
 
 #pragma region Climbable Object
 public:
-	TTuple<FVector, bool> SearchClimbTarget(FVector Start, FVector End, bool DebugTrace = false);
+	void RegisterClimbObject(AActor* RegistObject);
+	void DeRegisterClimbObject();
+	AActor* GetClimbObject();
 
 #pragma endregion
 
@@ -34,12 +36,7 @@ protected:
 	TArray<FGripNode2D> GripList2D;
 
 public:
-	void RegisterClimbObject(AActor* RegistObject);
-	void DeRegisterClimbObject();
-	AActor* GetClimbObject();
-
 	void SetGrip1DRelation(float MinInterval, float MaxInterval);
-	TOptional<FVector> GetExitLocation();
 	bool CheckGripListValid();
 
 	/// <summary>
@@ -66,15 +63,8 @@ public:
 
 	void SetLowestGrip1D(float MinHeight = 0.0f, float Comparision = 0.0f);
 
-	void SetGripNeighborUpByRange(FGripNode1D* CurrentGrip, float Range = 0);
-	void SetGripNeighborDownByRange(FGripNode1D* CurrentGrip, float Range = 0);
-
 	void SetGripNeighborUp(FGripNode1D*& CurrentGrip, int32 Count = 1);
 	void SetGripNeighborDown(FGripNode1D*& CurrentGrip, int32 Count = 1);
-
-
-
-	bool SetGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace = false);
 
 #pragma region Setting Value
 private:
@@ -94,10 +84,6 @@ public:
 
 #pragma region Ladder Climbing
 public:	
-	void SetELadderStance(ELadderStance StanceValue);
-	ELadderStance GetELadderStance();
-
-	USceneComponent* GetExitTarget();
 	TOptional<FTransform> GetEnterTopPosition();
 	TOptional<FTransform> GetInitTopPosition();
 	TOptional<FTransform> GetInitBottomPosition();
@@ -105,8 +91,5 @@ public:
 
 private:
 	AActor* ClimbObject;
-
-	ELadderStance CurLadderStance;
-
 #pragma endregion
 };

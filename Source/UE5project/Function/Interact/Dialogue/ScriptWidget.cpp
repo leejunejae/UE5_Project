@@ -1,25 +1,25 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PBScriptWidget.h"
-#include "PBDialogueSystem.h"
+#include "ScriptWidget.h"
+#include "DialogueSystem.h"
 #include "../../../NPC/PBNPCBase.h"
 #include "Input/Reply.h"
-#include "../PBInteractInterface.h"
+#include "../InteractInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetStringLibrary.h"
 
-UPBScriptWidget::UPBScriptWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+UScriptWidget::UScriptWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	
 }
 
-void UPBScriptWidget::SetScriptWidget(APBNPCBase* InteractActor)
+void UScriptWidget::SetScriptWidget(APBNPCBase* InteractActor)
 {
 	if (InteractActor)
 	{
 		DialogueActor = InteractActor;
-		DialogueComponent = DialogueActor->GetComponentByClass<UPBDialogueSystem>();
+		DialogueComponent = DialogueActor->GetComponentByClass<UDialogueSystem>();
 		if (DialogueComponent)
 		{
 			DialogueDT = DialogueComponent->GetDialogueDT();
@@ -39,7 +39,7 @@ void UPBScriptWidget::SetScriptWidget(APBNPCBase* InteractActor)
 	}
 }
 
-void UPBScriptWidget::ShowDialogue(FName RowName)
+void UScriptWidget::ShowDialogue(FName RowName)
 {
 	CurDialogueDTRow = DialogueDT->FindRow<FDialogueContentStruct>(RowName, "");
 	if (!CurDialogueDTRow)
@@ -50,11 +50,11 @@ void UPBScriptWidget::ShowDialogue(FName RowName)
 	SetTypeWriter(CurDialogueDTRow->Text);
 }
 
-void UPBScriptWidget::SetTypeWriter(FText CurText)
+void UScriptWidget::SetTypeWriter(FText CurText)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("SetTypeWriter"));
 	InitTypeWriter();
-	TypingDelay.BindUObject(this, &UPBScriptWidget::TypeWriter);
+	TypingDelay.BindUObject(this, &UScriptWidget::TypeWriter);
 	ScriptText = CurText;
 	ScriptString = ScriptText.ToString();
 	ScriptLength = ScriptString.Len();
@@ -62,7 +62,7 @@ void UPBScriptWidget::SetTypeWriter(FText CurText)
 	IsTypeWriting = true;
 }
 
-void UPBScriptWidget::TypeWriter()
+void UScriptWidget::TypeWriter()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("TypeWrtier"));
 	ScriptChar = UKismetStringLibrary::GetSubstring(ScriptString, ScriptIndex, 1);
@@ -91,14 +91,14 @@ void UPBScriptWidget::TypeWriter()
 	}
 }
 
-void UPBScriptWidget::CompleteTypeWriter()
+void UScriptWidget::CompleteTypeWriter()
 {
 	GetWorld()->GetTimerManager().ClearTimer(TypingDelayHandle);
 	ScriptTextBlock->SetText(CurDialogueDTRow->Text);
 	IsTypeWriting = false;
 }
 
-void UPBScriptWidget::InitTypeWriter()
+void UScriptWidget::InitTypeWriter()
 {
 	ScriptIndex = 0;
 	ScriptLength = 0;
@@ -108,21 +108,21 @@ void UPBScriptWidget::InitTypeWriter()
 	ScriptChar = NULL;
 }
 
-void UPBScriptWidget::CloseDialogue()
+void UScriptWidget::CloseDialogue()
 {
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	FInputModeGameOnly CharacterInputMode;
 	PlayerController->SetInputMode(CharacterInputMode);
 	RemoveFromViewport();
-	IPBInteractInterface::Execute_EndInteract(DialogueActor);
+	IInteractInterface::Execute_EndInteract(DialogueActor);
 }
 
-FName UPBScriptWidget::GetDTLoc()
+FName UScriptWidget::GetDTLoc()
 {
 	return DialogueComponent->GetPrevDialogLoc() == NAME_None ? FName("Start") : DialogueComponent->GetPrevDialogLoc();
 }
 
-FReply UPBScriptWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+FReply UScriptWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
 	Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 	if (IsTypeWriting)

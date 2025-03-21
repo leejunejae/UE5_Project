@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Engine/DataTable.h"
-#include "PBScriptWidget.h"
-#include "PBDialogueSystem.generated.h"
+#include "ScriptWidget.h"
+#include "DialogueSystem.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class UE5PROJECT_API UPBDialogueSystem : public UActorComponent
+class UE5PROJECT_API UDialogueSystem : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UPBDialogueSystem();
+	UDialogueSystem();
 
 protected:
 	// Called when the game starts
@@ -36,10 +36,10 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UPBScriptWidget> DialogueWidgetClass;
+		TSubclassOf<class UScriptWidget> DialogueWidgetClass;
 
 	UPROPERTY(EditAnywhere)
-		class UPBScriptWidget* DialogueWidget;
+		class UScriptWidget* DialogueWidget;
 
 	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 		class UDataTable* NPCListDT;

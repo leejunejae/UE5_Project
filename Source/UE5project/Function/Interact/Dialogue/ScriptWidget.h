@@ -3,25 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../../PBWidgetInterface.h"
-#include "PDialogueStruct.h"
+#include "../../WidgetInterface.h"
+#include "DialogueStruct.h"
 #include "Components/RichTextBlock.h"
-#include "PBScriptWidget.generated.h"
+#include "ScriptWidget.generated.h"
 
 /**
  * 
  */
-class IPBInteractInterface;
+class IInteractInterface;
 class APBNPCBase;
-class UPBDialogueSystem;
+class UDialogueSystem;
 
 UCLASS()
-class UE5PROJECT_API UPBScriptWidget : public UPBWidgetInterface
+class UE5PROJECT_API UScriptWidget : public UWidgetInterface
 {
 	GENERATED_BODY()
 
 public:
-	UPBScriptWidget(const FObjectInitializer& ObjectInitializer);
+	UScriptWidget(const FObjectInitializer& ObjectInitializer);
 	void SetScriptWidget(APBNPCBase* InteractActor);
 	void ShowDialogue(FName RowName);
 	void SetTypeWriter(FText CurText);
@@ -41,7 +41,7 @@ private:
 		class URichTextBlock* ScriptTextBlock;
 
 	APBNPCBase* DialogueActor;
-	UPBDialogueSystem* DialogueComponent;
+	UDialogueSystem* DialogueComponent;
 	UDataTable* DialogueDT;
 	FDialogueContentStruct* CurDialogueDTRow;
 

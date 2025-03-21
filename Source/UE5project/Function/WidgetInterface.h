@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/DataTable.h"
-#include "PBWidgetInterface.generated.h"
+#include "WidgetInterface.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE5PROJECT_API UPBWidgetInterface : public UUserWidget
+class UE5PROJECT_API UWidgetInterface : public UUserWidget
 {
 	GENERATED_BODY()
 	

@@ -6,7 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "MapObjectBase.h"
-#include "Function/Interact/PBInteractInterface.h"
+#include "Function/Interact/InteractInterface.h"
 #include "Function/Interact/ClimbObjectInterface.h"
 #include "ClimbHeader.h"
 #include "ClimbableObjectBase.generated.h"
@@ -15,7 +15,7 @@
  * 
  */
 UCLASS()
-class UE5PROJECT_API AClimbableObjectBase : public AMapObjectBase, public IPBInteractInterface, public IClimbObjectInterface
+class UE5PROJECT_API AClimbableObjectBase : public AMapObjectBase, public IInteractInterface, public IClimbObjectInterface
 {
 	GENERATED_BODY()
 	
@@ -59,7 +59,4 @@ protected:
 
 	TArray<FGripNode1D> GripList1D;
 	TArray<FGripNode2D> GripList2D;
-
-	int32 TopGripIndex;
-	int32 BottomGripIndex;
 };

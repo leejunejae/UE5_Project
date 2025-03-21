@@ -10,7 +10,7 @@
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
-#include "../Function/PBDefaultWidget.h"
+#include "../Function/DefaultWidget.h"
 #include "Warrior/CharacterBaseAnimInstance.h"
 #include "Blueprint/UserWidget.h"
 #include "AIController.h"
@@ -104,7 +104,7 @@ ACharacterBase::ACharacterBase()
 		InteractAction = IP_Interact.Object;
 	}
 
-	static ConstructorHelpers::FClassFinder<UPBDefaultWidget> DEFAULTWIDGET(TEXT("/Game/Character/C_Source/PBDefaultWidget_BP"));
+	static ConstructorHelpers::FClassFinder<UDefaultWidget> DEFAULTWIDGET(TEXT("/Game/Character/C_Source/DefaultWidget_BP"));
 	if (!ensure(DEFAULTWIDGET.Class != nullptr)) return;
 
 	DefaultWidgetClass = DEFAULTWIDGET.Class;
@@ -141,7 +141,7 @@ void ACharacterBase::BeginPlay()
 
 	if (DefaultWidgetClass)
 	{
-		DefaultWidget = CreateWidget<UPBDefaultWidget>(PlayerController, DefaultWidgetClass);
+		DefaultWidget = CreateWidget<UDefaultWidget>(PlayerController, DefaultWidgetClass);
 	}
 
 	DamageSystem->SetHealth(GetMaxHP());
@@ -645,7 +645,7 @@ void ACharacterBase::Interact()
 		FVector ForwardVector = GetActorForwardVector();
 
 		float CurDotVal = 0.0f;
-		float Threshold = 0.5f;
+
 		for (auto& Act : InteractActorList)
 		{
 			FVector ActorLocation = Act->GetActorLocation();
@@ -672,19 +672,19 @@ void ACharacterBase::Interact()
 			return;
 		}
 
-		if (InteractActor->GetClass()->ImplementsInterface(UPBInteractInterface::StaticClass()))
+		if (InteractActor->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
 		{
 			if (InteractActor->ActorHasTag("NPC"))
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Interact To NPC"));
-				IPBInteractInterface::Execute_Interact(InteractActor, this);
+				IInteractInterface::Execute_Interact(InteractActor, this);
 				//GetController()->SetIgnoreMoveInput(true);
 			}
 			else if (InteractActor->ActorHasTag("Ride"))
 			{
 				IsInteraction = true;
 				bUseControllerRotationYaw = false;
-				IPBInteractInterface::Execute_RegisterInteractActor(InteractActor, this);
+				IInteractInterface::Execute_RegisterInteractActor(InteractActor, this);
 				MovetoInteractPos(InteractActor);
 			}
 			else if (InteractActor->ActorHasTag("Climbable"))
@@ -709,7 +709,7 @@ void ACharacterBase::Interact()
 
 void ACharacterBase::MovetoInteractPos(AActor* InteractActor)
 {
-	USceneComponent* Target = IPBInteractInterface::Execute_GetEnterInteractLocation(InteractActor, this);
+	USceneComponent* Target = IInteractInterface::Execute_GetEnterInteractLocation(InteractActor, this);
 	FVector DestLoc = Target->GetComponentLocation();
 	FRotator DestRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), DestLoc);
 	SetActorRotation(FRotator(0.0f, DestRot.Yaw, 0.0f));
@@ -803,7 +803,7 @@ void ACharacterBase::OnMoveEndToLadder()
 
 void ACharacterBase::MountEnd()
 {
-	IPBInteractInterface::Execute_Interact(Ride, this);
+	IInteractInterface::Execute_Interact(Ride, this);
 	//SpringArm->bUsePawnControlRotation = false;
 	//GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	//GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
@@ -1073,28 +1073,28 @@ void ACharacterBase::JumpTimer()
 
 bool ACharacterBase::IsPlayer_Implementation()
 {
-	IPBPlayerInterface::IsPlayer_Implementation();
+	IPlayerInterface::IsPlayer_Implementation();
 
 	return false;
 }
 
 void ACharacterBase::RegisterInteractableActor_Implementation(AActor* Interactable)
 {
-	IPBPlayerInterface::RegisterInteractableActor_Implementation(Interactable);
+	IPlayerInterface::RegisterInteractableActor_Implementation(Interactable);
 
 	InteractActorList.Add(Interactable);
 }
 
 void ACharacterBase::DeRegisterInteractableActor_Implementation(AActor* Interactable)
 {
-	IPBPlayerInterface::DeRegisterInteractableActor_Implementation(Interactable);
+	IPlayerInterface::DeRegisterInteractableActor_Implementation(Interactable);
 
 	InteractActorList.Remove(Interactable);
 }
 
 void ACharacterBase::EndInteraction_Implementation(AActor* Interactable)
 {
-	IPBPlayerInterface::EndInteraction_Implementation(Interactable);
+	IPlayerInterface::EndInteraction_Implementation(Interactable);
 
 	if (Interactable->ActorHasTag("Ride"))
 	{
@@ -1119,7 +1119,7 @@ TOptional<FVector> ACharacterBase::GetCharBoneLocation(FName BoneName)
 
 void ACharacterBase::DisMountEnd()
 {
-	USceneComponent* GetDownLoc = IPBInteractInterface::Execute_GetLeftInteractLocation(Ride);
+	USceneComponent* GetDownLoc = IInteractInterface::Execute_GetLeftInteractLocation(Ride);
 	SetActorLocation(GetDownLoc->GetComponentLocation());
 	SetActorRotation(GetDownLoc->GetRelativeRotation());
 	
@@ -1137,7 +1137,7 @@ void ACharacterBase::DisMountEnd()
 	SpringArm->bUsePawnControlRotation = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
-	FComponentTransform CameraTransform = IPBInteractInterface::Execute_GetCameraData(Ride);
+	FComponentTransform CameraTransform = IInteractInterface::Execute_GetCameraData(Ride);
 	Camera->SetWorldLocation(CameraTransform.Location);
 	Camera->SetWorldRotation(CameraTransform.Rotation);
 

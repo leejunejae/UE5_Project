@@ -4,8 +4,8 @@
 #include "PBNPCBase.h"
 #include <Engine/Classes/Components/CapsuleComponent.h>
 #include "Kismet/GameplayStatics.h"
-#include "../Function/PBPlayerInterface.h"
-#include "../Function/Interact/Dialogue/PBScriptWidget.h"
+#include "../Function/PlayerInterface.h"
+#include "../Function/Interact/Dialogue/ScriptWidget.h"
 #include "Blueprint/UserWidget.h"
 
 // Sets default values
@@ -18,7 +18,7 @@ APBNPCBase::APBNPCBase()
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 
-	DialogueSystem = CreateDefaultSubobject<UPBDialogueSystem>(TEXT("DialogSystem"));
+	DialogueSystem = CreateDefaultSubobject<UDialogueSystem>(TEXT("DialogSystem"));
 	DialogueSystem->bAutoActivate = true;
 
 	InteractTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractTrigger"));
@@ -26,7 +26,7 @@ APBNPCBase::APBNPCBase()
 	InteractTrigger->SetRelativeLocation(FVector(0.0f, 30.0f, 110.0f));
 	InteractTrigger->SetBoxExtent(FVector(100.0f, 100.0f, 100.0f));
 
-	static ConstructorHelpers::FClassFinder<UPBScriptWidget> ScriptWidget(TEXT("/Game/Character/C_Source/PBScriptWidget_BP.PBScriptWidget_BP_C"));
+	static ConstructorHelpers::FClassFinder<UScriptWidget> ScriptWidget(TEXT("/Game/Character/C_Source/ScriptWidget_BP.ScriptWidget_BP_C"));
 	if (!ensure(ScriptWidget.Class != nullptr)) return;
 
 	DialogueWidgetClass = ScriptWidget.Class;
@@ -54,7 +54,7 @@ void APBNPCBase::Interact_Implementation(ACharacter* InteractActor)
 			UE_LOG(LogTemp, Warning, TEXT("StartDialogue2"));
 			// Widget 인스턴스를 생성합니다.
 
-			DialogueWidget = CreateWidget<UPBScriptWidget>(PlayerController, DialogueWidgetClass);
+			DialogueWidget = CreateWidget<UScriptWidget>(PlayerController, DialogueWidgetClass);
 			DialogueWidget->SetScriptWidget(this);
 			DialogueSystem->SetIsDialogue(true);
 			//PlayerController->SetInputMode(FInputModeGameAndUI());
@@ -74,12 +74,12 @@ void APBNPCBase::Interact_Implementation(ACharacter* InteractActor)
 
 		// Widget Blueprint 클래스를 로드합니다.
 		/*
-		TSubclassOf<UUserWidget> DialogueWidgetClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/Character/C_Source/PBScriptWidget_BP.PBScriptWidget_BP_C"));
+		TSubclassOf<UUserWidget> DialogueWidgetClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/Character/C_Source/ScriptWidget_BP.ScriptWidget_BP_C"));
 
 		if (DialogueWidgetClass)
 		{
 			// Widget 인스턴스를 생성합니다.
-			UPBScriptWidget* DialogueWidget = CreateWidget<UPBScriptWidget>(PlayerController, DialogueWidgetClass);
+			UScriptWidget* DialogueWidget = CreateWidget<UScriptWidget>(PlayerController, DialogueWidgetClass);
 
 			if (DialogueWidget)
 			{
@@ -111,9 +111,9 @@ void APBNPCBase::TriggerBegin(UPrimitiveComponent* OverlappedComp, AActor* Other
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
-		if (OtherActor->GetClass()->ImplementsInterface(UPBPlayerInterface::StaticClass()))
+		if (OtherActor->GetClass()->ImplementsInterface(UPlayerInterface::StaticClass()))
 		{
-			IPBPlayerInterface::Execute_RegisterInteractableActor(OtherActor, this);
+			IPlayerInterface::Execute_RegisterInteractableActor(OtherActor, this);
 			UE_LOG(LogTemp, Warning, TEXT("Can Talk"));
 		}
 	}
@@ -123,9 +123,9 @@ void APBNPCBase::TriggerEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
-		if (OtherActor->GetClass()->ImplementsInterface(UPBPlayerInterface::StaticClass()))
+		if (OtherActor->GetClass()->ImplementsInterface(UPlayerInterface::StaticClass()))
 		{
-			IPBPlayerInterface::Execute_DeRegisterInteractableActor(OtherActor, this);
+			IPlayerInterface::Execute_DeRegisterInteractableActor(OtherActor, this);
 		}
 	}
 }

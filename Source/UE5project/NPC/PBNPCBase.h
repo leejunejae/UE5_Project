@@ -6,16 +6,16 @@
 #include "GameFramework/Character.h"
 #include "Components/BoxComponent.h"
 #include "Engine/DataTable.h"
-#include "../Function/Interact/PBInteractInterface.h"
-#include "../Function/Interact/Dialogue/PBDialogueSystem.h"
-#include "../Function/Interact/Dialogue/PBScriptWidget.h"
+#include "../Function/Interact/InteractInterface.h"
+#include "../Function/Interact/Dialogue/DialogueSystem.h"
+#include "../Function/Interact/Dialogue/ScriptWidget.h"
 #include "PBNPCBase.generated.h"
 
-class UPBDialogueSystem;
+class UDialogueSystem;
 class UBoxComponent;
 
 UCLASS()
-class UE5PROJECT_API APBNPCBase : public ACharacter, public IPBInteractInterface
+class UE5PROJECT_API APBNPCBase : public ACharacter, public IInteractInterface
 {
 	GENERATED_BODY()
 
@@ -49,16 +49,16 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UPBScriptWidget> DialogueWidgetClass;
+		TSubclassOf<class UScriptWidget> DialogueWidgetClass;
 
 	UPROPERTY(EditAnywhere)
-		class UPBScriptWidget* DialogueWidget;
+		class UScriptWidget* DialogueWidget;
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
 		UBoxComponent* InteractTrigger;
 
 	UPROPERTY(VisibleAnywhere, Category = Dialog)
-		UPBDialogueSystem* DialogueSystem;
+		UDialogueSystem* DialogueSystem;
 
 	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 		FName NPCName;

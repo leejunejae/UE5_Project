@@ -9,7 +9,7 @@
 #include "EnhancedInputComponent.h"
 #include "Components/BoxComponent.h"
 #include "../PEnumHeader.h"
-#include "../Function/Interact/PBInteractInterface.h"
+#include "../Function/Interact/InteractInterface.h"
 #include "../Function/Interact/Ride/RideInterface.h"
 #include "Ride.generated.h"
 
@@ -27,7 +27,7 @@ enum class HorseDirection : uint8
 };
 
 UCLASS()
-class UE5PROJECT_API ARide : public ACharacter, public IPBInteractInterface, public IRideInterface
+class UE5PROJECT_API ARide : public ACharacter, public IInteractInterface, public IRideInterface
 {
 	GENERATED_BODY()
 

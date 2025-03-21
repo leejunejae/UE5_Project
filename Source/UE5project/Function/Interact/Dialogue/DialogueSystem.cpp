@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PBDialogueSystem.h"
+#include "DialogueSystem.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
-UPBDialogueSystem::UPBDialogueSystem()
+UDialogueSystem::UDialogueSystem()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -13,7 +13,7 @@ UPBDialogueSystem::UPBDialogueSystem()
 
 	// ...
 
-	static ConstructorHelpers::FClassFinder<UPBScriptWidget> ScriptWidget (TEXT("/Game/Character/C_Source/PBScriptWidget_BP.PBScriptWidget_BP_C"));
+	static ConstructorHelpers::FClassFinder<UScriptWidget> ScriptWidget (TEXT("/Game/Character/C_Source/ScriptWidget_BP.ScriptWidget_BP_C"));
 	if (!ensure(ScriptWidget.Class != nullptr)) return;
 
 	DialogueWidgetClass = ScriptWidget.Class;
@@ -29,7 +29,7 @@ UPBDialogueSystem::UPBDialogueSystem()
 
 
 // Called when the game starts
-void UPBDialogueSystem::BeginPlay()
+void UDialogueSystem::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -39,39 +39,39 @@ void UPBDialogueSystem::BeginPlay()
 
 
 // Called every frame
-void UPBDialogueSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UDialogueSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
 }
 
-void UPBDialogueSystem::SetDialogueDT(UDataTable* InitDialogueDT)
+void UDialogueSystem::SetDialogueDT(UDataTable* InitDialogueDT)
 {
 	DialogueDT = InitDialogueDT;
 }
 
-void UPBDialogueSystem::SetParticipant(FName CurParticipant)
+void UDialogueSystem::SetParticipant(FName CurParticipant)
 {
 	Participant.RowName = CurParticipant;
 }
 
-void UPBDialogueSystem::SetIsDialogue(bool CurDialogue)
+void UDialogueSystem::SetIsDialogue(bool CurDialogue)
 {
 	IsDialog = CurDialogue;
 }
 
-UDataTable* UPBDialogueSystem::GetDialogueDT()
+UDataTable* UDialogueSystem::GetDialogueDT()
 {
 	return DialogueDT;
 }
 
-FName UPBDialogueSystem::GetPrevDialogLoc()
+FName UDialogueSystem::GetPrevDialogLoc()
 {
 	return Mark;
 }
 
-void UPBDialogueSystem::StartDialogue(AActor* InteractPlayer)
+void UDialogueSystem::StartDialogue(AActor* InteractPlayer)
 {
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (PlayerController)
@@ -82,7 +82,7 @@ void UPBDialogueSystem::StartDialogue(AActor* InteractPlayer)
 			UE_LOG(LogTemp, Warning, TEXT("StartDialogue2"));
 			// Widget 인스턴스를 생성합니다.
 
-			DialogueWidget = CreateWidget<UPBScriptWidget>(PlayerController, DialogueWidgetClass);
+			DialogueWidget = CreateWidget<UScriptWidget>(PlayerController, DialogueWidgetClass);
 			//DialogueWidget->SetScriptWidget(InteractPlayer);
 			IsDialog = true;
 			/*

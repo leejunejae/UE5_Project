@@ -11,7 +11,7 @@
 #include "EnhancedInputComponent.h"
 #include "KismetAnimationLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "../Function/PBPlayerInterface.h"
+#include "../Function/PlayerInterface.h"
 #include "../Function/Combat/PBDamagableInterface.h"
 #include "../Function/Combat/PBDamageSystem.h"
 #include "../Function/Interact/ClimbComponent.h"
@@ -19,7 +19,7 @@
 #include "../Enemy/Human/PBEHuman.h"
 #include "NavigationSystem.h"
 #include "NavigationInvokerComponent.h"
-#include "../Function/Interact/PBInteractInterface.h"
+#include "../Function/Interact/InteractInterface.h"
 #include "../Function/Interact/Ride/RideInterface.h"
 #include "Sound/SoundCue.h" 
 #include "MotionWarpingComponent.h"
@@ -47,7 +47,7 @@ enum class CharState : uint8
 };
 
 UCLASS()
-class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPBPlayerInterface, public IClimbInterface
+class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPlayerInterface, public IClimbInterface
 {
 	GENERATED_BODY()
 
@@ -72,10 +72,10 @@ public:
 /* PRIVATE VARIATION */
 private:
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UPBDefaultWidget> DefaultWidgetClass;
+		TSubclassOf<class UDefaultWidget> DefaultWidgetClass;
 
 	UPROPERTY(EditAnywhere)
-		class UPBDefaultWidget* DefaultWidget;
+		class UDefaultWidget* DefaultWidget;
 
 	UPROPERTY(EditAnywhere)
 		class UNavigationInvokerComponent* NavigationInvokerComponent;

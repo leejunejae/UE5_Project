@@ -25,58 +25,9 @@ void UClimbComponent::BeginPlay()
 	
 }
 
-TTuple<FVector, bool> UClimbComponent::SearchClimbTarget(FVector Start, FVector End, bool DebugTrace)
-{
-	TArray<FHitResult> HitResult;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.bTraceComplex = true;
-	enum ECollisionChannel TraceChannel = ECC_Visibility;
-
-	bool bHit = GetWorld()->SweepMultiByChannel(
-		HitResult,
-		Start,
-		End,
-		FQuat::Identity,
-		TraceChannel,
-		FCollisionShape::MakeSphere(40.0f),
-		CollisionParams
-	);
-
-	FVector TraceVec = End - Start;
-	FVector Center = Start + TraceVec * 0.5f;
-	float HalfHeight = FVector::Dist(Start, End) * 0.5f;
-	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
-	float DebugLifeTime = 5.0f;
-
-	for (FHitResult Result : HitResult)
-	{
-		if (Result.GetActor()->ActorHasTag(FName("Climbable")))
-		{
-			if (DebugTrace)
-			{
-				DrawDebugCapsule(
-					GetWorld(),
-					Center,
-					HalfHeight,
-					40.0f,
-					CapsuleRot,
-					FColor::Green,
-					false,
-					DebugLifeTime
-				);
-			}
-
-			return MakeTuple(Result.ImpactPoint, true);
-		}
-	}
-
-	return MakeTuple(FVector::ZeroVector, false);
-}
-
 void UClimbComponent::RegisterClimbObject(AActor* RegistObject)
 {
 	ClimbObject = RegistObject;
-	//UE_LOG(LogTemp, Warning, TEXT("Register Climb Object"));
 	if (ClimbObject->GetClass()->ImplementsInterface(UClimbObjectInterface::StaticClass()))
 	{
 		if (ClimbObject->ActorHasTag(FName("Ladder")))
@@ -88,16 +39,6 @@ void UClimbComponent::RegisterClimbObject(AActor* RegistObject)
 				SetLowestGrip1D(MinFirstGripHeight, GetInitBottomPosition().GetValue().GetLocation().Z);
 			}
 		}
-		/*
-		if (GripList1D.IsEmpty())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("GripList is Empty"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("GripList isnt Empty"));
-		}
-		*/
 	}
 }
 
@@ -125,18 +66,6 @@ void UClimbComponent::SetMinGripInterval(float MinInterval)
 void UClimbComponent::SetMaxGripInterval(float MaxInterval)
 {
 	MaxGripInterval = MaxInterval;
-}
-
-USceneComponent* UClimbComponent::GetExitTarget()
-{
-	/*
-	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Object Has Climb Interface"));
-		return ILadderInterface::Execute_GetExitTopLocation(ClimbObject);
-	}
-	*/
-	return nullptr;
 }
 
 TOptional<FTransform> UClimbComponent::GetEnterTopPosition()
@@ -185,58 +114,6 @@ float UClimbComponent::GetLadderTopTransitionDistance()
 	return FVector2D::Distance(InitLocation, EnterLocation);
 }
 
-TOptional<FVector> UClimbComponent::GetExitLocation()
-{
-	FVector ExitLocation = GetInitTopPosition().GetValue().GetLocation();
-	//UE_LOG(LogTemp, Warning, TEXT("ExitTarget Location : X = %f, Y = %f, Z = %f"), ExitTarget->GetComponentLocation().X, ExitTarget->GetComponentLocation().Y, ExitTarget->GetComponentLocation().Z);
-
-	float TraceDistance = 500.0f;
-	FVector StartLoc = ExitLocation;
-	FVector EndLoc = StartLoc - FVector(0.0f, 0.0f, TraceDistance);
-
-	FHitResult HitResult;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(GetOwner());
-	bool bHit = GetWorld()->SweepSingleByChannel(
-		HitResult,
-		StartLoc,
-		EndLoc,
-		FQuat::Identity,
-		ECC_Visibility,
-		FCollisionShape::MakeSphere(20.0f),
-		CollisionParams
-	);
-
-	FVector TraceVec = EndLoc - StartLoc;
-	FVector Center = StartLoc + TraceVec * 0.5f;
-	float HalfHeight = FVector::Dist(StartLoc, EndLoc) * 0.5f;
-	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
-	FColor DrawColor = bHit ? FColor::Green : FColor::Red;
-	float DebugLifeTime = 5.0f;
-
-	DrawDebugCapsule(
-		GetWorld(),
-		Center,
-		HalfHeight,
-		20.0f,
-		CapsuleRot,
-		DrawColor,
-		false,
-		DebugLifeTime
-	);
-
-	if (bHit)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Trace Hit"));
-		return HitResult.ImpactPoint;
-	}
-	else
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Trace Doesnt Hit"));
-		return TOptional<FVector>();
-	}
-}
-
 void UClimbComponent::SetGrip1DRelation(float MinInterval, float MaxInterval)
 {
 	if (!CheckGripListValid())
@@ -275,7 +152,6 @@ void UClimbComponent::SetGrip1DRelation(float MinInterval, float MaxInterval)
 			{
 				GripList1D[i].NeighborUp = { &GripList1D[upperindex], DistanceToUpperGrip };
 				//UE_LOG(LogTemp, Warning, TEXT("Neighbors Position Z of GripList[%d] UpperGrip = %f"), i, GripList1D[upperindex].Position.Z);
-				//upperindex++;
 				break;
 			}
 			else if (DistanceToUpperGrip < MinInterval)
@@ -357,10 +233,10 @@ FGripNode1D* UClimbComponent::GetGripNeighborUpByRange(const FGripNode1D* Curren
 		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDownByRange"));
 		return nullptr;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Current Index = %d"), CurrentGrip->GripIndex);
-	UE_LOG(LogTemp, Warning, TEXT("Neighbor Distance = %f"), CurrentGrip->NeighborUp.Distance);
-	UE_LOG(LogTemp, Warning, TEXT("Range = %f"), Range);
-	UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+	//UE_LOG(LogTemp, Warning, TEXT("Current Index = %d"), CurrentGrip->GripIndex);
+	//UE_LOG(LogTemp, Warning, TEXT("Neighbor Distance = %f"), CurrentGrip->NeighborUp.Distance);
+	//UE_LOG(LogTemp, Warning, TEXT("Range = %f"), Range);
+	//UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
 	if (CurrentGrip->NeighborUp.Distance < Range)
 	{
 		return GetGripNeighborUpByRange(CurrentGrip->NeighborUp.Neighbor, Range - CurrentGrip->NeighborUp.Distance);
@@ -379,10 +255,10 @@ FGripNode1D* UClimbComponent::GetGripNeighborDownByRange(const FGripNode1D* Curr
 	}
 	//check(CurrentGrip != nullptr);
 	//UE_LOG(LogTemp, Warning, TEXT("CurrentGrip Position: %d"), CurrentGrip->NeighborUp.Neighbor->GripIndex);
-	UE_LOG(LogTemp, Warning, TEXT("Current Index = %d"), CurrentGrip->GripIndex);
-	UE_LOG(LogTemp, Warning, TEXT("Neighbor Distance = %f"), CurrentGrip->NeighborDown.Distance);
-	UE_LOG(LogTemp, Warning, TEXT("Range = %f"), Range);
-	UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+	//UE_LOG(LogTemp, Warning, TEXT("Current Index = %d"), CurrentGrip->GripIndex);
+	//UE_LOG(LogTemp, Warning, TEXT("Neighbor Distance = %f"), CurrentGrip->NeighborDown.Distance);
+	//UE_LOG(LogTemp, Warning, TEXT("Range = %f"), Range);
+	//UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
 	if (CurrentGrip->NeighborDown.Distance < Range)
 	{
 		return GetGripNeighborDownByRange(CurrentGrip->NeighborDown.Neighbor, Range - CurrentGrip->NeighborDown.Distance);
@@ -396,7 +272,7 @@ FGripNode1D* UClimbComponent::GetGripNeighborUp(const FGripNode1D* CurrentGrip, 
 {	
 	if (CurrentGrip == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborUp"));
+		//UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborUp"));
 		return nullptr;
 	}
 	//check(CurrentGrip->NeighborUp.Neighbor != nullptr)
@@ -415,7 +291,7 @@ FGripNode1D* UClimbComponent::GetGripNeighborDown(const FGripNode1D* CurrentGrip
 {
 	if (CurrentGrip == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDown"));
+		//UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDown"));
 		return nullptr;
 	}
 
@@ -508,15 +384,6 @@ void UClimbComponent::SetLowestGrip1D(float MinHeight, float Comparison)
 	}
 }
 
-void UClimbComponent::SetGripNeighborUpByRange(FGripNode1D* CurrentGrip, float Range)
-{
-
-}
-
-void UClimbComponent::SetGripNeighborDownByRange(FGripNode1D* CurrentGrip, float Range)
-{
-}
-
 void UClimbComponent::SetGripNeighborUp(FGripNode1D*& CurrentGrip, int32 Count)
 {
 	if (!CurrentGrip)
@@ -551,82 +418,4 @@ void UClimbComponent::SetGripNeighborDown(FGripNode1D*& CurrentGrip, int32 Count
 	}
 
 	PrevGrip->PrevGrip = nullptr;
-}
-
-bool UClimbComponent::SetGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace)
-{
-	FVector End = Start + FVector(0.0f, 0.0f, TraceDistance);
-
-	TArray<FHitResult> HitResult;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.bTraceComplex = true;
-	enum ECollisionChannel TraceChannel = ECC_GameTraceChannel9;
-
-	bool bHit = GetWorld()->SweepMultiByChannel(
-		HitResult,
-		Start,
-		End,
-		FQuat::Identity,
-		TraceChannel,
-		FCollisionShape::MakeSphere(15.0f),
-		CollisionParams
-	);
-
-	FVector TraceVec = End - Start;
-	FVector Center = Start + TraceVec * 0.5f;
-	float HalfHeight = FVector::Dist(Start, End) * 0.5f;
-	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
-	float DebugLifeTime = 5.0f;
-
-	UE_LOG(LogTemp, Warning, TEXT("Number Of Hitting Collision : %d"), HitResult.Num());
-
-	for (FHitResult Result : HitResult)
-	{
-		if (Result.Distance > PassDistance)
-		{
-			if (DebugTrace)
-			{
-				DrawDebugCapsule(
-					GetWorld(),
-					Center,
-					HalfHeight,
-					15.0f,
-					CapsuleRot,
-					FColor::Green,
-					false,
-					DebugLifeTime
-				);
-			}
-
-			*Target = Result.GetComponent()->GetComponentLocation();
-
-			return true;
-		}
-	}
-
-	if (DebugTrace)
-	{
-		DrawDebugCapsule(
-			GetWorld(),
-			Center,
-			HalfHeight,
-			15.0f,
-			CapsuleRot,
-			FColor::Red,
-			false,
-			DebugLifeTime
-		);
-	}
-
-	return false;
-}
-
-void UClimbComponent::SetELadderStance(ELadderStance StanceValue)
-{
-	CurLadderStance = StanceValue;
-}
-
-ELadderStance UClimbComponent::GetELadderStance()
-{
-	return CurLadderStance;
 }
