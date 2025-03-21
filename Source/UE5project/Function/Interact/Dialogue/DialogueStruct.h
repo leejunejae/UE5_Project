@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "GameFramework/Actor.h"
-#include "PDialogueStruct.generated.h"
+#include "DialogueStruct.generated.h"
 
 USTRUCT(Atomic, BlueprintType)
 struct FDialogueParticipantStruct : public FTableRowBase
@@ -34,13 +34,13 @@ public:
 };
 
 UCLASS()
-class UE5PROJECT_API APDialogueStruct : public AActor
+class UE5PROJECT_API ADialogueStruct : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	APDialogueStruct();
+	ADialogueStruct();
 
 protected:
 	// Called when the game starts or when spawned

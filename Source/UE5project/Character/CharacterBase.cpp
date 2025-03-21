@@ -10,7 +10,7 @@
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
-#include "../Function/PBDefaultWidget.h"
+#include "../Function/DefaultWidget.h"
 #include "Warrior/CharacterBaseAnimInstance.h"
 #include "Blueprint/UserWidget.h"
 #include "AIController.h"
@@ -104,7 +104,7 @@ ACharacterBase::ACharacterBase()
 		InteractAction = IP_Interact.Object;
 	}
 
-	static ConstructorHelpers::FClassFinder<UPBDefaultWidget> DEFAULTWIDGET(TEXT("/Game/Character/C_Source/PBDefaultWidget_BP"));
+	static ConstructorHelpers::FClassFinder<UDefaultWidget> DEFAULTWIDGET(TEXT("/Game/Character/C_Source/DefaultWidget_BP"));
 	if (!ensure(DEFAULTWIDGET.Class != nullptr)) return;
 
 	DefaultWidgetClass = DEFAULTWIDGET.Class;
@@ -116,6 +116,10 @@ ACharacterBase::ACharacterBase()
 	CurGroundStance = EGroundStance::Jog;
 	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
+
+	ClimbComponent->SetMinGripInterval(MinGripInterval);
+	ClimbComponent->SetMaxGripInterval(MaxGripInterval);
+	ClimbComponent->SetMinFirstGripHeight(MinFirstGripHeight);
 
 	CameraSetting();
 	Tags.Add("Player");
@@ -137,7 +141,7 @@ void ACharacterBase::BeginPlay()
 
 	if (DefaultWidgetClass)
 	{
-		DefaultWidget = CreateWidget<UPBDefaultWidget>(PlayerController, DefaultWidgetClass);
+		DefaultWidget = CreateWidget<UDefaultWidget>(PlayerController, DefaultWidgetClass);
 	}
 
 	DamageSystem->SetHealth(GetMaxHP());
@@ -148,55 +152,6 @@ void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	/*
-	if (CurrentState == ECharacterState::Ladder)
-	{
-		switch (CurLadderStance)
-		{
-		case ELadderStance::Idle_OneStep:
-		{
-			UE_LOG(LogTemp, Error, TEXT("Idle_OneStep"));
-			break;
-		}
-		case ELadderStance::Idle:
-		{
-			UE_LOG(LogTemp, Error, TEXT("Idle"));
-			break;
-		}
-		case ELadderStance::ClimbUp_OneStep:
-		{
-			UE_LOG(LogTemp, Error, TEXT("ClimbUp_OneStep"));
-			break;
-		}
-		case ELadderStance::ClimbUp:
-		{
-			UE_LOG(LogTemp, Error, TEXT("ClimbUp"));
-			break;
-		}
-		case ELadderStance::ClimbDown_OneStep:
-		{
-			UE_LOG(LogTemp, Error, TEXT("ClimbDown_OneStep"));
-			break;
-		}
-		case ELadderStance::ClimbDown:
-		{
-			UE_LOG(LogTemp, Error, TEXT("ClimbDown"));
-			break;
-		}
-		case ELadderStance::Enter_From_Bottom:
-		{
-			UE_LOG(LogTemp, Error, TEXT("Enter_From_Bottom"));
-			break;
-		}
-		case ELadderStance::Enter_From_Top:
-		{
-			UE_LOG(LogTemp, Error, TEXT("Enter_From_Top"));
-			break;
-		}
-		}
-	}
-	*/
-	//UE_LOG(LogTemp, Error, TEXT("%f"), GetCharacterMovement()->MaxWalkSpeed);
 
 	if (CurGroundStance == EGroundStance::Sprint)
 	{
@@ -345,6 +300,8 @@ void ACharacterBase::PostInitializeComponents()
 	CharacterBaseAnim = Cast<UCharacterBaseAnimInstance>(GetMesh()->GetAnimInstance());
 
 	DamageSystem->OnDeath.BindUFunction(this, FName("Death"));
+
+	CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
 }
 
 /* Input Action */
@@ -399,56 +356,59 @@ void ACharacterBase::Move(const FInputActionValue& value)
 			{
 				if (IsClimbUp)
 				{
-					if (ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L, 1) == nullptr)
+					if (ClimbComponent->GetGripNeighborUp(Grip1D_Hand_L, 2) == nullptr)
 					{
 						// Exit From Top
-						if (ClimbComponent->FindGripNeighborUp(Grip1D_Hand_R, 1) == nullptr)
+						if (ClimbComponent->GetGripNeighborUp(Grip1D_Hand_R, 2) == nullptr)
 						{
-							ClimbDistance = FMath::Abs((ClimbComponent->GetExitLocation().GetValue().Z + GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) - GetActorLocation().Z);
-							Grip1D_Hand_R = Grip1D_Hand_L;
-							Grip1D_Foot_R = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_R, 1);
-							Grip1D_Foot_L = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_L, 1);
+							
+							ClimbDistance = FMath::Abs((ClimbComponent->GetInitTopPosition().GetValue().GetLocation().Z + GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) - GetActorLocation().Z);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Hand_R, 1);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Foot_R, 2);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Foot_L, 2);
 						}
 						else
 						{
 							ClimbDistance = Grip1D_Foot_L->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance;
-							Grip1D_Hand_R = ClimbComponent->FindGripNeighborUp(Grip1D_Hand_R, 1);
-							Grip1D_Hand_L = Grip1D_Hand_R;
-							Grip1D_Foot_R = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_R, 1);
-							Grip1D_Foot_L = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_L, 1);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Hand_R, 2);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Hand_L, 1);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Foot_R, 2);
+							ClimbComponent->SetGripNeighborUp(Grip1D_Foot_L, 2);
 						}
 
 						//ClimbDistance -= 140.0f;
 						GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
 						CurLadderStance = ELadderStance::Exit_From_Top;
-						CurrentState = ECharacterState::LadderToGround;
+						//CurrentState = ECharacterState::LadderToGround;
+						//OnExitTopLadder.ExecuteIfBound();
+							
 					}
 					else
 					{
-						ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Hand_L->NeighborUp.Distance + Grip1D_Foot_L->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 4.0f) / 25.0f;
-						Grip1D_Hand_R = ClimbComponent->FindGripNeighborUp(Grip1D_Hand_R, 1);
-						Grip1D_Hand_L = ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L, 1);
-						Grip1D_Foot_R = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_R, 1);
-						Grip1D_Foot_L = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_L, 1);
+						ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Hand_L->NeighborUp.Distance + Grip1D_Foot_L->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f);
+						ClimbComponent->SetGripNeighborUp(Grip1D_Hand_R, 2);
+						ClimbComponent->SetGripNeighborUp(Grip1D_Hand_L, 2);
+						ClimbComponent->SetGripNeighborUp(Grip1D_Foot_R, 2);
+						ClimbComponent->SetGripNeighborUp(Grip1D_Foot_L, 2);
 						CurLadderStance = ELadderStance::ClimbUp;
 					}
 				}
 				else
 				{
-					if (ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1) == nullptr)
+					if (ClimbComponent->GetGripNeighborDown(Grip1D_Foot_R, 2) == nullptr || Grip1D_Foot_R->Tag.Contains(FName("LowestGrip")))
 					{
 						// Idle -> Idle_OneStep
-						ClimbDistance = Grip1D_Hand_R->NeighborDown.Distance / 25.0f;
-						Grip1D_Hand_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L, 1);
+						ClimbDistance = Grip1D_Hand_R->NeighborDown.Distance;
+						ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, 2);
 						CurLadderStance = ELadderStance::ClimbDown_OneStep;
 					}
 					else
 					{
-						ClimbDistance = ((Grip1D_Hand_R->NeighborDown.Distance + Grip1D_Hand_L->NeighborDown.Distance + Grip1D_Foot_L->NeighborDown.Distance + Grip1D_Foot_R->NeighborDown.Distance) / 4.0f) / 25.0f;
-						Grip1D_Hand_R = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_R, 1);
-						Grip1D_Hand_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L, 1);
-						Grip1D_Foot_R = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_R, 1);
-						Grip1D_Foot_L = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_L, 1);
+						ClimbDistance = ((Grip1D_Hand_R->NeighborDown.Distance + Grip1D_Hand_L->NeighborDown.Distance + Grip1D_Foot_L->NeighborDown.Distance + Grip1D_Foot_R->NeighborDown.Distance) / 2.0f);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Hand_R, 2);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, 2);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Foot_R, 2);
+						ClimbComponent->SetGripNeighborDown(Grip1D_Foot_L, 2);
 						CurLadderStance = ELadderStance::ClimbDown;
 					}
 					ClimbDistance *= -1.0f;
@@ -459,18 +419,16 @@ void ACharacterBase::Move(const FInputActionValue& value)
 			{
 				if (IsClimbUp)
 				{
-					ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f) / 25.0f;
-					Grip1D_Hand_L = ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L, 1);
-					Grip1D_Foot_L = ClimbComponent->FindGripNeighborUp(Grip1D_Foot_R);
+					ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f);
+					ClimbComponent->SetGripNeighborUp(Grip1D_Hand_L, 2);
+					Grip1D_Foot_L = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_R);
 					CurLadderStance = ELadderStance::ClimbUp_OneStep;
 				}
 				else
 				{
 					// Exit from Bottom
 					GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-					//GetController()->SetIgnoreMoveInput(true);
 					CurLadderStance = ELadderStance::Exit_From_Bottom;
-					CurrentState = ECharacterState::LadderToGround;
 				}
 				break;	
 			}
@@ -687,7 +645,7 @@ void ACharacterBase::Interact()
 		FVector ForwardVector = GetActorForwardVector();
 
 		float CurDotVal = 0.0f;
-		float Threshold = 0.5f;
+
 		for (auto& Act : InteractActorList)
 		{
 			FVector ActorLocation = Act->GetActorLocation();
@@ -714,19 +672,19 @@ void ACharacterBase::Interact()
 			return;
 		}
 
-		if (InteractActor->GetClass()->ImplementsInterface(UPBInteractInterface::StaticClass()))
+		if (InteractActor->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
 		{
 			if (InteractActor->ActorHasTag("NPC"))
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Interact To NPC"));
-				IPBInteractInterface::Execute_Interact(InteractActor, this);
+				IInteractInterface::Execute_Interact(InteractActor, this);
 				//GetController()->SetIgnoreMoveInput(true);
 			}
 			else if (InteractActor->ActorHasTag("Ride"))
 			{
 				IsInteraction = true;
 				bUseControllerRotationYaw = false;
-				IPBInteractInterface::Execute_RegisterInteractActor(InteractActor, this);
+				IInteractInterface::Execute_RegisterInteractActor(InteractActor, this);
 				MovetoInteractPos(InteractActor);
 			}
 			else if (InteractActor->ActorHasTag("Climbable"))
@@ -734,11 +692,14 @@ void ACharacterBase::Interact()
 				IsInteraction = true;
 				//GetController()->SetIgnoreMoveInput(true);
 				ClimbComponent->RegisterClimbObject(InteractActor);
-				if (ClimbComponent->CheckGripListValid())
+				/*
+				if (InteractActor->ActorHasTag("Ladder") && ClimbComponent->CheckGripListValid())
 				{
 					//UE_LOG(LogTemp, Warning, TEXT("GripList is Valid"));
 					ClimbComponent->SetGrip1DRelation(15.0f, 50.0f);
+					ClimbComponent->SetLowestGrip1D(45.0f, ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z);
 				}
+				*/
 				//UE_LOG(LogTemp, Warning, TEXT("Interact With Climbable Actor"));
 				MovetoInteractPos(InteractActor);
 			}
@@ -748,7 +709,7 @@ void ACharacterBase::Interact()
 
 void ACharacterBase::MovetoInteractPos(AActor* InteractActor)
 {
-	USceneComponent* Target = IPBInteractInterface::Execute_GetEnterInteractLocation(InteractActor, this);
+	USceneComponent* Target = IInteractInterface::Execute_GetEnterInteractLocation(InteractActor, this);
 	FVector DestLoc = Target->GetComponentLocation();
 	FRotator DestRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), DestLoc);
 	SetActorRotation(FRotator(0.0f, DestRot.Yaw, 0.0f));
@@ -779,37 +740,36 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 			Ride = Cast<ACharacter>(InteractActor);
 			IsRide = true;
-			//GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
 		}
 		else if (InteractActor->ActorHasTag("Ladder"))
 		{
 			CanMovementInput = false;
 			LatentInfo.ExecutionFunction = FName("OnMoveEndToLadder");
 
-			if (Target->ComponentHasTag("Bottom"))
-			{
-				CurLadderStance = ELadderStance::Enter_From_Bottom;
-				float ComparisonHeight = GetActorLocation().Z - GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-				Grip1D_Foot_R = ClimbComponent->FindGripByHeight(25.0f, ComparisonHeight);
-				Grip1D_Hand_L = ClimbComponent->FindGripByHeight(120.0f, ComparisonHeight);
-				Grip1D_Hand_R = Grip1D_Hand_L != nullptr ? ClimbComponent->FindGripNeighborUp(Grip1D_Hand_L) : nullptr;
+			float ComparisonHeight = ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z;
+			TOptional<int32> GripInterval = ClimbComponent->FindGripLevelDifference(ClimbComponent->GetLowestGrip1D(), ClimbComponent->GetGripByHeightUpWard(130.0f, ComparisonHeight));
 
-				UE_LOG(LogTemp, Warning, TEXT("Bottom"));
-			}
-			else
+			if (GripInterval.IsSet())
 			{
-				CurLadderStance = ELadderStance::Enter_From_Top;
-				ClimbDistance = ClimbComponent->GetInitTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
-				Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
-				Grip1D_Hand_R = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_L);
-				Grip1D_Foot_L = ClimbComponent->FindGripNeighborDown(Grip1D_Hand_R, 1);
-				Grip1D_Foot_R = ClimbComponent->FindGripNeighborDown(Grip1D_Foot_L);
-				UE_LOG(LogTemp, Warning, TEXT("ClimbDistance = %f"), ClimbDistance);
-				//ClimbComponent->
-				//Grip1D_Foot_R = 
-				UE_LOG(LogTemp, Warning, TEXT("Top"));
+				if (Target->ComponentHasTag("Bottom"))
+				{
+					CurLadderStance = ELadderStance::Enter_From_Bottom;
+					Grip1D_Foot_R = ClimbComponent->GetLowestGrip1D();
+					Grip1D_Hand_L = ClimbComponent->GetGripByHeightUpWard(130.0f, ComparisonHeight);
+					//ClimbComponent->GetGripNeighborUpByRange(Grip1D_Foot_R, 70.0f);
+					Grip1D_Hand_R = Grip1D_Hand_L != nullptr ? ClimbComponent->GetGripNeighborUp(Grip1D_Hand_L) : nullptr;
+				}
+				else
+				{
+					CurLadderStance = ELadderStance::Enter_From_Top;
+					//ClimbDistance = ClimbComponent->GetEnterTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
+					UE_LOG(LogTemp, Warning, TEXT("ClimbDistance = %f"), ClimbDistance);
+					Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
+					Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
+					Grip1D_Foot_L = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_L, GripInterval.GetValue() - 1);
+					Grip1D_Foot_R = ClimbComponent->GetGripNeighborDown(Grip1D_Foot_L);
+				}
 			}
-			//UE_LOG(LogTemp, Warning, TEXT("%s"), *ELadderStanceLog);
 		}
 
 		UKismetSystemLibrary::MoveComponentTo(
@@ -834,33 +794,16 @@ void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActo
 void ACharacterBase::OnMoveEndToLadder()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Move completed!"));
-	CurrentState = ECharacterState::GroundToLadder;
+	CurrentState = ECharacterState::Ladder;
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
 	//CanMovementInput = false;
 	IsClimb = true;
-
-	/*
-	if (CurLadderStance == ELadderStance::Enter_From_Top)
-	{
-		UKismetSystemLibrary::MoveComponentTo(
-			GetCapsuleComponent(),
-			ClimbComponent->getex,
-			Target->GetComponentRotation(),
-			false,
-			false,
-			0.1f,
-			false,
-			EMoveComponentAction::Type::Move,
-			LatentInfo
-		);
-	}
-	*/
 }
 
 void ACharacterBase::MountEnd()
 {
-	IPBInteractInterface::Execute_Interact(Ride, this);
+	IInteractInterface::Execute_Interact(Ride, this);
 	//SpringArm->bUsePawnControlRotation = false;
 	//GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	//GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
@@ -970,6 +913,26 @@ UClimbComponent* ACharacterBase::GetClimbComponent()
 	return ClimbComponent;
 }
 
+void ACharacterBase::SetNextGripDown_Implementation(FName BoneName, int32 Count)
+{
+	if (BoneName == FName("Hand_L"))
+	{
+		ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, Count);
+	}
+	else if (BoneName == FName("Hand_R"))
+	{
+		ClimbComponent->SetGripNeighborDown(Grip1D_Hand_R, Count);
+	}
+	else if (BoneName == FName("Foot_L"))
+	{
+		ClimbComponent->SetGripNeighborDown(Grip1D_Foot_L, Count);
+	}
+	else if (BoneName == FName("Foot_R"))
+	{
+		ClimbComponent->SetGripNeighborDown(Grip1D_Foot_R, Count);
+	}
+}
+
 void ACharacterBase::DecideLadderStance()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("DecideLadderStance"));
@@ -1009,11 +972,13 @@ void ACharacterBase::DecideLadderStance()
 	}
 	case ELadderStance::Exit_From_Top:
 	{
+		CurrentState = ECharacterState::Ground;
 		CurLadderStance = ELadderStance::Idle;
 		break;
 	}
 	case ELadderStance::Exit_From_Bottom:
 	{
+		CurrentState = ECharacterState::Ground;
 		CurLadderStance = ELadderStance::Idle;
 		break;
 	}
@@ -1024,54 +989,62 @@ void ACharacterBase::DecideLadderStance()
 	//GetController()->SetIgnoreMoveInput(false);
 }
 
-TOptional<FVector> ACharacterBase::GetBoneTargetLoc(EBodyType BoneType)
+TOptional<TTuple<FVector, FVector>> ACharacterBase::GetBoneTargetLoc(EBodyType BoneType)
 {
 	AActor* LadderObject = ClimbComponent->GetClimbObject();
 
 	if (LadderObject == nullptr)
-		return TOptional<FVector>();
+		return TOptional<TTuple<FVector, FVector>>();
 
 	FVector LadderRight = LadderObject->GetActorForwardVector();
+	float DirectionScale = 20.0f;
+
+	LadderRight *= DirectionScale;
 
 	switch (BoneType)
 	{
 	case EBodyType::Hand_R:
 	{
 		if(Grip1D_Hand_R == nullptr)
-			return TOptional<FVector>();
+			return TOptional<TTuple<FVector, FVector>>();
 
-		//UE_LOG(LogTemp, Warning, TEXT("LadderRight Value = X : %f, Y : %f, Z : %f"), LadderRight.X, LadderRight.Y, LadderRight.Z);
-		//UE_LOG(LogTemp, Warning, TEXT("HandRightGrip Value = X : %f, Y : %f, Z : %f"), Grip1D_Hand_R->Position.X, Grip1D_Hand_R->Position.Y, Grip1D_Hand_R->Position.Z);
+		if (Grip1D_Hand_R->PrevGrip == nullptr)
+			return TTuple<FVector, FVector>(Grip1D_Hand_R->Position + LadderRight, GetMesh()->GetSocketLocation(FName("Hand_R_Init")));
 
-		return Grip1D_Hand_R->Position + (LadderRight * 20.0f);
+		return TTuple<FVector, FVector>(Grip1D_Hand_R->Position + LadderRight, Grip1D_Hand_R->PrevGrip->Position + LadderRight);
 	}
 	case EBodyType::Hand_L:
 	{
 		if (Grip1D_Hand_L == nullptr)
-			return TOptional<FVector>();
+			return TOptional<TTuple<FVector, FVector>>();
 
-		return Grip1D_Hand_L->Position - (LadderRight * 20.0f);
+		if (Grip1D_Hand_L->PrevGrip == nullptr)
+			return TTuple<FVector, FVector>(Grip1D_Hand_L->Position - LadderRight, GetMesh()->GetSocketLocation(FName("Hand_L_Init")));
+
+		return TTuple<FVector, FVector>(Grip1D_Hand_L->Position - LadderRight, Grip1D_Hand_L->PrevGrip->Position - LadderRight);
 	}
 	case EBodyType::Foot_R:
 	{
 		if (Grip1D_Foot_R == nullptr)
-			return TOptional<FVector>();
+			return TOptional<TTuple<FVector, FVector>>();
 
-		FVector AdjustGrip1D_Foot_R = Grip1D_Foot_R->Position + (LadderRight * 20.0f);
-		//AdjustGrip1D_Foot_R.Z += 20.0f;
-		return AdjustGrip1D_Foot_R;
+		if (Grip1D_Foot_R->PrevGrip == nullptr)
+			return TTuple<FVector, FVector>(Grip1D_Foot_R->Position + LadderRight, GetMesh()->GetSocketLocation(FName("Foot_R_Init")));
+
+		return TTuple<FVector, FVector>(Grip1D_Foot_R->Position + LadderRight, Grip1D_Foot_R->PrevGrip->Position + LadderRight);
 	}
 	case EBodyType::Foot_L:
 	{
 		if (Grip1D_Foot_L == nullptr)
-			return TOptional<FVector>();
+			return TOptional<TTuple<FVector, FVector>>();
 
-		FVector AdjustGrip1D_Foot_L = Grip1D_Foot_L->Position - (LadderRight * 20.0f);
-		//AdjustGrip1D_Foot_L.Z += 5.0f;
-		return AdjustGrip1D_Foot_L;
+		if (Grip1D_Foot_L->PrevGrip == nullptr)
+			return TTuple<FVector, FVector>(Grip1D_Foot_L->Position - LadderRight, GetMesh()->GetSocketLocation(FName("Foot_L_Init")));
+
+		return TTuple<FVector, FVector>(Grip1D_Foot_L->Position - LadderRight, Grip1D_Foot_L->PrevGrip->Position - LadderRight);
 	}
 	default:
-		return TOptional<FVector>();
+		return TOptional<TTuple<FVector, FVector>>();
 	}
 }
 
@@ -1100,28 +1073,28 @@ void ACharacterBase::JumpTimer()
 
 bool ACharacterBase::IsPlayer_Implementation()
 {
-	IPBPlayerInterface::IsPlayer_Implementation();
+	IPlayerInterface::IsPlayer_Implementation();
 
 	return false;
 }
 
 void ACharacterBase::RegisterInteractableActor_Implementation(AActor* Interactable)
 {
-	IPBPlayerInterface::RegisterInteractableActor_Implementation(Interactable);
+	IPlayerInterface::RegisterInteractableActor_Implementation(Interactable);
 
 	InteractActorList.Add(Interactable);
 }
 
 void ACharacterBase::DeRegisterInteractableActor_Implementation(AActor* Interactable)
 {
-	IPBPlayerInterface::DeRegisterInteractableActor_Implementation(Interactable);
+	IPlayerInterface::DeRegisterInteractableActor_Implementation(Interactable);
 
 	InteractActorList.Remove(Interactable);
 }
 
 void ACharacterBase::EndInteraction_Implementation(AActor* Interactable)
 {
-	IPBPlayerInterface::EndInteraction_Implementation(Interactable);
+	IPlayerInterface::EndInteraction_Implementation(Interactable);
 
 	if (Interactable->ActorHasTag("Ride"))
 	{
@@ -1146,7 +1119,7 @@ TOptional<FVector> ACharacterBase::GetCharBoneLocation(FName BoneName)
 
 void ACharacterBase::DisMountEnd()
 {
-	USceneComponent* GetDownLoc = IPBInteractInterface::Execute_GetLeftInteractLocation(Ride);
+	USceneComponent* GetDownLoc = IInteractInterface::Execute_GetLeftInteractLocation(Ride);
 	SetActorLocation(GetDownLoc->GetComponentLocation());
 	SetActorRotation(GetDownLoc->GetRelativeRotation());
 	
@@ -1164,7 +1137,7 @@ void ACharacterBase::DisMountEnd()
 	SpringArm->bUsePawnControlRotation = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
-	FComponentTransform CameraTransform = IPBInteractInterface::Execute_GetCameraData(Ride);
+	FComponentTransform CameraTransform = IInteractInterface::Execute_GetCameraData(Ride);
 	Camera->SetWorldLocation(CameraTransform.Location);
 	Camera->SetWorldRotation(CameraTransform.Rotation);
 

@@ -24,7 +24,9 @@ protected:
 
 #pragma region Climbable Object
 public:
-	TTuple<FVector, bool> SearchClimbTarget(FVector Start, FVector End, bool DebugTrace = false);
+	void RegisterClimbObject(AActor* RegistObject);
+	void DeRegisterClimbObject();
+	AActor* GetClimbObject();
 
 #pragma endregion
 
@@ -34,44 +36,60 @@ protected:
 	TArray<FGripNode2D> GripList2D;
 
 public:
-	void RegisterClimbObject(AActor* RegistObject);
-	void DeRegisterClimbObject();
-	AActor* GetClimbObject();
-
 	void SetGrip1DRelation(float MinInterval, float MaxInterval);
-	TOptional<FVector> GetExitLocation();
 	bool CheckGripListValid();
+
+	/// <summary>
+	/// Getter Function For Find Grip about various rule
+	/// </summary>
 
 	FGripNode1D* GetLowestGrip1D();
 	FGripNode1D* GetHighestGrip1D();
-	FGripNode1D* FindGripByHeight(float MinHeight = 0.0f, float Comparison = 0.0f);
-	FGripNode1D* FindGripNeighborUp(const FGripNode1D* CurrentGrip, int32 Count = 0);
-	FGripNode1D* FindGripNeighborDown(const FGripNode1D* CurrentGrip, int32 Count = 0);
-	FGripNode1D* FindGripUpward(const FGripNode1D* CurrentGrip, float MinInterval = 0);
-	FGripNode1D* FindGripDownward(const FGripNode1D* CurrentGrip, float MinInterval = 0);
-	void SetGripNeighborUp(FGripNode1D* CurrentGrip, int32 Count = 0);
-	void SetGripNeighborDown(FGripNode1D* CurrentGrip, int32 Count = 0);
-	void SetGripUpward(FGripNode1D* CurrentGrip, float MinInterval = 0);
-	void SetGripDownward(FGripNode1D* CurrentGrip, float MinInterval = 0);
 
-	bool FindGripLocation(FVector* Target, FVector Start, float TraceDistance, float PassDistance, FName GripTag, bool DebugTrace = false);
+	FGripNode1D* GetGripByHeightUpWard(float MinHeight = 0.0f, float Comparison = 0.0f);
+	FGripNode1D* GetGripByHeightDownWard(float MinHeight = 0.0f, float Comparison = 0.0f);
+
+	FGripNode1D* GetGripNeighborUpByRange(const FGripNode1D* CurrentGrip, float Range = 0);
+	FGripNode1D* GetGripNeighborDownByRange(const FGripNode1D* CurrentGrip, float Range = 0);
+
+	FGripNode1D* GetGripNeighborUp(const FGripNode1D* CurrentGrip, int32 Count = 1);
+	FGripNode1D* GetGripNeighborDown(const FGripNode1D* CurrentGrip, int32 Count = 1);
+
+	FGripNode1D* GetGripUpward(const FGripNode1D* CurrentGrip, float MinInterval = 0);
+	FGripNode1D* GetGripDownward(const FGripNode1D* CurrentGrip, float MinInterval = 0);
+
+	TOptional<int32> FindGripLevelDifference(const FGripNode1D* StartGrip, const FGripNode1D* DestGrip);
+	TOptional<float> FindGripDistance(const FGripNode1D* StartGrip, const FGripNode1D* DestGrip);
+
+	void SetLowestGrip1D(float MinHeight = 0.0f, float Comparision = 0.0f);
+
+	void SetGripNeighborUp(FGripNode1D*& CurrentGrip, int32 Count = 1);
+	void SetGripNeighborDown(FGripNode1D*& CurrentGrip, int32 Count = 1);
+
+#pragma region Setting Value
+private:
+	float MinFirstGripHeight = 0.0f;
+	float MinGripInterval = 0.0f;
+	float MaxGripInterval = TNumericLimits<float>::Max();
+
+/// <summary>
+/// Setter Function For Setting Value
+/// </summary>
+public:
+	void SetMinFirstGripHeight(float MinValue);
+	void SetMinGripInterval(float MinInterval);
+	void SetMaxGripInterval(float MaxInterval);
 
 #pragma endregion
 
 #pragma region Ladder Climbing
 public:	
-	void SetELadderStance(ELadderStance StanceValue);
-	ELadderStance GetELadderStance();
-
-	USceneComponent* GetExitTarget();
 	TOptional<FTransform> GetEnterTopPosition();
 	TOptional<FTransform> GetInitTopPosition();
 	TOptional<FTransform> GetInitBottomPosition();
+	float GetLadderTopTransitionDistance();
 
 private:
 	AActor* ClimbObject;
-
-	ELadderStance CurLadderStance;
-
 #pragma endregion
 };

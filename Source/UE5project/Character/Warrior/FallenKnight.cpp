@@ -271,7 +271,6 @@ void AFallenKnight::PostInitializeComponents()
 		FallenKnightAnim->OnDisMountEnd.AddUObject(this, &AFallenKnight::DisMountEnd);
 
 		// Ladder Binding
-		FallenKnightAnim->OnClimbEnd.AddUObject(this, &AFallenKnight::DecideLadderStance);
 
 		FallenKnightAnim->OnEnterWalkState.AddLambda([this]()->void {
 			CurrentState = ECharacterState::Ground;

@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../PBWidgetInterface.h"
-#include "PBInteractWidget.generated.h"
+#include "../WidgetInterface.h"
+#include "InteractWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE5PROJECT_API UPBInteractWidget : public UPBWidgetInterface
+class UE5PROJECT_API UInteractWidget : public UWidgetInterface
 {
 	GENERATED_BODY()
 	
 public:
-	UPBInteractWidget(const FObjectInitializer& ObjectInitializer);
+	UInteractWidget(const FObjectInitializer& ObjectInitializer);
 
 private:
 	UPROPERTY(meta = (BindWidget))

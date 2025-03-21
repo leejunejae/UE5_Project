@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
-#include "PBEnemyDataTable.generated.h"
+#include "EnemyDataTable.generated.h"
 
 USTRUCT(BlueprintType)
 struct FEnemyData : public FTableRowBase
@@ -27,7 +27,7 @@ public:
 };
 
 UCLASS()
-class UE5PROJECT_API APBEnemyDataTable : public AActor
+class UE5PROJECT_API AEnemyDataTable : public AActor
 {
 	GENERATED_BODY()
 };

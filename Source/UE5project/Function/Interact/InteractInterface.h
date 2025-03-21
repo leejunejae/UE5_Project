@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "../../PEnumHeader.h"
-#include "PBInteractInterface.generated.h"
+#include "InteractInterface.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UPBInteractInterface : public UInterface
+class UInteractInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -17,7 +17,7 @@ class UPBInteractInterface : public UInterface
 /**
  * 
  */
-class UE5PROJECT_API IPBInteractInterface
+class UE5PROJECT_API IInteractInterface
 {
 	GENERATED_BODY()
 

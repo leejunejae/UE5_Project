@@ -11,14 +11,15 @@
 #include "EnhancedInputComponent.h"
 #include "KismetAnimationLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "../Function/PBPlayerInterface.h"
+#include "../Function/PlayerInterface.h"
 #include "../Function/Combat/PBDamagableInterface.h"
 #include "../Function/Combat/PBDamageSystem.h"
 #include "../Function/Interact/ClimbComponent.h"
+#include "../Function/Interact/ClimbInterface.h"
 #include "../Enemy/Human/PBEHuman.h"
 #include "NavigationSystem.h"
 #include "NavigationInvokerComponent.h"
-#include "../Function/Interact/PBInteractInterface.h"
+#include "../Function/Interact/InteractInterface.h"
 #include "../Function/Interact/Ride/RideInterface.h"
 #include "Sound/SoundCue.h" 
 #include "MotionWarpingComponent.h"
@@ -33,6 +34,8 @@ class UCharacterMovementComponent;
 class UPBDamageSystem;
 class UClimbComponent;
 
+DECLARE_DELEGATE(FOnSingleDelegate);
+
 UENUM(BlueprintType)
 enum class CharState : uint8
 {
@@ -44,7 +47,7 @@ enum class CharState : uint8
 };
 
 UCLASS()
-class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPBPlayerInterface
+class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPlayerInterface, public IClimbInterface
 {
 	GENERATED_BODY()
 
@@ -69,10 +72,10 @@ public:
 /* PRIVATE VARIATION */
 private:
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class UPBDefaultWidget> DefaultWidgetClass;
+		TSubclassOf<class UDefaultWidget> DefaultWidgetClass;
 
 	UPROPERTY(EditAnywhere)
-		class UPBDefaultWidget* DefaultWidget;
+		class UDefaultWidget* DefaultWidget;
 
 	UPROPERTY(EditAnywhere)
 		class UNavigationInvokerComponent* NavigationInvokerComponent;
@@ -311,6 +314,17 @@ private:
 public:
 	UClimbComponent* GetClimbComponent();
 	void SetCanMovementInput(bool CanMove);
+	virtual void SetNextGripDown_Implementation(FName BoneName, int32 Count) override;
+
+protected:
+	void DecideLadderStance();
+
+	UPROPERTY(EditAnywhere)
+		float MinGripInterval = 15.0f;
+	UPROPERTY(EditAnywhere)
+		float MaxGripInterval = 50.0f;
+	UPROPERTY(EditAnywhere)
+		float MinFirstGripHeight = 40.0f;
 
 private:
 	FGripNode1D* Grip1D_Hand_R;
@@ -319,9 +333,6 @@ private:
 	FGripNode1D* Grip1D_Foot_L;
 	float ClimbDistance;
 	bool CanMovementInput;
-
-protected:
-	void DecideLadderStance();
 
 #pragma endregion
 
@@ -332,6 +343,6 @@ private:
 	EBodyType CharBone;
 
 public:
-	TOptional<FVector> GetBoneTargetLoc(EBodyType BoneType);
+	TOptional<TTuple<FVector, FVector>> GetBoneTargetLoc(EBodyType BoneType);
 #pragma endregion
 };

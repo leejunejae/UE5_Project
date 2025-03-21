@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PBWidgetInterface.h"
+#include "WidgetInterface.h"
 
 /* WidgetMenu�� ����Ʈ�� ���̵����� �� ���Ǵ� �Լ� */
-void UPBWidgetInterface::SetUp()
+void UWidgetInterface::SetUp()
 {
 	// ����Ʈ�� �ش� �޴��� ���̵��� ��.
 	this->AddToViewport();
@@ -24,7 +24,7 @@ void UPBWidgetInterface::SetUp()
 }
 
 /* WidgetMenu�� ����Ʈ���� ������ �� ����Ǵ� �Լ� */
-void UPBWidgetInterface::OffWidget()
+void UWidgetInterface::OffWidget()
 {
 	this->RemoveFromViewport();
 

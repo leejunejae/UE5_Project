@@ -5,7 +5,7 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
 #include "Components/BrushComponent.h"
-#include "Function/PBPlayerInterface.h"
+#include "Function/PlayerInterface.h"
 
 AClimbableObjectBase::AClimbableObjectBase()
 {
@@ -28,8 +28,6 @@ AClimbableObjectBase::AClimbableObjectBase()
 	ClimbBottomLocation = CreateDefaultSubobject<USceneComponent>(TEXT("ClimbBottomLocation"));
 	ClimbBottomLocation->SetupAttachment(ObjectRoot);
 	ClimbBottomLocation->ComponentTags.Add(FName("Bottom"));
-	//ClimbStartLocation->SetRelativeLocation(FVector(70.0f, 44.0f, 85.0f));
-	//ClimbStartLocation->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
 }
 
 void AClimbableObjectBase::BeginPlay()
@@ -54,7 +52,7 @@ void AClimbableObjectBase::PostInitializeComponents()
 
 USceneComponent* AClimbableObjectBase::GetEnterInteractLocation_Implementation(AActor* Target)
 {
-	IPBInteractInterface::GetEnterInteractLocation_Implementation(Target);
+	IInteractInterface::GetEnterInteractLocation_Implementation(Target);
 
 	FVector DistTopLoc = Target->GetActorLocation() - ClimbTopLocation->GetComponentLocation();
 	FVector DistBottomLoc = Target->GetActorLocation() - ClimbBottomLocation->GetComponentLocation();
@@ -64,15 +62,6 @@ USceneComponent* AClimbableObjectBase::GetEnterInteractLocation_Implementation(A
 
 TArray<FGripNode1D> AClimbableObjectBase::GetGripList1D_Implementation()
 {
-	/*
-	UE_LOG(LogTemp, Warning, TEXT("GetGripList"));
-
-	for (int32 j = 0; j < GripList1D.Num(); j++)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("GripList[%d] = %f"), j, GripList1D[j].Position.Z);
-	}
-	*/
-
 	return GripList1D;
 }
 
@@ -80,10 +69,9 @@ void AClimbableObjectBase::TriggerBegin(UPrimitiveComponent* OverlappedComp, AAc
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
-		if (OtherActor->GetClass()->ImplementsInterface(UPBPlayerInterface::StaticClass()))
+		if (OtherActor->GetClass()->ImplementsInterface(UPlayerInterface::StaticClass()))
 		{
-			IPBPlayerInterface::Execute_RegisterInteractableActor(OtherActor, this);
-			//UE_LOG(LogTemp, Warning, TEXT("Trigger In"));
+			IPlayerInterface::Execute_RegisterInteractableActor(OtherActor, this);
 		}
 	}
 }
@@ -92,10 +80,9 @@ void AClimbableObjectBase::TriggerEnd(UPrimitiveComponent* OverlappedComp, AActo
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
-		if (OtherActor->GetClass()->ImplementsInterface(UPBPlayerInterface::StaticClass()))
+		if (OtherActor->GetClass()->ImplementsInterface(UPlayerInterface::StaticClass()))
 		{
-			IPBPlayerInterface::Execute_DeRegisterInteractableActor(OtherActor, this);
-			//UE_LOG(LogTemp, Warning, TEXT("Trigger Out"));
+			IPlayerInterface::Execute_DeRegisterInteractableActor(OtherActor, this);
 		}
 	}
 }

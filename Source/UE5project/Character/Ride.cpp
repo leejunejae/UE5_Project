@@ -8,7 +8,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "Components/WidgetComponent.h"
-#include "../Function/PBPlayerInterface.h"
+#include "../Function/PlayerInterface.h"
 #include "RideAnimInstance.h"
 
 // Sets default values
@@ -70,7 +70,7 @@ ARide::ARide()
 	
 	InteractWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("INTERACTWIDGET"));
 	InteractWidget->SetupAttachment(GetMesh());
-	static ConstructorHelpers::FClassFinder<UUserWidget>INTERACT(TEXT("/Game/Character/C_Source/PBInteractWidget_BP.PBInteractWidget_BP_C"));
+	static ConstructorHelpers::FClassFinder<UUserWidget>INTERACT(TEXT("/Game/Character/C_Source/InteractWidget_BP.InteractWidget_BP_C"));
 	if (INTERACT.Succeeded())
 	{
 		InteractWidget->SetWidgetClass(INTERACT.Class);
@@ -336,10 +336,10 @@ void ARide::Interact()
 
 	
 	//Rider->SetActorLocation(RiderGetDownLoc->GetComponentLocation());
-	if (Rider->GetClass()->ImplementsInterface(UPBPlayerInterface::StaticClass()))
+	if (Rider->GetClass()->ImplementsInterface(UPlayerInterface::StaticClass()))
 	{
 		DisableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-		IPBPlayerInterface::Execute_EndInteraction(Rider, this);
+		IPlayerInterface::Execute_EndInteraction(Rider, this);
 	}
 	
 	Rider = nullptr;
@@ -358,9 +358,9 @@ void ARide::TriggerBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		CanInteraction = true;
-		if (OtherActor->GetClass()->ImplementsInterface(UPBPlayerInterface::StaticClass()))
+		if (OtherActor->GetClass()->ImplementsInterface(UPlayerInterface::StaticClass()))
 		{
-			IPBPlayerInterface::Execute_RegisterInteractableActor(OtherActor, this);
+			IPlayerInterface::Execute_RegisterInteractableActor(OtherActor, this);
 		}
 	}
 }
@@ -370,23 +370,23 @@ void ARide::TriggerEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, 
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		CanInteraction = false;
-		if (OtherActor->GetClass()->ImplementsInterface(UPBPlayerInterface::StaticClass()))
+		if (OtherActor->GetClass()->ImplementsInterface(UPlayerInterface::StaticClass()))
 		{
-			IPBPlayerInterface::Execute_DeRegisterInteractableActor(OtherActor, this);
+			IPlayerInterface::Execute_DeRegisterInteractableActor(OtherActor, this);
 		}
 	}
 }
 
 void ARide::RegisterInteractActor_Implementation(ACharacter* InteractActor)
 {
-	IPBInteractInterface::RegisterInteractActor_Implementation(InteractActor);
+	IInteractInterface::RegisterInteractActor_Implementation(InteractActor);
 
 	Rider = InteractActor;
 }
 
 void ARide::Interact_Implementation(ACharacter* InteractActor)
 {
-	IPBInteractInterface::Interact_Implementation(InteractActor);
+	IInteractInterface::Interact_Implementation(InteractActor);
 	
 	if (Rider != InteractActor)
 		return;
@@ -436,7 +436,7 @@ void ARide::Interact_Implementation(ACharacter* InteractActor)
 	InteractActor->SetActorLocation(RiderLocation1->GetComponentLocation());
 	InteractActor->SetActorRotation(RiderLocation1->GetComponentRotation());
 
-	FComponentTransform CameraTransform = IPBPlayerInterface::Execute_GetCameraData(Rider);
+	FComponentTransform CameraTransform = IPlayerInterface::Execute_GetCameraData(Rider);
 	Camera->SetWorldLocation(CameraTransform.Location);
 	Camera->SetWorldRotation(CameraTransform.Rotation);
 	//Rider->GetMesh()->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
@@ -462,7 +462,7 @@ void ARide::Interact_Implementation(ACharacter* InteractActor)
 
 USceneComponent* ARide::GetEnterInteractLocation_Implementation(AActor* Target)
 {
-	IPBInteractInterface::GetEnterInteractLocation_Implementation(Target);
+	IInteractInterface::GetEnterInteractLocation_Implementation(Target);
 
 	FVector DistRightLoc = Rider->GetActorLocation() - RiderMountLocRight->GetComponentLocation();
 	FVector DistLeftLoc = Rider->GetActorLocation() - RiderMountLocLeft->GetComponentLocation();
@@ -481,7 +481,7 @@ USceneComponent* ARide::GetEnterInteractLocation_Implementation(AActor* Target)
 
 USceneComponent* ARide::GetLeftInteractLocation_Implementation()
 {
-	IPBInteractInterface::GetLeftInteractLocation_Implementation();
+	IInteractInterface::GetLeftInteractLocation_Implementation();
 
 	return RiderGetDownLoc;
 }

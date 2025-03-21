@@ -3,21 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PBWidgetInterface.h"
-#include "PBDefaultWidget.generated.h"
+#include "WidgetInterface.h"
+#include "DefaultWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE5PROJECT_API UPBDefaultWidget : public UPBWidgetInterface
+class UE5PROJECT_API UDefaultWidget : public UWidgetInterface
 {
 	GENERATED_BODY()
 	
 public:
-	UPBDefaultWidget(const FObjectInitializer& ObjectInitializer);
+	UDefaultWidget(const FObjectInitializer& ObjectInitializer);
 
-	// ÇÃ·¹ÀÌ¾î ¸Þ´º ±âÃÊ ¼³Á¤
+	// ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Þ´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	void SetUp();
 	virtual bool Initialize();
 
