@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "InteractComponent.generated.h"
 
+DECLARE_DELEGATE(FOnSingleDelegate);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UInteractComponent : public UActorComponent
@@ -16,15 +17,29 @@ public:
 	// Sets default values for this component's properties
 	UInteractComponent();
 
+private:
+	FTimerHandle InteractTimerHandle;
+	FTimerDelegate InteractTimerDelegate;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	TSet<AActor*> InteractActorList;
+	TSet<AActor*> InteractableList;
+
+	AActor* InteractActor;
 
 public:	
 	// Called every frame
+	AActor* GetInteractActor();
+
+	bool CheckInteractListValid();
 	void AddInteractObject(AActor* InteractObject);
 	void RemoveInteractObject(AActor* InteractObject);
-	AActor* FindInteractActorByDegree(AActor* StartActor, float SearchDegrees);
+	bool SetInteractActorByDegree(AActor* StartActor, float SearchDegrees);
+	void MovetoInteractPos();
+	void InteractPosCheckTimer(USceneComponent* Target);
+
+public:
+	FOnSingleDelegate OnArrivedInteractionPoint;
 };

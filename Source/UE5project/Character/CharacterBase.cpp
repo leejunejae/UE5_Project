@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetTextLibrary.h"
 #include "Kismet/KismetStringLibrary.h"
+#include "KismetAnimationLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -22,10 +24,13 @@ ACharacterBase::ACharacterBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
-	DamageSystem = CreateDefaultSubobject<UPBDamageSystem>(TEXT("DAMAGESYSTEM"));
-	DamageSystem->bAutoActivate = true;
+	DamageComponent = CreateDefaultSubobject<UPBDamageSystem>(TEXT("DamageComponent"));
+	DamageComponent->bAutoActivate = true;
+	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
+	InteractComponent->bAutoActivate = true;
 	ClimbComponent = CreateDefaultSubobject<UClimbComponent>(TEXT("ClimbComponent"));
 	ClimbComponent->bAutoActivate = true;
+
 
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
@@ -144,7 +149,7 @@ void ACharacterBase::BeginPlay()
 		DefaultWidget = CreateWidget<UDefaultWidget>(PlayerController, DefaultWidgetClass);
 	}
 
-	DamageSystem->SetHealth(GetMaxHP());
+	DamageComponent->SetHealth(GetMaxHP());
 }
 
 // Called every frame
@@ -299,7 +304,9 @@ void ACharacterBase::PostInitializeComponents()
 
 	CharacterBaseAnim = Cast<UCharacterBaseAnimInstance>(GetMesh()->GetAnimInstance());
 
-	DamageSystem->OnDeath.BindUFunction(this, FName("Death"));
+	InteractComponent->OnArrivedInteractionPoint.BindUObject(this, &ACharacterBase::HandleArrivedInteractionPoint);
+
+	DamageComponent->OnDeath.BindUFunction(this, FName("Death"));
 
 	CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
 }
@@ -623,9 +630,6 @@ void ACharacterBase::SetCanMovementInput(bool CanMove)
 
 void ACharacterBase::Interact()
 {
-	if (InteractActorList.IsEmpty())
-		return;
-
 	if (IsInteraction)
 	{
 		//bUseControllerRotationYaw = true;
@@ -639,166 +643,35 @@ void ACharacterBase::Interact()
 	}
 	else
 	{
-		AActor* InteractActor = nullptr;
+		bool InteractTargetValid = InteractComponent->SetInteractActorByDegree(this, 60.0f);
 
-		FVector CharLocation = GetActorLocation();
-		FVector ForwardVector = GetActorForwardVector();
-
-		float CurDotVal = 0.0f;
-
-		for (auto& Act : InteractActorList)
-		{
-			FVector ActorLocation = Act->GetActorLocation();
-
-			FVector ToTargetDir = ActorLocation - CharLocation;
-			ToTargetDir.Z = 0.0f;
-			ToTargetDir.Normalize();
-
-			float DotToTarget = FVector::DotProduct(ForwardVector, ToTargetDir);
-			float RadianToTarget = FMath::Acos(DotToTarget);
-			float AngleDegrees = FMath::RadiansToDegrees(RadianToTarget);
-
-			if (AngleDegrees > -60.0f && AngleDegrees < 60.0f)
-			{
-				//UE_LOG(LogTemp, Warning, TEXT("Set Interact Actor"));
-				//CurDotVal = DotToTarget;
-				InteractActor = Act;
-			}
-		}
-
-		if (InteractActor == nullptr)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Interactable Actor Doesn't Exist"));
+		if (!InteractTargetValid)
 			return;
-		}
+		AActor* InteractActor = InteractComponent->GetInteractActor();
 
 		if (InteractActor->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
 		{
 			if (InteractActor->ActorHasTag("NPC"))
 			{
-				//UE_LOG(LogTemp, Warning, TEXT("Interact To NPC"));
 				IInteractInterface::Execute_Interact(InteractActor, this);
-				//GetController()->SetIgnoreMoveInput(true);
 			}
 			else if (InteractActor->ActorHasTag("Ride"))
 			{
 				IsInteraction = true;
 				bUseControllerRotationYaw = false;
 				IInteractInterface::Execute_RegisterInteractActor(InteractActor, this);
-				MovetoInteractPos(InteractActor);
+				InteractComponent->MovetoInteractPos();
 			}
 			else if (InteractActor->ActorHasTag("Climbable"))
 			{
 				IsInteraction = true;
 				//GetController()->SetIgnoreMoveInput(true);
 				ClimbComponent->RegisterClimbObject(InteractActor);
-				/*
-				if (InteractActor->ActorHasTag("Ladder") && ClimbComponent->CheckGripListValid())
-				{
-					//UE_LOG(LogTemp, Warning, TEXT("GripList is Valid"));
-					ClimbComponent->SetGrip1DRelation(15.0f, 50.0f);
-					ClimbComponent->SetLowestGrip1D(45.0f, ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z);
-				}
-				*/
-				//UE_LOG(LogTemp, Warning, TEXT("Interact With Climbable Actor"));
-				MovetoInteractPos(InteractActor);
+
+				InteractComponent->MovetoInteractPos();
 			}
 		}
 	}
-}
-
-void ACharacterBase::MovetoInteractPos(AActor* InteractActor)
-{
-	USceneComponent* Target = IInteractInterface::Execute_GetEnterInteractLocation(InteractActor, this);
-	FVector DestLoc = Target->GetComponentLocation();
-	FRotator DestRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), DestLoc);
-	SetActorRotation(FRotator(0.0f, DestRot.Yaw, 0.0f));
-	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), DestLoc);
-	
-	InteractTimerDelegate.BindUObject(this, &ACharacterBase::InteractTimer, Target, InteractActor);
-	GetWorldTimerManager().SetTimer(InteractTimerHandle, InteractTimerDelegate, 0.1f, true);
-}
-
-void ACharacterBase::InteractTimer(USceneComponent* Target, AActor* InteractActor)
-{
-	FVector2D CharLoc = FVector2D(GetActorLocation().X, GetActorLocation().Y);
-	FVector2D TargetLoc = FVector2D(Target->GetComponentLocation().X, Target->GetComponentLocation().Y);
-	float Distance = FVector2D::Distance(CharLoc, TargetLoc);
-	if (Distance < 50.0f)
-	{
-		GetController()->StopMovement();
-		FLatentActionInfo LatentInfo;
-		LatentInfo.CallbackTarget = this;
-		LatentInfo.Linkage = 0;
-		LatentInfo.UUID = __LINE__;
-
-		if (InteractActor->ActorHasTag("Ride"))
-		{
-			DisableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-			Ride = Cast<ACharacter>(InteractActor);
-			IsRide = true;
-		}
-		else if (InteractActor->ActorHasTag("Ladder"))
-		{
-			CanMovementInput = false;
-			LatentInfo.ExecutionFunction = FName("OnMoveEndToLadder");
-
-			float ComparisonHeight = ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z;
-			TOptional<int32> GripInterval = ClimbComponent->FindGripLevelDifference(ClimbComponent->GetLowestGrip1D(), ClimbComponent->GetGripByHeightUpWard(130.0f, ComparisonHeight));
-
-			if (GripInterval.IsSet())
-			{
-				if (Target->ComponentHasTag("Bottom"))
-				{
-					CurLadderStance = ELadderStance::Enter_From_Bottom;
-					Grip1D_Foot_R = ClimbComponent->GetLowestGrip1D();
-					Grip1D_Hand_L = ClimbComponent->GetGripByHeightUpWard(130.0f, ComparisonHeight);
-					//ClimbComponent->GetGripNeighborUpByRange(Grip1D_Foot_R, 70.0f);
-					Grip1D_Hand_R = Grip1D_Hand_L != nullptr ? ClimbComponent->GetGripNeighborUp(Grip1D_Hand_L) : nullptr;
-				}
-				else
-				{
-					CurLadderStance = ELadderStance::Enter_From_Top;
-					//ClimbDistance = ClimbComponent->GetEnterTopPosition().GetValue().GetLocation().Z - GetActorLocation().Z;
-					UE_LOG(LogTemp, Warning, TEXT("ClimbDistance = %f"), ClimbDistance);
-					Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
-					Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
-					Grip1D_Foot_L = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_L, GripInterval.GetValue() - 1);
-					Grip1D_Foot_R = ClimbComponent->GetGripNeighborDown(Grip1D_Foot_L);
-				}
-			}
-		}
-
-		UKismetSystemLibrary::MoveComponentTo(
-			GetCapsuleComponent(),
-			FVector(Target->GetComponentLocation().X, Target->GetComponentLocation().Y, Target->GetComponentLocation().Z + 92.0f),
-			Target->GetComponentRotation(),
-			false,
-			false,
-			0.1f,
-			false,
-			EMoveComponentAction::Type::Move,
-			LatentInfo
-		);
-
-		//SetActorLocation(Target->GetComponentLocation());
-		//SetActorRotation(Target->GetComponentRotation());
-		
-		GetWorldTimerManager().ClearTimer(InteractTimerHandle);
-	}
-}
-
-void ACharacterBase::OnMoveEndToLadder()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Move completed!"));
-	CurrentState = ECharacterState::Ladder;
-	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
-	//CanMovementInput = false;
-	IsClimb = true;
 }
 
 void ACharacterBase::MountEnd()
@@ -1082,14 +955,15 @@ void ACharacterBase::RegisterInteractableActor_Implementation(AActor* Interactab
 {
 	IPlayerInterface::RegisterInteractableActor_Implementation(Interactable);
 
-	InteractActorList.Add(Interactable);
+	InteractComponent->AddInteractObject(Interactable);
+	//InteractActorList.Add(Interactable);
 }
 
 void ACharacterBase::DeRegisterInteractableActor_Implementation(AActor* Interactable)
 {
 	IPlayerInterface::DeRegisterInteractableActor_Implementation(Interactable);
 
-	InteractActorList.Remove(Interactable);
+	InteractComponent->RemoveInteractObject(Interactable);
 }
 
 void ACharacterBase::EndInteraction_Implementation(AActor* Interactable)
@@ -1101,6 +975,54 @@ void ACharacterBase::EndInteraction_Implementation(AActor* Interactable)
 		IsRide = false;
 
 		//GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+	}
+}
+
+void ACharacterBase::HandleArrivedInteractionPoint()
+{
+	AActor* InteractActor = InteractComponent->GetInteractActor();
+	USceneComponent* InteractionPoint = IInteractInterface::Execute_GetEnterInteractLocation(InteractActor, this);
+
+	if (InteractActor->ActorHasTag("Ride"))
+	{
+		DisableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		Ride = Cast<ACharacter>(InteractActor);
+		IsRide = true;
+	}
+	else if (InteractActor->ActorHasTag("Ladder"))
+	{
+		CanMovementInput = false;
+
+		float ComparisonHeight = ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z;
+		TOptional<int32> GripInterval = ClimbComponent->FindGripLevelDifference(ClimbComponent->GetLowestGrip1D(), ClimbComponent->GetGripByHeightUpWard(130.0f, ComparisonHeight));
+
+		if (GripInterval.IsSet())
+		{
+			if (InteractionPoint->ComponentHasTag("Bottom"))
+			{
+				CurLadderStance = ELadderStance::Enter_From_Bottom;
+				Grip1D_Foot_R = ClimbComponent->GetLowestGrip1D();
+				Grip1D_Hand_L = ClimbComponent->GetGripByHeightUpWard(130.0f, ComparisonHeight);
+				Grip1D_Hand_R = Grip1D_Hand_L != nullptr ? ClimbComponent->GetGripNeighborUp(Grip1D_Hand_L) : nullptr;
+			}
+			else
+			{
+				CurLadderStance = ELadderStance::Enter_From_Top;
+				UE_LOG(LogTemp, Warning, TEXT("ClimbDistance = %f"), ClimbDistance);
+				Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
+				Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
+				Grip1D_Foot_L = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_L, GripInterval.GetValue() - 1);
+				Grip1D_Foot_R = ClimbComponent->GetGripNeighborDown(Grip1D_Foot_L);
+			}
+
+			CurrentState = ECharacterState::Ladder;
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
+			IsClimb = true;
+		}
 	}
 }
 
@@ -1172,21 +1094,21 @@ float ACharacterBase::GetMaxHealth_Implementation()
 {
 	IPBDamagableInterface::GetMaxHealth_Implementation();
 
-	return DamageSystem->GetfloatValue("MaxHealth");
+	return DamageComponent->GetfloatValue("MaxHealth");
 }
 
 float ACharacterBase::GetHealth_Implementation()
 {
 	IPBDamagableInterface::GetHealth_Implementation();
 
-	return DamageSystem->GetfloatValue("Health");
+	return DamageComponent->GetfloatValue("Health");
 }
 
 float ACharacterBase::Heal_Implementation(float amount)
 {
 	IPBDamagableInterface::Heal_Implementation(amount);
 
-	return DamageSystem->Heal(amount);
+	return DamageComponent->Heal(amount);
 }
 
 // ���� �ý��� �������̽� //

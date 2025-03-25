@@ -45,9 +45,6 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	void PlayMontage(MontageType Type, int32 Section = 0);
-	MontageType CheckMontage(UAnimMontage* Montage);
-
 public:
 	FOnActionDelegate OnResetHurt;
 	FOnActionDelegate OnSetAttackDirection;
@@ -186,9 +183,6 @@ private:
 
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = TIP, Meta = (AllowPrivateAccess = true))
 		FName Turning = TEXT("Turning");
-
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		UAnimMontage* DeathMontage;
 
 
 	UFUNCTION()

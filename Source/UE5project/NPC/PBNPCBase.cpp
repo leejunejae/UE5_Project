@@ -13,6 +13,10 @@ APBNPCBase::APBNPCBase()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	NPCTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Dialogue.NPC")));
+	NPCTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Interactable.Dialogue")));
+
 	RootComponent = GetCapsuleComponent();
 
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));

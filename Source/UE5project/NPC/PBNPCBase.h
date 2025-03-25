@@ -9,6 +9,7 @@
 #include "../Function/Interact/InteractInterface.h"
 #include "../Function/Interact/Dialogue/DialogueSystem.h"
 #include "../Function/Interact/Dialogue/ScriptWidget.h"
+#include "GameplayTagContainer.h"
 #include "PBNPCBase.generated.h"
 
 class UDialogueSystem;
@@ -46,6 +47,9 @@ public:
 	virtual void Interact_Implementation(ACharacter* InteractActor);
 
 	virtual void EndInteract_Implementation();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+		FGameplayTagContainer NPCTags;
 
 protected:
 	UPROPERTY(EditAnywhere)

@@ -16,6 +16,10 @@ ARide::ARide()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	RideTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Ride.Horse")));
+	RideTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Interactable.Ride")));
+
 	RootComponent = GetCapsuleComponent();
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));

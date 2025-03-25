@@ -9,8 +9,6 @@
 #include "Camera/CameraComponent.h"
 #include <Engine/Classes/Components/CapsuleComponent.h>
 #include "EnhancedInputComponent.h"
-#include "KismetAnimationLibrary.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "../Function/PlayerInterface.h"
 #include "../Function/Combat/PBDamagableInterface.h"
 #include "../Function/Combat/PBDamageSystem.h"
@@ -19,7 +17,8 @@
 #include "../Enemy/Human/PBEHuman.h"
 #include "NavigationSystem.h"
 #include "NavigationInvokerComponent.h"
-#include "../Function/Interact/InteractInterface.h"
+#include "../Function/Interact/InteractComponent.h"
+#include "../Function/Interact/InteractInterface.h" ///삭제 예정
 #include "../Function/Interact/Ride/RideInterface.h"
 #include "Sound/SoundCue.h" 
 #include "MotionWarpingComponent.h"
@@ -33,6 +32,7 @@ class USpringArmComponent;
 class UCharacterMovementComponent;
 class UPBDamageSystem;
 class UClimbComponent;
+class UInteractComponent;
 
 DECLARE_DELEGATE(FOnSingleDelegate);
 
@@ -83,12 +83,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionWarping", meta = (AllowPrivateAccess = "true"))
 		class UMotionWarpingComponent* MotionWarpingComponent;
 
-	TSet<AActor*> InteractActorList;
-	//ACharacter* InteractActor;
-
-	FTimerHandle InteractTimerHandle;
-	FTimerDelegate InteractTimerDelegate;
-
 	float YAxisScale;
 
 
@@ -121,10 +115,13 @@ protected:
 		UCameraComponent* Camera;
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
-		UPBDamageSystem* DamageSystem;
+		UPBDamageSystem* DamageComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Climb)
 		UClimbComponent* ClimbComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = Interact)
+		UInteractComponent* InteractComponent;
 
 	/* ĳ���� �Է� ���� ���� */
 	UPROPERTY(VisibleAnywhere, Category = Input)
@@ -218,13 +215,8 @@ protected:
 	virtual void Attack();
 
 	virtual void Interact();
-	void MovetoInteractPos(AActor* InteractActor);
 	void MountEnd();
 	void DisMountEnd();
-
-
-	UFUNCTION()
-		virtual void OnMoveEndToLadder();
 
 /* PROTECTED FUNCTION */
 
@@ -236,9 +228,6 @@ public:
 /* Public FUNCTION */
 public:
 	virtual bool IsPlayer_Implementation();
-	virtual void RegisterInteractableActor_Implementation(AActor* Interactable);
-	virtual void DeRegisterInteractableActor_Implementation(AActor* Interactable);
-	virtual void EndInteraction_Implementation(AActor* Interactable);
 	virtual FComponentTransform GetCameraData_Implementation();
 	virtual TOptional<FVector> GetCharBoneLocation(FName BoneName);
 
@@ -345,4 +334,16 @@ private:
 public:
 	TOptional<TTuple<FVector, FVector>> GetBoneTargetLoc(EBodyType BoneType);
 #pragma endregion
+
+
+
+
+#pragma region Interact
+public:
+	virtual void RegisterInteractableActor_Implementation(AActor* Interactable);
+	virtual void DeRegisterInteractableActor_Implementation(AActor* Interactable);
+	virtual void EndInteraction_Implementation(AActor* Interactable);
+
+protected:
+	void HandleArrivedInteractionPoint();
 };
