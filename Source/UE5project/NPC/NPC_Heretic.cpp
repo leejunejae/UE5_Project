@@ -28,6 +28,6 @@ ANPC_Heretic::ANPC_Heretic()
     
     NPCName = FName("Heretic");
 
-    DialogueSystem->SetDialogueDT(DialogueDT);
-    DialogueSystem->SetParticipant(NPCName);
+    DialogueComponent->SetDialogueDT(DialogueDT);
+    DialogueComponent->SetParticipant(NPCName);
 }

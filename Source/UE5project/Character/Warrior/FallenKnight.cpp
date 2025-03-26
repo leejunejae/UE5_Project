@@ -312,12 +312,6 @@ void AFallenKnight::IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupte
 	}*/
 }
 
-void AFallenKnight::OnMoveEndToLadder()
-{
-	Super::OnMoveEndToLadder();
-	CurStance = WarriorStance::UA;
-}
-
 void AFallenKnight::Sprint()
 {
 	Super::Sprint();

@@ -37,8 +37,11 @@ public:
 	void AddInteractObject(AActor* InteractObject);
 	void RemoveInteractObject(AActor* InteractObject);
 	bool SetInteractActorByDegree(AActor* StartActor, float SearchDegrees);
-	void MovetoInteractPos();
+	bool MovetoInteractPos();
 	void InteractPosCheckTimer(USceneComponent* Target);
+
+	UFUNCTION()
+		void OnMovetoInteractPosEnd();
 
 public:
 	FOnSingleDelegate OnArrivedInteractionPoint;

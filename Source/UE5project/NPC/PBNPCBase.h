@@ -62,7 +62,7 @@ protected:
 		UBoxComponent* InteractTrigger;
 
 	UPROPERTY(VisibleAnywhere, Category = Dialog)
-		UDialogueSystem* DialogueSystem;
+		UDialogueSystem* DialogueComponent;
 
 	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 		FName NPCName;

@@ -166,8 +166,6 @@ private:
 	UFUNCTION()
 		void IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 
-	void OnMoveEndToLadder() override;
-
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 		TArray<USoundCue*> RollSounds;

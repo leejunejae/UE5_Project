@@ -647,30 +647,8 @@ void ACharacterBase::Interact()
 
 		if (!InteractTargetValid)
 			return;
-		AActor* InteractActor = InteractComponent->GetInteractActor();
 
-		if (InteractActor->GetClass()->ImplementsInterface(UInteractInterface::StaticClass()))
-		{
-			if (InteractActor->ActorHasTag("NPC"))
-			{
-				IInteractInterface::Execute_Interact(InteractActor, this);
-			}
-			else if (InteractActor->ActorHasTag("Ride"))
-			{
-				IsInteraction = true;
-				bUseControllerRotationYaw = false;
-				IInteractInterface::Execute_RegisterInteractActor(InteractActor, this);
-				InteractComponent->MovetoInteractPos();
-			}
-			else if (InteractActor->ActorHasTag("Climbable"))
-			{
-				IsInteraction = true;
-				//GetController()->SetIgnoreMoveInput(true);
-				ClimbComponent->RegisterClimbObject(InteractActor);
-
-				InteractComponent->MovetoInteractPos();
-			}
-		}
+		IsInteraction = InteractComponent->MovetoInteractPos();
 	}
 }
 
@@ -985,6 +963,8 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 
 	if (InteractActor->ActorHasTag("Ride"))
 	{
+		IInteractInterface::Execute_RegisterInteractActor(InteractActor, this);
+
 		DisableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -995,7 +975,7 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 	else if (InteractActor->ActorHasTag("Ladder"))
 	{
 		CanMovementInput = false;
-
+		ClimbComponent->RegisterClimbObject(InteractActor);
 		float ComparisonHeight = ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z;
 		TOptional<int32> GripInterval = ClimbComponent->FindGripLevelDifference(ClimbComponent->GetLowestGrip1D(), ClimbComponent->GetGripByHeightUpWard(130.0f, ComparisonHeight));
 
@@ -1024,6 +1004,12 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 			IsClimb = true;
 		}
 	}
+	else if (InteractActor->ActorHasTag("NPC"))
+	{
+		IInteractInterface::Execute_Interact(InteractActor, this);
+	}
+
+	IsInteraction = true;
 }
 
 FComponentTransform ACharacterBase::GetCameraData_Implementation()

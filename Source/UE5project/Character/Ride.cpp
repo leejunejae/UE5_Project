@@ -468,8 +468,8 @@ USceneComponent* ARide::GetEnterInteractLocation_Implementation(AActor* Target)
 {
 	IInteractInterface::GetEnterInteractLocation_Implementation(Target);
 
-	FVector DistRightLoc = Rider->GetActorLocation() - RiderMountLocRight->GetComponentLocation();
-	FVector DistLeftLoc = Rider->GetActorLocation() - RiderMountLocLeft->GetComponentLocation();
+	FVector DistRightLoc = Target->GetActorLocation() - RiderMountLocRight->GetComponentLocation();
+	FVector DistLeftLoc = Target->GetActorLocation() - RiderMountLocLeft->GetComponentLocation();
 
 	if (DistRightLoc.Length() < DistLeftLoc.Length())
 	{

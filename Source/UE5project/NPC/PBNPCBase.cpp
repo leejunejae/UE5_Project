@@ -22,8 +22,8 @@ APBNPCBase::APBNPCBase()
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 
-	DialogueSystem = CreateDefaultSubobject<UDialogueSystem>(TEXT("DialogSystem"));
-	DialogueSystem->bAutoActivate = true;
+	DialogueComponent = CreateDefaultSubobject<UDialogueSystem>(TEXT("DialogComponent"));
+	DialogueComponent->bAutoActivate = true;
 
 	InteractTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractTrigger"));
 	InteractTrigger->SetupAttachment(GetMesh());
@@ -60,7 +60,7 @@ void APBNPCBase::Interact_Implementation(ACharacter* InteractActor)
 
 			DialogueWidget = CreateWidget<UScriptWidget>(PlayerController, DialogueWidgetClass);
 			DialogueWidget->SetScriptWidget(this);
-			DialogueSystem->SetIsDialogue(true);
+			DialogueComponent->SetIsDialogue(true);
 			//PlayerController->SetInputMode(FInputModeGameAndUI());
 		
 			/*
@@ -101,7 +101,7 @@ void APBNPCBase::Interact_Implementation(ACharacter* InteractActor)
 
 void APBNPCBase::EndInteract_Implementation()
 {
-	DialogueSystem->SetIsDialogue(false);
+	DialogueComponent->SetIsDialogue(false);
 }
 
 // Called when the game starts or when spawned

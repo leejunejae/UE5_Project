@@ -84,22 +84,29 @@ bool UInteractComponent::SetInteractActorByDegree(AActor* StartActor, float Sear
 	return InteractActor != nullptr;
 }
 
-void UInteractComponent::MovetoInteractPos()
+bool UInteractComponent::MovetoInteractPos()
 {
-	UE_LOG(LogTemp, Error, TEXT("Interact4"));
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 	if (Character == nullptr || InteractActor == nullptr)
-		return;
+		return false;
 
-	UE_LOG(LogTemp, Error, TEXT("Interact5"));
 	USceneComponent* Target = IInteractInterface::Execute_GetEnterInteractLocation(InteractActor, Character);
-	FVector DestLoc = Target->GetComponentLocation();
-	FRotator DestRot = UKismetMathLibrary::FindLookAtRotation(Character->GetActorLocation(), DestLoc);
-	Character->SetActorRotation(FRotator(0.0f, DestRot.Yaw, 0.0f));
-	UAIBlueprintHelperLibrary::SimpleMoveToLocation(Character->GetController(), DestLoc);
+	if (Target)
+	{
+		FVector DestLoc = Target->GetComponentLocation();
+		FRotator DestRot = UKismetMathLibrary::FindLookAtRotation(Character->GetActorLocation(), DestLoc);
+		Character->SetActorRotation(FRotator(0.0f, DestRot.Yaw, 0.0f));
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(Character->GetController(), DestLoc);
 
-	InteractTimerDelegate.BindUObject(this, &UInteractComponent::InteractPosCheckTimer, Target);
-	GetOwner()->GetWorldTimerManager().SetTimer(InteractTimerHandle, InteractTimerDelegate, 0.1f, true);
+		InteractTimerDelegate.BindUObject(this, &UInteractComponent::InteractPosCheckTimer, Target);
+		GetOwner()->GetWorldTimerManager().SetTimer(InteractTimerHandle, InteractTimerDelegate, 0.1f, true);
+	}
+	else
+	{
+		OnArrivedInteractionPoint.ExecuteIfBound();
+	}
+
+	return true;
 }
 
 void UInteractComponent::InteractPosCheckTimer(USceneComponent* Target)
@@ -118,6 +125,7 @@ void UInteractComponent::InteractPosCheckTimer(USceneComponent* Target)
 		LatentInfo.CallbackTarget = this;
 		LatentInfo.Linkage = 0;
 		LatentInfo.UUID = __LINE__;
+		LatentInfo.ExecutionFunction = FName("OnMovetoInteractPosEnd");
 
 		UKismetSystemLibrary::MoveComponentTo(
 			Character->GetCapsuleComponent(),
@@ -125,16 +133,21 @@ void UInteractComponent::InteractPosCheckTimer(USceneComponent* Target)
 			Target->GetComponentRotation(),
 			false,
 			false,
-			0.1f,
+			0.2f,
 			false,
 			EMoveComponentAction::Type::Move,
 			LatentInfo
 		);
 
+		GetOwner()->GetWorldTimerManager().ClearTimer(InteractTimerHandle);
 		//SetActorLocation(Target->GetComponentLocation());
 		//SetActorRotation(Target->GetComponentRotation());
-		OnArrivedInteractionPoint.ExecuteIfBound();
-
-		GetOwner()->GetWorldTimerManager().ClearTimer(InteractTimerHandle);
 	}
+}
+
+void UInteractComponent::OnMovetoInteractPosEnd()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Arrived"));
+	OnArrivedInteractionPoint.ExecuteIfBound();
+	//GetOwner()->GetWorldTimerManager().ClearTimer(InteractTimerHandle);
 }
