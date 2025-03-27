@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "../../PEnumHeader.h"
+#include "GameplayTagContainer.h"
 #include "InteractInterface.generated.h"
 
 // This class does not need to be modified.
@@ -40,4 +41,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		FComponentTransform GetCameraData();
+
+	void GetInteractionTags(FGameplayTagContainer& OutTags) const;
 };

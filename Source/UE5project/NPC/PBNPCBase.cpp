@@ -13,13 +13,17 @@ APBNPCBase::APBNPCBase()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	NPCTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Dialogue.NPC")));
+	NPCTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Interactable.Dialogue")));
+
 	RootComponent = GetCapsuleComponent();
 
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 
-	DialogueSystem = CreateDefaultSubobject<UDialogueSystem>(TEXT("DialogSystem"));
-	DialogueSystem->bAutoActivate = true;
+	DialogueComponent = CreateDefaultSubobject<UDialogueSystem>(TEXT("DialogComponent"));
+	DialogueComponent->bAutoActivate = true;
 
 	InteractTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractTrigger"));
 	InteractTrigger->SetupAttachment(GetMesh());
@@ -56,7 +60,7 @@ void APBNPCBase::Interact_Implementation(ACharacter* InteractActor)
 
 			DialogueWidget = CreateWidget<UScriptWidget>(PlayerController, DialogueWidgetClass);
 			DialogueWidget->SetScriptWidget(this);
-			DialogueSystem->SetIsDialogue(true);
+			DialogueComponent->SetIsDialogue(true);
 			//PlayerController->SetInputMode(FInputModeGameAndUI());
 		
 			/*
@@ -97,7 +101,7 @@ void APBNPCBase::Interact_Implementation(ACharacter* InteractActor)
 
 void APBNPCBase::EndInteract_Implementation()
 {
-	DialogueSystem->SetIsDialogue(false);
+	DialogueComponent->SetIsDialogue(false);
 }
 
 // Called when the game starts or when spawned

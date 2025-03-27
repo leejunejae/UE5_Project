@@ -11,6 +11,7 @@
 #include "../PEnumHeader.h"
 #include "../Function/Interact/InteractInterface.h"
 #include "../Function/Interact/Ride/RideInterface.h"
+#include "GameplayTagContainer.h"
 #include "Ride.generated.h"
 
 class UInputMappingContext;
@@ -142,4 +143,7 @@ public:
 	virtual float GetRideVertical_Implementation();
 	virtual float GetRideHorizontal_Implementation();
 	virtual bool GetMountDir_Implementation();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+		FGameplayTagContainer RideTags;
 };

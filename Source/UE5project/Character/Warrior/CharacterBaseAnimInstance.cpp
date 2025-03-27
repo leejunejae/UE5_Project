@@ -13,12 +13,6 @@ UCharacterBaseAnimInstance::UCharacterBaseAnimInstance()
 {
 	IsInAir = false;
 
-	static ConstructorHelpers::FObjectFinder<UAnimMontage> DEATH_MONTAGE(TEXT("/Game/Character/C_Warrior/CW_Animation/CWA_BP/CWAB_DeathMontage.CWAB_DeathMontage"));
-	if (DEATH_MONTAGE.Succeeded())
-	{
-		DeathMontage = DEATH_MONTAGE.Object;
-	}
-
 	BoneNameToBodyType.Add("Hand_L", EBodyType::Hand_L);
 	BoneNameToBodyType.Add("Hand_R", EBodyType::Hand_R);
 	BoneNameToBodyType.Add("Foot_L", EBodyType::Foot_L);
@@ -615,18 +609,6 @@ void UCharacterBaseAnimInstance::SetRootYawOffset()
 	return;
 }
 
-void UCharacterBaseAnimInstance::PlayMontage(MontageType Type, int32 Section)
-{
-	switch (Type)
-	{
-	case MontageType::Death:
-		Montage_Play(DeathMontage, 1.0f);
-		break;
-	default:
-		break;
-	}
-}
-
 void UCharacterBaseAnimInstance::AnimNotify_NOT_ParryEnd()
 {
 	OnParryEnd.Broadcast();
@@ -800,12 +782,4 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_LeftIdleState()
 {
 	CanMovementInput = false;
 	//UE_LOG(LogTemp, Warning, TEXT("LeftIdleState"));
-}
-
-MontageType UCharacterBaseAnimInstance::CheckMontage(UAnimMontage* Montage)
-{
-	if (Montage == DeathMontage)
-		return MontageType::Death;
-	else
-		return MontageType::None;
 }

@@ -5,6 +5,7 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
 #include "Components/BrushComponent.h"
+#include "GameplayTagsManager.h"
 #include "Function/PlayerInterface.h"
 
 AClimbableObjectBase::AClimbableObjectBase()
@@ -12,6 +13,9 @@ AClimbableObjectBase::AClimbableObjectBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	Tags.Add("Climbable");
+	
+	ClimbObjectTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Climbable")));
+	ClimbObjectTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Interactable.Climb")));
 
 	ClimbStaticMesh = CreateDefaultSubobject<UStaticMesh>(TEXT("ClimbStaticMesh"));
 
@@ -58,6 +62,11 @@ USceneComponent* AClimbableObjectBase::GetEnterInteractLocation_Implementation(A
 	FVector DistBottomLoc = Target->GetActorLocation() - ClimbBottomLocation->GetComponentLocation();
 
 	return DistTopLoc.Length() < DistBottomLoc.Length() ? ClimbTopLocation : ClimbBottomLocation;
+}
+
+void AClimbableObjectBase::GetInteractionTags_Implementation(FGameplayTagContainer& OutTags) const
+{
+	OutTags = ClimbObjectTags;
 }
 
 TArray<FGripNode1D> AClimbableObjectBase::GetGripList1D_Implementation()
