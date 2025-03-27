@@ -16,6 +16,10 @@ ARide::ARide()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	RideTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Ride.Horse")));
+	RideTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Interactable.Ride")));
+
 	RootComponent = GetCapsuleComponent();
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
@@ -390,39 +394,6 @@ void ARide::Interact_Implementation(ACharacter* InteractActor)
 	
 	if (Rider != InteractActor)
 		return;
-
-	
-	/*
-	FVector MountLoc;
-	FRotator MountRot;
-	if (MountRight)
-	{
-		MountLoc = RiderMountLocRight->GetComponentLocation();
-		MountRot = RiderMountLocRight->GetComponentRotation();
-	}
-	else
-	{
-		MountLoc = RiderMountLocLeft->GetComponentLocation();
-		MountRot = RiderMountLocLeft->GetComponentRotation();
-	}
-
-	MountLoc.Z += InteractActor->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-
-	FLatentActionInfo LatentInfo;
-	LatentInfo.CallbackTarget = this;
-	LatentInfo.ExecutionFunction = "OnMoveComponentToEnd";
-	UKismetSystemLibrary::MoveComponentTo(
-		InteractActor->GetCapsuleComponent(),
-		MountLoc,
-		MountRot,
-		false,
-		false,
-		1.0f,
-		false,
-		EMoveComponentAction::Type::Move,
-		LatentInfo
-	);
-	*/
 	
 
 	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
@@ -439,7 +410,6 @@ void ARide::Interact_Implementation(ACharacter* InteractActor)
 	FComponentTransform CameraTransform = IPlayerInterface::Execute_GetCameraData(Rider);
 	Camera->SetWorldLocation(CameraTransform.Location);
 	Camera->SetWorldRotation(CameraTransform.Rotation);
-	//Rider->GetMesh()->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->Possess(this);
 	
 	FLatentActionInfo LatentInfo;
@@ -464,8 +434,8 @@ USceneComponent* ARide::GetEnterInteractLocation_Implementation(AActor* Target)
 {
 	IInteractInterface::GetEnterInteractLocation_Implementation(Target);
 
-	FVector DistRightLoc = Rider->GetActorLocation() - RiderMountLocRight->GetComponentLocation();
-	FVector DistLeftLoc = Rider->GetActorLocation() - RiderMountLocLeft->GetComponentLocation();
+	FVector DistRightLoc = Target->GetActorLocation() - RiderMountLocRight->GetComponentLocation();
+	FVector DistLeftLoc = Target->GetActorLocation() - RiderMountLocLeft->GetComponentLocation();
 
 	if (DistRightLoc.Length() < DistLeftLoc.Length())
 	{

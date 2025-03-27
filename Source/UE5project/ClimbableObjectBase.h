@@ -8,6 +8,7 @@
 #include "MapObjectBase.h"
 #include "Function/Interact/InteractInterface.h"
 #include "Function/Interact/ClimbObjectInterface.h"
+#include "GameplayTagContainer.h"
 #include "ClimbHeader.h"
 #include "ClimbableObjectBase.generated.h"
 
@@ -27,6 +28,12 @@ public:
 	virtual void PostInitializeComponents() override;
 
 	virtual USceneComponent* GetEnterInteractLocation_Implementation(AActor* Target);
+
+
+	void GetInteractionTags_Implementation(FGameplayTagContainer& OutTags) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+	FGameplayTagContainer ClimbObjectTags;
 
 #pragma region ClimbObjectInterface
 	virtual TArray<FGripNode1D> GetGripList1D_Implementation();

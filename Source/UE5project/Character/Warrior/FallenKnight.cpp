@@ -118,6 +118,7 @@ void AFallenKnight::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	/*
 	if (DodgeCurve)
 	{
 		PreviousCurveValue = 0.0f;
@@ -129,6 +130,7 @@ void AFallenKnight::BeginPlay()
 		DodgeTimeline.SetTimelineFinishedFunc(DodgeUpdateFinCallback);
 		DodgeTimeline.SetLooping(false);
 	}
+	*/
 }
 
 void AFallenKnight::Tick(float DeltaTime)
@@ -267,9 +269,6 @@ void AFallenKnight::PostInitializeComponents()
 			});
 		*/
 
-		FallenKnightAnim->OnMountEnd.AddUObject(this, &AFallenKnight::MountEnd);
-		FallenKnightAnim->OnDisMountEnd.AddUObject(this, &AFallenKnight::DisMountEnd);
-
 		// Ladder Binding
 
 		FallenKnightAnim->OnEnterWalkState.AddLambda([this]()->void {
@@ -290,26 +289,14 @@ void AFallenKnight::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (nullptr==FallenKnightAnim)
 		return;
-	MontageType Type = FallenKnightAnim->CheckMontage(Montage);
-	
-	switch (Type)
-	{
-	case MontageType::Attack:
-		break;
-	case MontageType::Death:
-		break;
-	case MontageType::Hit:
-		break;
-	default:
-		break;
-	}
+
 }
 
 void AFallenKnight::IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (nullptr == FallenKnightAnim)
 		return;
-	MontageType Type = FallenKnightAnim->CheckMontage(Montage);
+/*	MontageType Type = FallenKnightAnim->CheckMontage(Montage);
 
 	switch (Type)
 	{
@@ -319,13 +306,7 @@ void AFallenKnight::IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupte
 		break;
 	default:
 		break;
-	}
-}
-
-void AFallenKnight::OnMoveEndToLadder()
-{
-	Super::OnMoveEndToLadder();
-	CurStance = WarriorStance::UA;
+	}*/
 }
 
 void AFallenKnight::Sprint()
@@ -469,18 +450,6 @@ void AFallenKnight::Dodge()
 	*/
 	//CanDodge = false;
 	
-	/*
-	FallenKnightAnim->PlayMontage(MontageType::Dodge);
-	switch (CurStance)
-	{
-	case WarriorStance::UA:
-		FallenKnightAnim->Montage_JumpToSection("Default");
-		break;
-	default:
-		FallenKnightAnim->Montage_JumpToSection("Combat");
-		break;
-	}
-	*/
 	CanDodge = false;
 	IsDodge = true;
 	IsRoll = true;
@@ -538,7 +507,6 @@ void AFallenKnight::Death()
 	Super::Death();
 	if (nullptr == FallenKnightAnim)
 		return;
-	FallenKnightAnim->PlayMontage(MontageType::Death);
 }
 
 void AFallenKnight::Block(bool CanParried)

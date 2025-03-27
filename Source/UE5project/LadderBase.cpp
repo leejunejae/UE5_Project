@@ -9,6 +9,8 @@ ALadderBase::ALadderBase()
 	LadderScale = FVector(1.0f, 1.0f, 1.0f);
 	AdditionalHeight = 0.0f;
 
+	ClimbObjectTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Climbable.Ladder")));
+
 	EnterTopPosition = CreateDefaultSubobject<USceneComponent>(TEXT("EnterTopPosition"));
 	EnterTopPosition->SetupAttachment(ObjectRoot);
 	EnterTopPosition->ComponentTags.Add(FName("Top"));
