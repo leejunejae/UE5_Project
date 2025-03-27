@@ -394,39 +394,6 @@ void ARide::Interact_Implementation(ACharacter* InteractActor)
 	
 	if (Rider != InteractActor)
 		return;
-
-	
-	/*
-	FVector MountLoc;
-	FRotator MountRot;
-	if (MountRight)
-	{
-		MountLoc = RiderMountLocRight->GetComponentLocation();
-		MountRot = RiderMountLocRight->GetComponentRotation();
-	}
-	else
-	{
-		MountLoc = RiderMountLocLeft->GetComponentLocation();
-		MountRot = RiderMountLocLeft->GetComponentRotation();
-	}
-
-	MountLoc.Z += InteractActor->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-
-	FLatentActionInfo LatentInfo;
-	LatentInfo.CallbackTarget = this;
-	LatentInfo.ExecutionFunction = "OnMoveComponentToEnd";
-	UKismetSystemLibrary::MoveComponentTo(
-		InteractActor->GetCapsuleComponent(),
-		MountLoc,
-		MountRot,
-		false,
-		false,
-		1.0f,
-		false,
-		EMoveComponentAction::Type::Move,
-		LatentInfo
-	);
-	*/
 	
 
 	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
@@ -443,7 +410,6 @@ void ARide::Interact_Implementation(ACharacter* InteractActor)
 	FComponentTransform CameraTransform = IPlayerInterface::Execute_GetCameraData(Rider);
 	Camera->SetWorldLocation(CameraTransform.Location);
 	Camera->SetWorldRotation(CameraTransform.Rotation);
-	//Rider->GetMesh()->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->Possess(this);
 	
 	FLatentActionInfo LatentInfo;

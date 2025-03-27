@@ -269,9 +269,6 @@ void AFallenKnight::PostInitializeComponents()
 			});
 		*/
 
-		FallenKnightAnim->OnMountEnd.AddUObject(this, &AFallenKnight::MountEnd);
-		FallenKnightAnim->OnDisMountEnd.AddUObject(this, &AFallenKnight::DisMountEnd);
-
 		// Ladder Binding
 
 		FallenKnightAnim->OnEnterWalkState.AddLambda([this]()->void {

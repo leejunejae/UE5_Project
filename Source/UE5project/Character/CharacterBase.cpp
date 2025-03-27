@@ -309,6 +309,8 @@ void ACharacterBase::PostInitializeComponents()
 	DamageComponent->OnDeath.BindUFunction(this, FName("Death"));
 
 	CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
+	CharacterBaseAnim->OnMountEnd.AddUObject(this, &ACharacterBase::MountEnd);
+	CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &ACharacterBase::DisMountEnd);
 }
 
 /* Input Action */
@@ -655,9 +657,6 @@ void ACharacterBase::Interact()
 void ACharacterBase::MountEnd()
 {
 	IInteractInterface::Execute_Interact(Ride, this);
-	//SpringArm->bUsePawnControlRotation = false;
-	//GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	//GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	UE_LOG(LogTemp, Warning, TEXT("MountEnd2"));
 }
 
