@@ -86,7 +86,7 @@ private:
 		USkeletalMeshComponent* ArmorMesh;
 		*/
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* ParryAction;
 
 	FTimerHandle MoveSpeedTimerHandle;
@@ -98,7 +98,7 @@ private:
 		class UPBDamageSystem* FallenKnightDMGSystem;
 
 	//Dodge TImeline
-	UPROPERTY(VisibleAnywhere, Category = Timeline)
+	UPROPERTY(EditAnywhere, Category = Timeline)
 		UCurveFloat* DodgeCurve;
 
 	FVector InitPosition;
@@ -128,7 +128,6 @@ private:
 	bool IsParry;
 	bool AttackInput;
 	bool CanAttack;
-	bool CanDodge;
 	bool NextDodge;
 	bool CurHandRight;
 	bool CanInputBuffer;

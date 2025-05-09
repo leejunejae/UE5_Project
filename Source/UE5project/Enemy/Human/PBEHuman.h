@@ -20,7 +20,7 @@
 class UCharacterMovementComponent;
 class UPBDamageSystem;
 
-DECLARE_MULTICAST_DELEGATE(FOnActionDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
 
 UCLASS()
 class UE5PROJECT_API APBEHuman : public APBEnemy, public IPBDamagableInterface, public ICombatInterface
@@ -77,15 +77,15 @@ protected:
 		virtual void OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 
 public:
-	FOnActionDelegate OnTeleport; // ������ ���� �ڷ���Ʈ Behavior Tree Task�� ���� ��������Ʈ
-	FOnActionDelegate OnSummonEnd;
-	FOnActionDelegate OnAttackEnd;
-	FOnActionDelegate OnAttackStart;
-	FOnActionDelegate OnAttackFin;
-	FOnActionDelegate OnAppearEnd;
-	FOnActionDelegate OnSwoopEnd;
-	FOnActionDelegate OnBlockEnd;
-	FOnActionDelegate OnDashEnd;
+	FOnMultiDelegate OnTeleport; // ������ ���� �ڷ���Ʈ Behavior Tree Task�� ���� ��������Ʈ
+	FOnMultiDelegate OnSummonEnd;
+	FOnMultiDelegate OnAttackEnd;
+	FOnMultiDelegate OnAttackStart;
+	FOnMultiDelegate OnAttackFin;
+	FOnMultiDelegate OnAppearEnd;
+	FOnMultiDelegate OnSwoopEnd;
+	FOnMultiDelegate OnBlockEnd;
+	FOnMultiDelegate OnDashEnd;
 
 protected:
 	FEnemyInfo EnemyInfo;

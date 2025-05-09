@@ -32,9 +32,10 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	if (Character)
 	{
+		IsMovementInput = Character->GetIsMovementInput();
 		CurrentState = Character->GetCurrentState();
 		CurStance = Character->GetStance();
-		IsMovementInput = Character->GetIsMovementInput();
+		IsAccelerating = Character->GetCharacterMovement()->GetCurrentAcceleration() != FVector::ZeroVector && Speed > 3.0f ? true : false;
 		IsInAir = Character->GetMovementComponent()->IsFalling();
 		IsAttack = Character->IsAttacking();
 		IsAttackInput = Character->IsAttackInput();
@@ -42,10 +43,12 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		IsParry = Character->IsParrying();
 		IsRoll = Character->IsRolling();
 		Response = Character->GetCharResponse();
-		IsRide = Character->IsRiding();
-		IsEscape = Character->GetVertical() > 1.0f ? true : false;
-		IsRightHand = Character->GetCurHand();
 		ComboCount = Character->CheckCombo();
+
+		//if (FMath::IsNearlyEqual(Speed, 0.0f) && CurrentState==ECharacterState::Ride)
+		//{
+		//	Speed = LastSpeed;
+		//}
 
 		switch (CurrentState)
 		{
@@ -53,21 +56,18 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			CurGroundStance = Character->GetCurGroundStance();
 
-			//RightHandLadderAlpha = FMath::FInterpTo(RightHandLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
-			//LeftHandLadderAlpha = FMath::FInterpTo(LeftHandLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
-			//RightFootLadderAlpha = FMath::FInterpTo(RightFootLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
-			//LeftFootLadderAlpha = FMath::FInterpTo(LeftFootLadderAlpha, 0.0f, DeltaSeconds, 5.0f);
+			RightHandIKTypeAlpha = FMath::FInterpTo(RightHandIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
+			LeftHandIKTypeAlpha = FMath::FInterpTo(LeftHandIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
+			RightFootIKTypeAlpha = FMath::FInterpTo(RightFootIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
+			LeftFootIKTypeAlpha = FMath::FInterpTo(LeftFootIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
 
-			RightHandStateAlpha = FMath::FInterpTo(RightHandStateAlpha, 0.0f, DeltaSeconds, 5.0f);
-			LeftHandStateAlpha = FMath::FInterpTo(LeftHandStateAlpha, 0.0f, DeltaSeconds, 5.0f);
-			RightFootStateAlpha = FMath::FInterpTo(RightFootStateAlpha, 0.0f, DeltaSeconds, 5.0f);
-			LeftFootStateAlpha = FMath::FInterpTo(LeftFootStateAlpha, 0.0f, DeltaSeconds, 5.0f);
-
-			Speed = Character->GetVelocity().Length();//FMath::FInterpTo(Speed, VelocityLength, DeltaSeconds, 20.0f);
+			Speed = Character->GetVelocity().Length();
 			Direction = CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
-			IsAccelerating = Character->GetCharacterMovement()->GetCurrentAcceleration() != FVector::ZeroVector && Speed > 3.0f ? true : false;
+			float LocomotionAnimCurrentTime = GetCurveValue(FName("LocomotionTimeCurve"));
+			float LocomotionAnimLength = GetCurveValue(FName("LocomotionAnimEntireLength"));
+			LocomotionAnimTime = LocomotionAnimCurrentTime / LocomotionAnimLength;
 
-			if (GetCurveValue(FName("TurnLock")) > 0.0f || Character->GetLastMovementInputVector().IsNearlyZero())
+			if (GetCurveValue(FName("TurnLock")) > 0.0f || Speed < 200.0f)
 			{
 				bQuickTurn = false;
 			}
@@ -116,13 +116,8 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
 			TTuple<FVector, float> TraceRightFoot = FootTrace("Foot_R");
 
-			//UE_LOG(LogTemp, Warning, TEXT("LeftFootOffset = %f"), TraceLeftFoot.Value);
-			//UE_LOG(LogTemp, Warning, TEXT("RightFootOffset = %f"), TraceRightFoot.Value);
-
 			FootRotation(DeltaSeconds, TraceLeftFoot.Key, &LeftFootRotator, 20.0f);
 			FootRotation(DeltaSeconds, TraceRightFoot.Key, &RightFootRotator, 20.0f);
-			//UE_LOG(LogTemp, Warning, TEXT("LeftFootRotator (Pitch : %f, Yaw : %f, Roll : %f) "), LeftFootRotator.Pitch, LeftFootRotator.Yaw, LeftFootRotator.Roll);
-			//UE_LOG(LogTemp, Warning, TEXT("RightFootRotator (Pitch : %f, Yaw : %f, Roll : %f)"), RightFootRotator.Pitch, RightFootRotator.Yaw, RightFootRotator.Roll);
 
 			PelvisOffset = FMath::FInterpTo(PelvisOffsetLast, UKismetMathLibrary::Min(TraceLeftFoot.Value, TraceRightFoot.Value), DeltaSeconds, 15.0f);
 			LeftFootOffset = FMath::FInterpTo(LeftFootOffsetLast, TraceLeftFoot.Value - PelvisOffset, DeltaSeconds, 15.0f);
@@ -152,10 +147,10 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				{
 				case ELadderStance::Enter_From_Top:
 				{
-					CheckIKValid(FName("Disable_FootIK_L"), LeftFootStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_FootIK_R"), RightFootStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_L"), LeftHandStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_R"), RightHandStateAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
 
 					const FVector InitLocation = Character->GetClimbComponent()->GetInitTopPosition().GetValue().GetLocation() + FVector(0.0f, 0.0f, Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 					const FVector TargetLocation = Character->GetClimbComponent()->GetEnterTopPosition().GetValue().GetLocation();
@@ -238,10 +233,10 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				case ELadderStance::Exit_From_Top:
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Exit Top"));
-					CheckIKValid(FName("Disable_FootIK_L"), LeftFootStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_FootIK_R"), RightFootStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_L"), LeftHandStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_R"), RightHandStateAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
 
 					const FVector InitLocation = Character->GetClimbComponent()->GetEnterTopPosition().GetValue().GetLocation();
 					const FVector TargetLocation = Character->GetClimbComponent()->GetInitTopPosition().GetValue().GetLocation();
@@ -271,11 +266,11 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				}
 				case ELadderStance::Enter_From_Bottom:
 				{
-					CheckIKValid(FName("Disable_FootIK_R"), RightFootStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_L"), LeftHandStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_R"), RightHandStateAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
 
-					LeftFootStateAlpha = 0.0f;
+					LeftFootIKTypeAlpha = 0.0f;
 					float LeftFootOffsetLast;
 					LeftFootOffsetLast = LeftFootOffset;
 					TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
@@ -289,9 +284,9 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				}
 				case ELadderStance::Exit_From_Bottom:
 				{
-					CheckIKValid(FName("Disable_FootIK_R"), RightFootStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_L"), LeftHandStateAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_R"), RightHandStateAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
 
 					float LeftFootOffsetLast;
 					float RightFootOffsetLast;
@@ -323,7 +318,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				}
 				case ELadderStance::ClimbDown_OneStep:
 				{
-					CheckIKValid(FName("Disable_FootIK_L"), LeftFootStateAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
 
 					float LeftFootOffsetLast;
 					LeftFootOffsetLast = LeftFootOffset;
@@ -338,7 +333,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				}
 				case ELadderStance::ClimbUp_OneStep:
 				{
-					CheckIKValid(FName("Disable_FootIK_L"), LeftFootStateAlpha, DeltaSeconds);
+					CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
 
 					float LeftFootOffsetLast;
 					LeftFootOffsetLast = LeftFootOffset;
@@ -354,7 +349,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				}
 				default:
 				{
-					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandTarget, Hand_L_Y_Distance, DeltaSeconds, 1.0f);
+					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandTarget, Hand_L_Y_Distance, DeltaSeconds, 1.0f, true);
 					SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandTarget, Hand_R_Y_Distance, DeltaSeconds);
 					SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveNameSet, LeftFootTarget, Foot_L_Y_Distance, DeltaSeconds, 0.5f);
 					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootTarget, Foot_R_Y_Distance, DeltaSeconds, 0.5f);
@@ -367,11 +362,83 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			//UE_LOG(LogTemp, Warning, TEXT("%s"), IsOneStep ? TEXT("True") : TEXT("False"));
 			break;
 		}
-		case ECharacterState::Riding:
+		case ECharacterState::Ride:
 		{
-			MountRight = Character->GetMountDir();
-			Speed = Character->GetVertical();
-			Direction = Character->GetHorizontal();
+			CurRideStance = Character->GetCurRideStance();
+
+			//TOptional<FVector> LeftHandRein = Character->GetRideIKTargetLoc(BoneNameToBodyType[FName("Hand_L")]);
+			//TOptional<FVector> RightHandRein = Character->GetRideIKTargetLoc(BoneNameToBodyType[FName("Hand_R")]);
+			//TOptional<FVector> LeftFootSaddle = Character->GetRideIKTargetLoc(BoneNameToBodyType[FName("Foot_L")]);
+			//TOptional<FVector> RightFootSaddle = Character->GetRideIKTargetLoc(BoneNameToBodyType[FName("Foot_R")]);
+
+			//CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
+			//CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
+			//CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
+			//CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
+
+			/*
+			if (LeftHandRein.IsSet())
+			{
+				LeftHandTarget = LeftHandRein.GetValue();
+				UE_LOG(LogTemp, Warning, TEXT("LeftRein is valid"));
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("LeftRein is Invalid"));
+			}
+
+			if (RightHandRein.IsSet())
+			{
+				RightHandTarget = RightHandRein.GetValue();
+				UE_LOG(LogTemp, Warning, TEXT("RightRein is valid"));
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("RightRein is Invalid"));
+			}
+
+			if (LeftHandRein.IsSet())
+			{
+				LeftFootTarget = LeftFootSaddle.GetValue();
+				UE_LOG(LogTemp, Warning, TEXT("LeftSaddle is valid"));
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("LeftSaddle is Invalid"));
+			}
+
+			if (LeftHandRein.IsSet())
+			{
+				RightFootTarget = RightFootSaddle.GetValue();
+				UE_LOG(LogTemp, Warning, TEXT("RightSaddle is valid"));
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("RightSaddle is Invalid"));
+			}
+			*/
+
+			switch (CurRideStance)
+			{
+			case ERideStance::Mount:
+			{
+				break;
+			}
+			case ERideStance::Riding:
+			{
+				Speed = Character->GetRideSpeed();
+				Direction = Character->GetRideDirection();
+
+				float LocomotionAnimCurrentTime = GetCurveValue(FName("LocomotionTimeCurve"));
+				float LocomotionAnimLength = GetCurveValue(FName("LocomotionAnimEntireLength"));
+				LocomotionAnimTime = LocomotionAnimCurrentTime / LocomotionAnimLength;
+				break;
+			}
+			case ERideStance::DisMount:
+			{
+				break;
+			}
+			}
 			break;
 		}
 		}
@@ -433,7 +500,7 @@ void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName&
 		return;
 	}
 
-	const TOptional<TTuple<FVector, FVector>> GripLoc = Character->GetBoneTargetLoc(BoneNameToBodyType[BoneName]);
+	const TOptional<TTuple<FVector, FVector>> GripLoc = Character->GetLadderIKTargetLoc(BoneNameToBodyType[BoneName]);
 
 	// 본 설정이 잘못되거나 손잡이에 대한 정보가 없는 경우
 	// EX) 사다리에 올라타지 않은 상태, 본 이름이 잘못 입력된 상태
@@ -713,13 +780,13 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_ResetHurt()
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterLocomotion()
 {
-	OnEnterLocomotion.Broadcast();
+	OnEnterLocomotion.ExecuteIfBound();
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_LeftLocomotion()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("ResetHurt"));
-	OnLeftLocomotion.Broadcast();
+	OnLeftLocomotion.ExecuteIfBound();
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_DodgeEnd()
@@ -768,7 +835,19 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterWalkState()
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterLadderState()
 {
 	OnEnterLadderState.Broadcast();
-	SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
+	//SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
+}
+
+float UCharacterBaseAnimInstance::GetAnimDirection(float DeltaSeconds)
+{
+	float PrevCharacterYaw = CharacterYaw;
+	CharacterYaw = Character->GetActorRotation().Yaw;
+	
+	float DeltaCharacterYaw = CharacterYaw - PrevCharacterYaw;
+	float LeanAngle = FMath::Clamp((UKismetMathLibrary::SafeDivide(DeltaCharacterYaw, DeltaSeconds) / 200.0f), -1.0f, 1.0f);
+		 
+
+	return LeanAngle;
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterIdleState()

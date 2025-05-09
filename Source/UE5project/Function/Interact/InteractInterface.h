@@ -36,11 +36,5 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		USceneComponent* GetEnterInteractLocation(AActor* Target = nullptr);
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		USceneComponent* GetLeftInteractLocation();
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		FComponentTransform GetCameraData();
-
 	void GetInteractionTags(FGameplayTagContainer& OutTags) const;
 };

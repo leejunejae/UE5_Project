@@ -30,7 +30,7 @@ APBNPCBase::APBNPCBase()
 	InteractTrigger->SetRelativeLocation(FVector(0.0f, 30.0f, 110.0f));
 	InteractTrigger->SetBoxExtent(FVector(100.0f, 100.0f, 100.0f));
 
-	static ConstructorHelpers::FClassFinder<UScriptWidget> ScriptWidget(TEXT("/Game/Character/C_Source/ScriptWidget_BP.ScriptWidget_BP_C"));
+	static ConstructorHelpers::FClassFinder<UScriptWidget> ScriptWidget(TEXT("/Game/00_Character/C_Source/ScriptWidget_BP.ScriptWidget_BP_C"));
 	if (!ensure(ScriptWidget.Class != nullptr)) return;
 
 	DialogueWidgetClass = ScriptWidget.Class;
@@ -78,7 +78,7 @@ void APBNPCBase::Interact_Implementation(ACharacter* InteractActor)
 
 		// Widget Blueprint 클래스를 로드합니다.
 		/*
-		TSubclassOf<UUserWidget> DialogueWidgetClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/Character/C_Source/ScriptWidget_BP.ScriptWidget_BP_C"));
+		TSubclassOf<UUserWidget> DialogueWidgetClass = LoadClass<UUserWidget>(nullptr, TEXT("/Game/00_Character/C_Source/ScriptWidget_BP.ScriptWidget_BP_C"));
 
 		if (DialogueWidgetClass)
 		{

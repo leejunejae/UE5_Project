@@ -20,10 +20,8 @@ UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
 	Ground UMETA(DisplayName = "Ground"),
-	GroundToLadder UMETA(DisplayName = "GroundToLadder"),
-	LadderToGround UMETA(DisplayName = "LadderToGround"),
 	Ladder UMETA(DisplayName = "Ladder"),
-	Riding UMETA(DisplayName = "Riding"),
+	Ride UMETA(DisplayName = "Ride"),
 };
 
 UENUM(BlueprintType)
@@ -48,6 +46,14 @@ enum class ELadderStance : uint8
 	ClimbDown_OneStep UMETA(DisplayName = "ClimbDown_OneStep"),
 	Exit_From_Bottom UMETA(DisplayName = "Exit_From_Bottom"),
 	Exit_From_Top UMETA(DisplayName = "Exit_From_Top"),
+};
+
+UENUM(BlueprintType)
+enum class ERideStance : uint8
+{
+	Mount UMETA(DisplayName = "Mount"),
+	DisMount UMETA(DisplayName = "DisMount"),
+	Riding UMETA(DisplayName = "Riding"),
 };
 
 UCLASS()

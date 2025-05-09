@@ -20,8 +20,19 @@ void URideAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	if (Character)
 	{
-		Horizontal = Character->CheckVar(RideVar::Horizontal);
-		Vertical = Character->CheckVar(RideVar::Vertical);
-		IsBreak = Character->CheckBool(RideVar::IsBreak);
+
+		Speed = Character->GetVelocity().Length();//FMath::FInterpTo(Speed, VelocityLength, DeltaSeconds, 20.0f);
+		Direction = Character->GetDirection();
+
+		//UE_LOG(LogTemp, Warning, TEXT("Speed = %f"), Speed);
+
+		if (GetCurveValue(FName("TurnLock")) > 0.0f)
+		{
+			bQuickTurn = false;
+		}
+		else
+		{
+			bQuickTurn = Direction > 160.0f || Direction < -160.0f ? bQuickTurn = true : bQuickTurn = false;
+		}
 	}
 }
