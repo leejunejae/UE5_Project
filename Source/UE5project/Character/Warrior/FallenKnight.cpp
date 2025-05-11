@@ -16,7 +16,7 @@ AFallenKnight::AFallenKnight()
 	}
 	*/
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Parry(TEXT("/Game/Character/C_Input/C_Parry.C_Parry"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Parry(TEXT("/Game/00_Character/C_Input/C_Parry.C_Parry"));
 	if (IP_Parry.Succeeded())
 	{
 		ParryAction = IP_Parry.Object;
@@ -84,13 +84,13 @@ AFallenKnight::AFallenKnight()
 	}
 	
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/Character/C_Warrior/CW_Animation/CWA_BP/ABP_FallenKnight.ABP_FallenKnight_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/00_Character/C_Warrior/CW_Animation/CWA_BP/ABP_FallenKnight.ABP_FallenKnight_C"));
 	if (FallenKnight_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(FallenKnight_ANIM.Class);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UCurveFloat> DodgeCurveAsset(TEXT("/Game/Character/C_Source/DodgeCurve.DodgeCurve"));
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> DodgeCurveAsset(TEXT("/Game/00_Character/C_Source/DodgeCurve.DodgeCurve"));
 	if (DodgeCurveAsset.Succeeded())
 	{
 		DodgeCurve = DodgeCurveAsset.Object;
@@ -117,8 +117,7 @@ AFallenKnight::AFallenKnight()
 void AFallenKnight::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	/*
+
 	if (DodgeCurve)
 	{
 		PreviousCurveValue = 0.0f;
@@ -130,7 +129,6 @@ void AFallenKnight::BeginPlay()
 		DodgeTimeline.SetTimelineFinishedFunc(DodgeUpdateFinCallback);
 		DodgeTimeline.SetLooping(false);
 	}
-	*/
 }
 
 void AFallenKnight::Tick(float DeltaTime)
@@ -191,20 +189,6 @@ void AFallenKnight::PostInitializeComponents()
 			CanDodge = true;
 			});
 
-
-		FallenKnightAnim->OnEnterLocomotion.AddLambda([this]()->void {
-			IsLocomotion = true;
-			//IsAttack = false;
-			CurResponse = HitResponse::None;
-			CanDodge = true;
-			//UE_LOG(LogTemp, Warning, TEXT("EnterLocomotion"));
-			});
-
-		FallenKnightAnim->OnLeftLocomotion.AddLambda([this]()->void {
-			IsLocomotion = false;
-			//UE_LOG(LogTemp, Warning, TEXT("LeftLocomotion"));
-			});
-
 		FallenKnightAnim->OnResetHurt.AddLambda([this]()->void {
 			IsAttack = false;
 			CurResponse = HitResponse::None;
@@ -212,29 +196,6 @@ void AFallenKnight::PostInitializeComponents()
 			IsBlock = false;
 			IsParry = false;
 			IsInvincible = false;
-			});
-
-		FallenKnightAnim->OnDodgeEnd.AddLambda([this]()->void {
-			CanDodge = true;
-			IsDodge = false;
-			GetCharacterMovement()->bOrientRotationToMovement = true;
-			//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
-			});
-
-		FallenKnightAnim->OnDodgeStart.AddLambda([this]()->void {
-			/*
-			if (RollSounds.Num() > 0)
-			{
-				int32 RandomIndex = FMath::RandRange(0, RollSounds.Num() - 1);
-				USoundCue* SelectedSound = RollSounds[RandomIndex];
-				if (SelectedSound)
-				{
-					UGameplayStatics::PlaySoundAtLocation(this, SelectedSound, GetActorLocation());
-				}
-			}
-			*/
-			IsDodge = true;
-			IsRoll = false;
 			});
 
 		FallenKnightAnim->OnAttackStart.AddLambda([this]()->void {
@@ -268,20 +229,6 @@ void AFallenKnight::PostInitializeComponents()
 			CanDodge = true;
 			});
 		*/
-
-		// Ladder Binding
-
-		FallenKnightAnim->OnEnterWalkState.AddLambda([this]()->void {
-			CurrentState = ECharacterState::Ground;
-			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			});
-
-		FallenKnightAnim->OnEnterLadderState.AddLambda([this]()->void {
-			CurrentState = ECharacterState::Ladder;
-			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			});
 	}
 }
 

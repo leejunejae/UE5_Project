@@ -23,11 +23,22 @@ class UE5PROJECT_API IRideInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		float GetRideVertical();
+		float GetRideSpeed();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		float GetRideHorizontal();
+		float GetRideDirection();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		bool GetMountDir();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		FTransform GetMountTransform();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		USceneComponent* GetLeftInteractLocation();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void Mount(ACharacter* RiderCharacter, FVector InitVelocity);
+
+	void DisMount();
 };

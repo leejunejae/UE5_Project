@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "../PEnumHeader.h"
 #include "PlayerInterface.generated.h"
 
 // This class does not need to be modified.
@@ -36,7 +35,7 @@ public:
 		void EndInteraction(AActor* Interactable);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		FComponentTransform GetCameraData();
+		void DespawnRide(FVector InitVelocity);
 
 	TOptional<FVector> GetCharBoneLocation(FName BoneName);
 };

@@ -33,7 +33,7 @@ public:
 	void Tick(float DeltaTime) override;
 
 public:
-	FOnActionDelegate OnSwitchEnd;
+	FOnMultiDelegate OnSwitchEnd;
 
 protected:
 	void BeginPlay() override;

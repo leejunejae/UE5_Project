@@ -11,9 +11,11 @@
 #include "../PEnumHeader.h"
 #include "../Function/Interact/InteractInterface.h"
 #include "../Function/Interact/Ride/RideInterface.h"
+#include "../Function/ViewDataInterface.h"
 #include "GameplayTagContainer.h"
 #include "Ride.generated.h"
 
+class UCharacterMovementComponent;
 class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
@@ -28,13 +30,16 @@ enum class HorseDirection : uint8
 };
 
 UCLASS()
-class UE5PROJECT_API ARide : public ACharacter, public IInteractInterface, public IRideInterface
+class UE5PROJECT_API ARide : public ACharacter, public IInteractInterface, public IRideInterface, public IViewDataInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
 	ARide();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+		FGameplayTagContainer RideTags;
 
 private:
 	void InputSetting();
@@ -46,27 +51,14 @@ private:
 		void TriggerEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* Saddle;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* Reins;
-
 	UPROPERTY(EditAnywhere)
 		class UWidgetComponent* InteractWidget;
 
-	float VerticalTarget = 0.0f;
-	UPROPERTY(VisibleAnywhere, Category = Velocity)
-		float Vertical;
-	float Horizontal;
+
+	float Direction;
 	float WidgetAlpha = 0.0f;
 	bool CanInteraction = false;
-	bool IsBreak;
 	bool MountRight;
-
-	UPROPERTY(VisibleAnywhere, Category = Velocity)
-	HorseDirection CurDirection;
-	UPROPERTY(VisibleAnywhere, Category = Velocity)
-	HorseMovement CurMovement;
 
 	ACharacter* Rider;
 	FRotator RiderRotator;
@@ -77,12 +69,17 @@ protected:
 
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
+
 	void Stop();
 	void MoveSpeedToggle();
-	void Interact();
 	bool FindMountPos();
 
 protected:
+	UPROPERTY(VisibleAnywhere, Category = Equipment)
+		USkeletalMeshComponent* Saddle;
+	UPROPERTY(VisibleAnywhere, Category = Equipment)
+		USkeletalMeshComponent* Reins;
+
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		USpringArmComponent* SpringArm;
 
@@ -90,20 +87,24 @@ protected:
 		UCameraComponent* Camera;
 
 	/* �� �Է� */
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputMappingContext* DefaultContext;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* MoveAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* LookAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* MoveSpeedToggleAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
-		UInputAction* InteractAction;
+	UPROPERTY(EditAnywhere, Category = Input)
+		UInputAction* DisMountAction;
+
+
+	bool IsMovementInput;
+	FInputActionValue MovementInputValue;
 
 	/* �� �Է� */
 
@@ -111,7 +112,7 @@ protected:
 		UBoxComponent* RiderTrigger;
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-		USceneComponent* RiderLocation1;
+		USceneComponent* RiderLocation;
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
 		USceneComponent* RiderGetDownLoc;
@@ -131,19 +132,40 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
-	float CheckVar(RideVar CheckVar);
-	bool CheckBool(RideVar CheckVar);
+	float GetDirection();
 
-	virtual void RegisterInteractActor_Implementation(ACharacter* InteractActor);
-	virtual void Interact_Implementation(ACharacter* InteractActor);
 	virtual USceneComponent* GetEnterInteractLocation_Implementation(AActor* Target);
 	virtual USceneComponent* GetLeftInteractLocation_Implementation();
-	virtual FComponentTransform GetCameraData_Implementation();
 
-	virtual float GetRideVertical_Implementation();
-	virtual float GetRideHorizontal_Implementation();
+#pragma region Mount And DisMount
+public:
+	void DisMount();
+	virtual bool TryDisMount();
+
+	virtual void Mount_Implementation(ACharacter* RiderCharacter, FVector InitVelocity);
+	virtual float GetRideSpeed_Implementation();
+	virtual float GetRideDirection_Implementation();
 	virtual bool GetMountDir_Implementation();
+	virtual FTransform GetMountTransform_Implementation();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
-		FGameplayTagContainer RideTags;
+protected:
+	bool CanDismount;
+	bool bDismount = false;
+	FVector LastSpeed;
+
+#pragma endregion
+
+#pragma region Need for Conversion Possess
+private:
+	void CameraSettingTimer();
+	FTimerHandle CameraSettingTimerHandle;
+	float SpringArmLength = 200.0f;
+
+public:
+	virtual FTransform GetCameraTransform_Implementation();
+	virtual FTransform GetSpringArmTransform_Implementation();
+	virtual float GetTargetArmLength_Implementation();
+	virtual FRotator GetControllerRotation_Implementation();
+
+#pragma endregion
 };

@@ -138,14 +138,6 @@ enum class RangeCheck : uint8
 	Close UMETA(DisplayName = "Close"),
 };
 
-UENUM(BlueprintType)
-enum class RideVar : uint8
-{
-	Horizontal UMETA(DisplayName = "Horizontal"),
-	Vertical UMETA(DisplayName = "Vertical"),
-	IsBreak UMETA(DisplayName = "IsBreak"),
-};
-
 USTRUCT(BlueprintType)
 struct FCharacterInfo
 {

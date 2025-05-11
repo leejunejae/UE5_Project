@@ -10,7 +10,8 @@
 #include "Animation/AnimInstance.h"
 #include "CharacterBaseAnimInstance.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnActionDelegate);
+DECLARE_DELEGATE(FOnSingleDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMulOneParamDelegate, FName);
 /**
  * 
@@ -46,26 +47,27 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 public:
-	FOnActionDelegate OnResetHurt;
-	FOnActionDelegate OnSetAttackDirection;
-	FOnActionDelegate OnEnterLocomotion;
-	FOnActionDelegate OnLeftLocomotion;
-	FOnActionDelegate OnAttackStart;
-	FOnActionDelegate OnCanDodge;
+	FOnSingleDelegate OnEnterLocomotion;
+	FOnSingleDelegate OnLeftLocomotion;
 
-	FOnActionDelegate OnParryEnd;
-	FOnActionDelegate OnNextAttackCheck;
-	FOnActionDelegate OnEndAttack;
-	FOnActionDelegate OnMountEnd;
-	FOnActionDelegate OnDisMountEnd;
+	FOnMultiDelegate OnResetHurt;
+	FOnMultiDelegate OnSetAttackDirection;
+	FOnMultiDelegate OnAttackStart;
+	FOnMultiDelegate OnCanDodge;
 
-	FOnActionDelegate OnDodgeEnd;
-	FOnActionDelegate OnDodgeStart;
-	FOnActionDelegate OnEquipEnd;
-	FOnActionDelegate OnHolsterEnd;
+	FOnMultiDelegate OnParryEnd;
+	FOnMultiDelegate OnNextAttackCheck;
+	FOnMultiDelegate OnEndAttack;
+	FOnMultiDelegate OnMountEnd;
+	FOnMultiDelegate OnDisMountEnd;
+
+	FOnMultiDelegate OnDodgeEnd;
+	FOnMultiDelegate OnDodgeStart;
+	FOnMultiDelegate OnEquipEnd;
+	FOnMultiDelegate OnHolsterEnd;
 
 // Ladder Delegate
-	FOnActionDelegate OnClimbEnd;
+	FOnMultiDelegate OnClimbEnd;
 	FOnMulOneParamDelegate OnNextGrip;
 
 private:
@@ -112,23 +114,11 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		float BlockBlend;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsRide;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool MountRight;
-
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool CombatMode;
 
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsTurning=false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsEscape;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsRightHand;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		bool CanAttack;
@@ -150,6 +140,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		float Direction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		float LocomotionAnimTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		float LastDirection;
@@ -239,6 +232,7 @@ private:
 private:
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EnterWalkState();
+
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EnterLadderState();
 
@@ -251,9 +245,12 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
 		ELadderStance CurLadderStance;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
+		ERideStance CurRideStance;
+
 public:
-	FOnActionDelegate OnEnterWalkState;
-	FOnActionDelegate OnEnterLadderState;
+	FOnMultiDelegate OnEnterWalkState;
+	FOnMultiDelegate OnEnterLadderState;
 
 #pragma region Ground
 private:
@@ -274,6 +271,10 @@ protected:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 		bool CanMovementInput = true;
 
+	float CharacterYaw;
+
+	float GetAnimDirection(float DeltaSeconds);
+
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EnterIdleState();
 
@@ -284,6 +285,7 @@ protected:
 
 #pragma region Quick Turn
 	void ResetTurn_Implementation() override;
+
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_TurnStart();
 	UFUNCTION(BlueprintCallable)
@@ -394,14 +396,14 @@ private:
 
 	// For Ladder IK
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float RightFootLadderAlpha;
+		float RightFootIKAlpha;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float LeftFootLadderAlpha;
+		float LeftFootIKAlpha;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float RightFootStateAlpha;
+		float RightFootIKTypeAlpha;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float LeftFootStateAlpha;
+		float LeftFootIKTypeAlpha;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
 		FVector LeftFootTarget;
@@ -448,13 +450,13 @@ private:
 ////////////////////////////////////
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float RightHandStateAlpha;
+		float RightHandIKTypeAlpha;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float LeftHandStateAlpha;
+		float LeftHandIKTypeAlpha;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float LeftHandLadderAlpha;
+		float LeftHandIKAlpha;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float RightHandLadderAlpha;
+		float RightHandIKAlpha;
 
 	// Actual Hand Position
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))

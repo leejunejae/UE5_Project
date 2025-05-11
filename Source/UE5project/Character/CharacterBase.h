@@ -18,8 +18,7 @@
 #include "NavigationSystem.h"
 #include "NavigationInvokerComponent.h"
 #include "../Function/Interact/InteractComponent.h"
-#include "../Function/Interact/InteractInterface.h" ///삭제 예정
-#include "../Function/Interact/Ride/RideInterface.h"
+#include "../Function/ViewDataInterface.h"
 #include "Sound/SoundCue.h" 
 #include "MotionWarpingComponent.h"
 #include "CharacterBase.generated.h"
@@ -47,7 +46,7 @@ enum class CharState : uint8
 };
 
 UCLASS()
-class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPlayerInterface, public IClimbInterface
+class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPlayerInterface, public IClimbInterface, public IViewDataInterface
 {
 	GENERATED_BODY()
 
@@ -83,9 +82,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionWarping", meta = (AllowPrivateAccess = "true"))
 		class UMotionWarpingComponent* MotionWarpingComponent;
 
+
 	float YAxisScale;
-
-
 	float DebugUpdateInterval = 0.1f; // 디버깅 갱신 간격
 	float TimeSinceLastDebugUpdate = 0.0f;
 	FVector PastLastInputVector;
@@ -94,7 +92,6 @@ private:
 /* PRIVATE FUNCTION */
 private:
 	void Initialization();
-	void InteractTimer(USceneComponent* Target, AActor* InteractActor);
 /* PRIVATE FUNCTION */
 
 
@@ -124,44 +121,47 @@ protected:
 		UInteractComponent* InteractComponent;
 
 	/* ĳ���� �Է� ���� ���� */
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputMappingContext* DefaultContext;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* MoveAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* CheckMoveAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* LookAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* JumpAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* AttackAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* HeavyAttackAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* DodgeAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* BlockAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* WalkAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* SprintAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* SwitchStanceAction;
 
-	UPROPERTY(VisibleAnywhere, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* InteractAction;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+		UInputAction* SpawnRideAction;
 
 	FVector2D AimOffVal;
 
@@ -179,9 +179,9 @@ protected:
 	bool IsRun;
 	bool IsAttack;
 	bool IsRoll;
+	bool CanDodge;
 	bool IsDodge;
 	bool IsBlock;
-	bool IsRide;
 	bool IsInteraction;
 	bool CanInput=true;
 	float AttackRange;
@@ -193,6 +193,8 @@ protected:
 	FCharacterInfo CharInfo;
 
 	ACharacter* Ride;
+
+	FVector InitSpringArmLocation;
 /* PROTECTED VARIATION */
 
 /* PROTECTED FUNCTION */
@@ -201,10 +203,10 @@ protected:
 	/* ĳ������ �⺻���� �������� �����ϴ� �Լ�*/
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
-	
 
 	void StartMoveInput();
 	void EndMoveInput();
+
 	virtual void Dodge();
 	virtual void Block();
 	virtual void SwitchStance();
@@ -215,8 +217,6 @@ protected:
 	virtual void Attack();
 
 	virtual void Interact();
-	void MountEnd();
-	void DisMountEnd();
 
 /* PROTECTED FUNCTION */
 
@@ -228,7 +228,6 @@ public:
 /* Public FUNCTION */
 public:
 	virtual bool IsPlayer_Implementation();
-	virtual FComponentTransform GetCameraData_Implementation();
 	virtual TOptional<FVector> GetCharBoneLocation(FName BoneName);
 
 	virtual void TakeDamage_Implementation(FAttackInfo DamageInfo) override;
@@ -242,11 +241,9 @@ public:
 		virtual void Block(bool CanParried);
 
 	bool GetIsMovementInput();
-	bool IsRiding();
-	float GetVertical();
-	float GetHorizontal();
+	float GetRideSpeed();
+	float GetRideDirection();
 	FVector GetInputDirection();
-	bool GetMountDir();
 
 	// Get Charcter Stat
 	FString GetName();
@@ -276,6 +273,7 @@ protected:
 	ECharacterState CurrentState = ECharacterState::Ground;
 	ELadderStance CurLadderStance = ELadderStance::Idle;
 	EGroundStance CurGroundStance = EGroundStance::Walk;
+	ERideStance CurRideStance = ERideStance::Riding;
 
 
 ////////////////////////////////////
@@ -285,6 +283,7 @@ public:
 	ECharacterState GetCurrentState();
 	ELadderStance GetCurLadderStance();
 	EGroundStance GetCurGroundStance();
+	ERideStance GetCurRideStance();
 	float GetClimbDistance();
 #pragma endregion
 
@@ -294,9 +293,15 @@ protected:
 	virtual void WalkEnd();
 	virtual void Sprint();
 	virtual void SprintEnd();
+	void EnterLocomotion();
+	void LeftLocomotion();
+
+public:
+	float GetDirection();
 
 private:
-	float InputTimer = 0.0f;
+	float Direction;
+
 #pragma endregion
 
 #pragma region Ladder
@@ -332,9 +337,39 @@ private:
 	EBodyType CharBone;
 
 public:
-	TOptional<TTuple<FVector, FVector>> GetBoneTargetLoc(EBodyType BoneType);
+	TOptional<TTuple<FVector, FVector>> GetLadderIKTargetLoc(EBodyType BoneType);
+	TOptional<FVector> GetRideIKTargetLoc(EBodyType BoneType);
 #pragma endregion
 
+#pragma region Ride
+private:
+	void MountTimer();
+	
+	FTimerHandle MountTimerHandle;
+
+	void SpawnRide();
+	void DespawnRide_Implementation(FVector InitVelocity);
+
+	void CameraSettingTimer();
+	FTimerHandle CameraSettingTimerHandle;
+
+	void JumpDismountTimer();
+	FTimerHandle JumpDismountTimerHandle;
+
+protected:
+	void MountEnd();
+	void DisMountEnd();
+
+public:
+	virtual FTransform GetCameraTransform_Implementation();
+	virtual FTransform GetSpringArmTransform_Implementation();
+	virtual float GetTargetArmLength_Implementation();
+	virtual FRotator GetControllerRotation_Implementation();
+
+
+private:
+	bool CanRide;
+#pragma endregion
 
 
 
@@ -346,4 +381,5 @@ public:
 
 protected:
 	void HandleArrivedInteractionPoint();
+#pragma endregion 
 };

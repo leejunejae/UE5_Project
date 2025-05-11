@@ -56,6 +56,10 @@
 		{
 			"Name": "MetaHuman",
 			"Enabled": true
+		},
+		{
+			"Name": "ChaosVehiclesPlugin",
+			"Enabled": true
 		}
 	]
 }

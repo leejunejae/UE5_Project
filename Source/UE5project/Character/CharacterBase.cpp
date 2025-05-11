@@ -17,6 +17,9 @@
 #include "Blueprint/UserWidget.h"
 #include "AIController.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "../Function/Interact/InteractInterface.h" ///삭제 예정
+#include "../Function/Interact/Ride/RideInterface.h"
+#include "PlayerRide.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase()
@@ -30,86 +33,93 @@ ACharacterBase::ACharacterBase()
 	InteractComponent->bAutoActivate = true;
 	ClimbComponent = CreateDefaultSubobject<UClimbComponent>(TEXT("ClimbComponent"));
 	ClimbComponent->bAutoActivate = true;
-
+	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
+	MotionWarpingComponent->bAutoActivate = true;
 
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	//GetMesh()->SetOwnerNoSee(true);
 
-	static ConstructorHelpers::FObjectFinder<UInputMappingContext>PBC_Context(TEXT("/Game/Character/C_Input/C_BasicInput.C_BasicInput"));
+	static ConstructorHelpers::FObjectFinder<UInputMappingContext>PBC_Context(TEXT("/Game/00_Character/C_Input/C_BasicInput.C_BasicInput"));
 	if (PBC_Context.Succeeded())
 	{
 		DefaultContext = PBC_Context.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Move(TEXT("/Game/Character/C_Input/C_Move.C_Move"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Move(TEXT("/Game/00_Character/C_Input/C_Move.C_Move"));
 	if (IP_Move.Succeeded())
 	{
 		MoveAction = IP_Move.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Look(TEXT("/Game/Character/C_Input/C_Look.C_Look"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Look(TEXT("/Game/00_Character/C_Input/C_Look.C_Look"));
 	if (IP_Look.Succeeded())
 	{
 		LookAction = IP_Look.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Dodge(TEXT("/Game/Character/C_Input/C_Dodge.C_Dodge"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Dodge(TEXT("/Game/00_Character/C_Input/C_Dodge.C_Dodge"));
 	if (IP_Dodge.Succeeded())
 	{
 		DodgeAction = IP_Dodge.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Walk(TEXT("/Game/Character/C_Input/C_Walk.C_Walk"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Walk(TEXT("/Game/00_Character/C_Input/C_Walk.C_Walk"));
 	if (IP_Walk.Succeeded())
 	{
 		WalkAction = IP_Walk.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Sprint(TEXT("/Game/Character/C_Input/C_Sprint.C_Sprint"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Sprint(TEXT("/Game/00_Character/C_Input/C_Sprint.C_Sprint"));
 	if (IP_Sprint.Succeeded())
 	{
 		SprintAction = IP_Sprint.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_CheckMoveInput(TEXT("/Game/Character/C_Input/C_CheckMoveInput.C_CheckMoveInput"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_CheckMoveInput(TEXT("/Game/00_Character/C_Input/C_CheckMoveInput.C_CheckMoveInput"));
 	if (IP_CheckMoveInput.Succeeded())
 	{
 		CheckMoveAction = IP_CheckMoveInput.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Jump(TEXT("/Game/Character/C_Input/C_Jump.C_Jump"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Jump(TEXT("/Game/00_Character/C_Input/C_Jump.C_Jump"));
 	if (IP_Jump.Succeeded())
 	{
 		JumpAction = IP_Jump.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Attack(TEXT("/Game/Character/C_Input/C_Attack.C_Attack"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Attack(TEXT("/Game/00_Character/C_Input/C_Attack.C_Attack"));
 	if (IP_Attack.Succeeded())
 	{
 		AttackAction = IP_Attack.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_HeavyAttack(TEXT("/Game/Character/C_Input/C_HeavyAttack.C_HeavyAttack"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_HeavyAttack(TEXT("/Game/00_Character/C_Input/C_HeavyAttack.C_HeavyAttack"));
 	if (IP_HeavyAttack.Succeeded())
 	{
 		HeavyAttackAction = IP_HeavyAttack.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Block(TEXT("/Game/Character/C_Input/C_Block.C_Block"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Block(TEXT("/Game/00_Character/C_Input/C_Block.C_Block"));
 	if (IP_Block.Succeeded())
 	{
 		BlockAction = IP_Block.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Interact(TEXT("/Game/Character/C_Input/C_Interact.C_Interact"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Interact(TEXT("/Game/00_Character/C_Input/C_Interact.C_Interact"));
 	if (IP_Interact.Succeeded())
 	{
 		InteractAction = IP_Interact.Object;
 	}
 
-	static ConstructorHelpers::FClassFinder<UDefaultWidget> DEFAULTWIDGET(TEXT("/Game/Character/C_Source/DefaultWidget_BP"));
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_SpawnRide(TEXT("/Game/00_Character/C_Input/C_SpawnRide.C_SpawnRide"));
+	if (IP_SpawnRide.Succeeded())
+	{
+		SpawnRideAction = IP_SpawnRide.Object;
+	}
+
+	static ConstructorHelpers::FClassFinder<UDefaultWidget> DEFAULTWIDGET(TEXT("/Game/00_Character/C_Source/DefaultWidget_BP"));
 	if (!ensure(DEFAULTWIDGET.Class != nullptr)) return;
 
 	DefaultWidgetClass = DEFAULTWIDGET.Class;
@@ -119,7 +129,7 @@ ACharacterBase::ACharacterBase()
 
 	CanMovementInput = true;
 	CurGroundStance = EGroundStance::Jog;
-	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
 
 	ClimbComponent->SetMinGripInterval(MinGripInterval);
@@ -150,13 +160,14 @@ void ACharacterBase::BeginPlay()
 	}
 
 	DamageComponent->SetHealth(GetMaxHP());
+
+	InitSpringArmLocation = SpringArm->GetRelativeLocation();
 }
 
 // Called every frame
 void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 
 	if (CurGroundStance == EGroundStance::Sprint)
 	{
@@ -225,7 +236,6 @@ void ACharacterBase::Tick(float DeltaTime)
 			0.0f
 		);
 	}
-	
 	/*
 	TimeSinceLastDebugUpdate += DeltaTime;
 	if (TimeSinceLastDebugUpdate >= DebugUpdateInterval)
@@ -295,6 +305,8 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &ACharacterBase::Walk);
 		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Triggered, this, &ACharacterBase::WalkEnd);
+
+		EnhancedInputComponent->BindAction(SpawnRideAction, ETriggerEvent::Triggered, this, &ACharacterBase::SpawnRide);
 	}
 }
 
@@ -308,6 +320,47 @@ void ACharacterBase::PostInitializeComponents()
 
 	DamageComponent->OnDeath.BindUFunction(this, FName("Death"));
 
+	CharacterBaseAnim->OnEnterLocomotion.BindUObject(this, &ACharacterBase::EnterLocomotion);
+
+	CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &ACharacterBase::LeftLocomotion);
+
+	CharacterBaseAnim->OnDodgeEnd.AddLambda([this]()->void {
+		CanDodge = true;
+		IsDodge = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
+		});
+
+	CharacterBaseAnim->OnDodgeStart.AddLambda([this]()->void {
+		/*
+		if (RollSounds.Num() > 0)
+		{
+			int32 RandomIndex = FMath::RandRange(0, RollSounds.Num() - 1);
+			USoundCue* SelectedSound = RollSounds[RandomIndex];
+			if (SelectedSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, SelectedSound, GetActorLocation());
+			}
+		}
+		*/
+		IsDodge = true;
+		IsRoll = false;
+		});
+
+
+	CharacterBaseAnim->OnEnterWalkState.AddLambda([this]()->void {
+		CurrentState = ECharacterState::Ground;
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		CanRide = true;
+		});
+
+	CharacterBaseAnim->OnEnterLadderState.AddLambda([this]()->void {
+		CurrentState = ECharacterState::Ladder;
+		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		});
+
 	CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
 	CharacterBaseAnim->OnMountEnd.AddUObject(this, &ACharacterBase::MountEnd);
 	CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &ACharacterBase::DisMountEnd);
@@ -316,12 +369,12 @@ void ACharacterBase::PostInitializeComponents()
 /* Input Action */
 void ACharacterBase::Move(const FInputActionValue& value)
 {
+	IsMovementInput = true;
+
 	if (!CanMovementInput)
 		return;
 
 	const FVector2D DirectionValue = value.Get<FVector2D>();
-	//const FVector forward = GetActorForwardVector();
-	//const FVector right = GetActorRightVector();
 	
 	switch (CurrentState)
 	{
@@ -331,25 +384,13 @@ void ACharacterBase::Move(const FInputActionValue& value)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		InputVector = FVector(DirectionValue.X, DirectionValue.Y, 0.0f);
 
-		/*
-		FVector ValueX = UKismetMathLibrary::GetForwardVector(YawRotation) * DirectionValue.Y;
-		FVector ValueY = UKismetMathLibrary::GetRightVector(YawRotation) * DirectionValue.X;
-		FVector Direction = ValueY + ValueX;
-		FVector InputDegree = GetActorTransform().InverseTransformVectorNoScale(Direction);
-		InputY = InputDegree.X;
-		InputX = InputDegree.Y;
-		*/
 
 		FVector2D MovementScale = DirectionValue;
 		MovementScale.Normalize();
 
-		//if (IsDodge)
-			//return;
 		if (!IsLocomotion)
 			return;
 
-		//AddMovementInput(forward, DirectionValue.Y);
-		//AddMovementInput(right, DirectionValue.X);
 		AddMovementInput(UKismetMathLibrary::GetForwardVector(YawRotation), MovementScale.Y);
 		AddMovementInput(UKismetMathLibrary::GetRightVector(YawRotation), MovementScale.X);
 		break;
@@ -446,7 +487,6 @@ void ACharacterBase::Move(const FInputActionValue& value)
 
 			}
 			}
-			//CanMovementInput = false;
 		}
 		break;
 	}
@@ -461,7 +501,7 @@ void ACharacterBase::Look(const FInputActionValue& value)
 {
 	const FVector2D LookAxisValue = value.Get<FVector2D>();
 	AddControllerPitchInput(LookAxisValue.Y * 0.5f);
-	AddControllerYawInput(LookAxisValue.X * 0.5f);
+	AddControllerYawInput(LookAxisValue.X * -0.5f);
 	/*
 	if (IsAttack)
 	{
@@ -478,23 +518,34 @@ void ACharacterBase::Look(const FInputActionValue& value)
 
 void ACharacterBase::StartMoveInput()
 {
-	switch (CurrentState)
-	{
-	case ECharacterState::Ground:
-	{
-		IsMovementInput = true;
-		break;
-	}
-	case ECharacterState::Ladder:
-	{
-		break;
-	}
-	}
+	UE_LOG(LogTemp, Warning, TEXT("MovementInput"));
+
+	IsMovementInput = true;
 }
 
 void ACharacterBase::EndMoveInput()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Does NotMovementInput"));
+
 	IsMovementInput = false;
+}
+
+void ACharacterBase::EnterLocomotion()
+{
+	IsLocomotion = true;
+	//IsAttack = false;
+	//CurResponse = HitResponse::None;
+	CanDodge = true;
+	CanRide = true;
+	//UE_LOG(LogTemp, Warning, TEXT("EnterLocomotion"));
+}
+
+void ACharacterBase::LeftLocomotion()
+{
+	IsLocomotion = false;
+
+	CanRide = false;
+	UE_LOG(LogTemp, Warning, TEXT("LeftLocomotion"));
 }
 
 void ACharacterBase::Dodge()
@@ -504,8 +555,8 @@ void ACharacterBase::Dodge()
 
 	FVector ValueX = UKismetMathLibrary::GetForwardVector(YawRotation) * InputVector.Y;
 	FVector ValueY = UKismetMathLibrary::GetRightVector(YawRotation) * InputVector.X;
-	FVector Direction = ValueY + ValueX;
-	FVector InputDegree = GetActorTransform().InverseTransformVectorNoScale(Direction);
+	FVector DirectionVector = ValueY + ValueX;
+	FVector InputDegree = GetActorTransform().InverseTransformVectorNoScale(DirectionVector);
 	float InputY = InputDegree.X;
 	float InputX = InputDegree.Y;
 
@@ -541,22 +592,16 @@ void ACharacterBase::Dodge()
 		OriginalLocX = -460.0f - OriginalLocY;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("OriginalLocX : %f, OriginalLocY : %f"), OriginalLocX, OriginalLocY);
-
 	float OriginalLength = FMath::Sqrt(OriginalLocX * OriginalLocX + OriginalLocY * OriginalLocY);
 
 	float AdjustFactorX = (OriginalLocX / OriginalLength) * 460.0f;
 	float AdjustFactorY = (OriginalLocY / OriginalLength) * 460.0f;
 
-	UE_LOG(LogTemp, Warning, TEXT("AdjustFactorX : %f, AdjustFactorY : %f"), AdjustFactorX, AdjustFactorY);
 
 	float TargetLocX = AdjustFactorX - OriginalLocX;
 	float TargetLocY = AdjustFactorY - OriginalLocY;;
 
-	UE_LOG(LogTemp, Warning, TEXT("TargetLocX : %f, TargetLocY : %f"), TargetLocX, TargetLocY);
-	//DodgeDirection = UKismetMathLibrary::GetForwardVector(YawRotation) * InputVector.Y + UKismetMathLibrary::GetRightVector(YawRotation) * InputVector.X;
 	DodgeDirection = GetActorForwardVector() * TargetLocY + GetActorRightVector() * TargetLocX;
-	//AddActorWorldOffset(DodgeDirection);
 }
 
 void ACharacterBase::Block()
@@ -587,13 +632,13 @@ void ACharacterBase::Walk()
 void ACharacterBase::WalkEnd()
 {
 	CurGroundStance = EGroundStance::Jog;
-	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
 }
 
 void ACharacterBase::Sprint()
 {
 	CurGroundStance = EGroundStance::Sprint;
-	GetCharacterMovement()->MaxWalkSpeed = 700.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 800.0f;
 	//GetCharacterMovement()->BrakingDecelerationWalking = 1300.0f;
 	//UE_LOG(LogTemp, Error, TEXT("TOGGLING"));
 	//IsRun = !IsRun;
@@ -621,8 +666,13 @@ void ACharacterBase::Sprint()
 void ACharacterBase::SprintEnd()
 {
 	CurGroundStance = EGroundStance::Jog;
-	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
 	//GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
+}
+
+float ACharacterBase::GetDirection()
+{
+	return Direction;
 }
 
 void ACharacterBase::SetCanMovementInput(bool CanMove)
@@ -650,14 +700,38 @@ void ACharacterBase::Interact()
 		if (!InteractTargetValid)
 			return;
 
+		GetController()->SetIgnoreMoveInput(true);
 		IsInteraction = InteractComponent->MovetoInteractPos();
+		
+		/*
+		if (InteractComponent->GetInteractActor()->ActorHasTag("Ride"))
+		{
+			UGameplayStatics::GetPlayerController(GetWorld(), 0)->Possess(Cast<APawn>(InteractComponent->GetInteractActor()));
+			IsInteraction = true;
+		}
+		else
+		{
+			IsInteraction = InteractComponent->MovetoInteractPos();
+		}
+		*/
 	}
 }
 
 void ACharacterBase::MountEnd()
 {
-	IInteractInterface::Execute_Interact(Ride, this);
-	UE_LOG(LogTemp, Warning, TEXT("MountEnd2"));
+	//IInteractInterface::Execute_Interact(Ride, this);
+
+	FTransform MountTransform = IRideInterface::Execute_GetMountTransform(Ride);
+	SetActorLocation(MountTransform.GetLocation());
+	SetActorRotation(MountTransform.GetRotation().Rotator());
+
+	if (GetWorldTimerManager().IsTimerActive(MountTimerHandle))
+	{
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetWorldTimerManager().ClearTimer(MountTimerHandle);
+	}
+	CurRideStance = ERideStance::Riding;
 }
 
 void ACharacterBase::Attack()
@@ -687,35 +761,25 @@ bool ACharacterBase::GetIsMovementInput()
 	return IsMovementInput;
 }
 
-bool ACharacterBase::IsRiding()
+float ACharacterBase::GetRideSpeed()
 {
-	return IsRide;
-}
-
-float ACharacterBase::GetVertical()
-{
-	if (!IsRide || Ride==nullptr)
+	if (Ride==nullptr)
 		return 0.0f;
 
-	return IRideInterface::Execute_GetRideVertical(Ride);
+	return IRideInterface::Execute_GetRideSpeed(Ride);
 }
 
-float ACharacterBase::GetHorizontal()
+float ACharacterBase::GetRideDirection()
 {
-	if (!IsRide || Ride == nullptr)
+	if (Ride == nullptr)
 		return 0.0f;
 
-	return IRideInterface::Execute_GetRideHorizontal(Ride);
+	return IRideInterface::Execute_GetRideDirection(Ride);
 }
 
 FVector ACharacterBase::GetInputDirection()
 {
 	return DodgeVector;
-}
-
-bool ACharacterBase::GetMountDir()
-{
-	return IRideInterface::Execute_GetMountDir(Ride);
 }
 
 FString ACharacterBase::GetName()
@@ -751,6 +815,11 @@ ELadderStance ACharacterBase::GetCurLadderStance()
 EGroundStance ACharacterBase::GetCurGroundStance()
 {
 	return CurGroundStance;
+}
+
+ERideStance ACharacterBase::GetCurRideStance()
+{
+	return CurRideStance;
 }
 
 float ACharacterBase::GetClimbDistance()
@@ -839,7 +908,7 @@ void ACharacterBase::DecideLadderStance()
 	//GetController()->SetIgnoreMoveInput(false);
 }
 
-TOptional<TTuple<FVector, FVector>> ACharacterBase::GetBoneTargetLoc(EBodyType BoneType)
+TOptional<TTuple<FVector, FVector>> ACharacterBase::GetLadderIKTargetLoc(EBodyType BoneType)
 {
 	AActor* LadderObject = ClimbComponent->GetClimbObject();
 
@@ -898,6 +967,44 @@ TOptional<TTuple<FVector, FVector>> ACharacterBase::GetBoneTargetLoc(EBodyType B
 	}
 }
 
+TOptional<FVector> ACharacterBase::GetRideIKTargetLoc(EBodyType BoneType)
+{
+	if (Ride == nullptr)
+		return TOptional<FVector>();
+
+	switch (BoneType)
+	{
+	case EBodyType::Hand_L:
+	{
+		return Ride->GetMesh()->DoesSocketExist(FName("Reins_Bn_Hand_L"))
+			? Ride->GetMesh()->GetSocketLocation(FName("Reins_Bn_Hand_L"))
+			: TOptional<FVector>();
+	}
+	case EBodyType::Hand_R:
+	{
+		return Ride->GetMesh()->DoesSocketExist(FName("Reins_Bn_Hand_R"))
+			? Ride->GetMesh()->GetSocketLocation(FName("Reins_Bn_Hand_R"))
+			: TOptional<FVector>();
+	}
+	case EBodyType::Foot_L:
+	{
+		return Ride->GetMesh()->DoesSocketExist(FName("SaddleLeftFootPlace"))
+			? Ride->GetMesh()->GetSocketLocation(FName("SaddleLeftFootPlace"))
+			: TOptional<FVector>();
+	}
+	case EBodyType::Foot_R:
+	{
+		return Ride->GetMesh()->DoesSocketExist(FName("SaddleRightFootPlace"))
+			? Ride->GetMesh()->GetSocketLocation(FName("SaddleRightFootPlace"))
+			: TOptional<FVector>();
+	}
+	default:
+	{
+		return TOptional<FVector>();
+	}
+	}
+}
+
 void ACharacterBase::SwitchStance()
 {
 
@@ -949,7 +1056,7 @@ void ACharacterBase::EndInteraction_Implementation(AActor* Interactable)
 
 	if (Interactable->ActorHasTag("Ride"))
 	{
-		IsRide = false;
+		//IsRide = false;
 
 		//GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	}
@@ -960,16 +1067,19 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 	AActor* InteractActor = InteractComponent->GetInteractActor();
 	USceneComponent* InteractionPoint = IInteractInterface::Execute_GetEnterInteractLocation(InteractActor, this);
 
+	GetController()->SetIgnoreMoveInput(false);
+
 	if (InteractActor->ActorHasTag("Ride"))
 	{
 		IInteractInterface::Execute_RegisterInteractActor(InteractActor, this);
 
 		DisableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		Ride = Cast<ACharacter>(InteractActor);
-		IsRide = true;
+		CurRideStance = ERideStance::Mount;
+		CurrentState = ECharacterState::Ride;
 	}
 	else if (InteractActor->ActorHasTag("Ladder"))
 	{
@@ -990,7 +1100,6 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 			else
 			{
 				CurLadderStance = ELadderStance::Enter_From_Top;
-				UE_LOG(LogTemp, Warning, TEXT("ClimbDistance = %f"), ClimbDistance);
 				Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
 				Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
 				Grip1D_Foot_L = ClimbComponent->GetGripNeighborDown(Grip1D_Hand_L, GripInterval.GetValue() - 1);
@@ -1011,12 +1120,152 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 	IsInteraction = true;
 }
 
-FComponentTransform ACharacterBase::GetCameraData_Implementation()
+void ACharacterBase::SpawnRide()
 {
-	FComponentTransform CameraTransform;
-	CameraTransform.Location = Camera->GetComponentLocation();
-	CameraTransform.Rotation = Camera->GetComponentRotation();
-	return CameraTransform;
+	if (!CanRide)
+		return;
+
+	Ride = GetWorld()->SpawnActor<APlayerRide>(GetActorLocation(), GetActorRotation());
+	if (!Ride)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Horse Not Spawn"));
+		return;
+	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	IRideInterface::Execute_Mount(Ride, this, GetVelocity());
+
+	GetCharacterMovement()->SetMovementMode(MOVE_None);
+	//GetCharacterMovement()->DisableMovement();
+
+	CurRideStance = ERideStance::Mount;
+	CurrentState = ECharacterState::Ride;
+
+	CanMovementInput = false;
+	CanRide = false;
+
+	GetWorldTimerManager().SetTimer(MountTimerHandle, this, &ACharacterBase::MountTimer, 0.01f, true);
+}
+
+void ACharacterBase::DespawnRide_Implementation(FVector InitVelocity)
+{
+	if (!Ride)
+	{
+		return;
+	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (Ride->GetClass()->ImplementsInterface(UViewDataInterface::StaticClass()))
+	{
+		FDetachmentTransformRules DetachmentRules = FDetachmentTransformRules(
+			EDetachmentRule::KeepWorld,
+			false
+		);
+
+		DetachFromActor(DetachmentRules);
+
+		FTransform SpringArmTransform = IViewDataInterface::Execute_GetSpringArmTransform(Ride);
+		float InitTargetArmLength = IViewDataInterface::Execute_GetTargetArmLength(Ride);
+
+		SpringArm->TargetArmLength = InitTargetArmLength;
+		SpringArm->SetWorldLocation(SpringArmTransform.GetLocation());
+		SpringArm->SetWorldRotation(SpringArmTransform.GetRotation().Rotator());
+
+		FRotator InitControllerRotator = IViewDataInterface::Execute_GetControllerRotation(Ride);
+
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->Possess(this);
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetControlRotation(InitControllerRotator);
+	}
+	else
+	{
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->Possess(this);
+	}
+
+	CurRideStance = ERideStance::DisMount;
+	//GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	FVector DisMountVelocity = InitVelocity * 0.4f;
+	DisMountVelocity.Z = 600.0f;
+
+	LaunchCharacter(DisMountVelocity, true, true);
+
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+		{
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}, 0.01f, false);
+
+	GetWorldTimerManager().SetTimer(CameraSettingTimerHandle, this, &ACharacterBase::CameraSettingTimer, 0.01f, true);
+}
+
+void ACharacterBase::CameraSettingTimer()
+{
+	bool CheckTargetArmLength = false;
+
+	float CurrentLength = SpringArm->TargetArmLength;
+	float NewLength = FMath::FInterpTo(CurrentLength, 200.0f, GetWorld()->GetDeltaSeconds(), 1.0f);
+
+	SpringArm->TargetArmLength = NewLength;
+
+	if (FMath::IsNearlyEqual(NewLength, 200.0f, 1.0f))
+	{
+		SpringArm->TargetArmLength = 200.0f;
+		CheckTargetArmLength = true;
+	}
+
+	bool CheckSpringArmLocation = false;
+
+	FVector CurrentLocation = SpringArm->GetRelativeLocation();
+	FVector NewLocation = FMath::VInterpTo(CurrentLocation, InitSpringArmLocation, GetWorld()->GetDeltaSeconds(), 1.0f);
+
+	SpringArm->SetRelativeLocation(NewLocation);
+
+	if (SpringArm->GetRelativeLocation().Equals(InitSpringArmLocation))
+	{
+		SpringArm->SetRelativeLocation(InitSpringArmLocation);
+		CheckSpringArmLocation = true;
+	}
+
+	if (CheckTargetArmLength && CheckSpringArmLocation)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CameraSettingTimerHandle);
+	}
+}
+
+void ACharacterBase::JumpDismountTimer()
+{
+}
+
+void ACharacterBase::MountTimer()
+{
+	FVector StartLocation = Ride->GetActorLocation();
+	FVector TargetLocation = IRideInterface::Execute_GetMountTransform(Ride).GetLocation();
+
+	FVector CurLocation = FMath::Lerp(StartLocation, TargetLocation, CharacterBaseAnim->GetCurveValue(FName("Char_Translation_Y")));
+	CurLocation.Z = FMath::Lerp(StartLocation.Z, TargetLocation.Z, CharacterBaseAnim->GetCurveValue(FName("Char_Translation_Z")));
+
+	SetActorLocation(CurLocation);
+}
+
+FTransform ACharacterBase::GetCameraTransform_Implementation()
+{
+	return Camera->GetComponentTransform();
+}
+
+FTransform ACharacterBase::GetSpringArmTransform_Implementation()
+{
+	return SpringArm->GetComponentTransform();
+}
+
+float ACharacterBase::GetTargetArmLength_Implementation()
+{
+	return SpringArm->TargetArmLength;
+}
+
+FRotator ACharacterBase::GetControllerRotation_Implementation()
+{
+	return GetController()->GetControlRotation();
 }
 
 TOptional<FVector> ACharacterBase::GetCharBoneLocation(FName BoneName)
@@ -1026,7 +1275,10 @@ TOptional<FVector> ACharacterBase::GetCharBoneLocation(FName BoneName)
 
 void ACharacterBase::DisMountEnd()
 {
-	USceneComponent* GetDownLoc = IInteractInterface::Execute_GetLeftInteractLocation(Ride);
+	UE_LOG(LogTemp, Warning, TEXT("Dismountend"));
+	CurrentState = ECharacterState::Ground;
+	/*
+	USceneComponent* GetDownLoc = IRideInterface::Execute_GetLeftInteractLocation(Ride);
 	SetActorLocation(GetDownLoc->GetComponentLocation());
 	SetActorRotation(GetDownLoc->GetRelativeRotation());
 	
@@ -1044,7 +1296,7 @@ void ACharacterBase::DisMountEnd()
 	SpringArm->bUsePawnControlRotation = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
-	FComponentTransform CameraTransform = IInteractInterface::Execute_GetCameraData(Ride);
+	FComponentTransform CameraTransform = IViewDataInterface::Execute_GetCameraTransform(Ride);
 	Camera->SetWorldLocation(CameraTransform.Location);
 	Camera->SetWorldRotation(CameraTransform.Rotation);
 
@@ -1066,12 +1318,12 @@ void ACharacterBase::DisMountEnd()
 	);
 
 	EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	*/
 }
 
 // ���� �ý��� �������̽� //
 void ACharacterBase::TakeDamage_Implementation(FAttackInfo DamageInfo)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Take Damage1"));
 	IPBDamagableInterface::TakeDamage_Implementation(DamageInfo);
 }
 
