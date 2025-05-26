@@ -2,10 +2,19 @@
 
 
 #include "ClimbableObjectBase.h"
+
+// 네비게이션
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
+
+// 컴포넌트
 #include "Components/BrushComponent.h"
+#include "Components/BoxComponent.h"
+
+// 태그
 #include "GameplayTagsManager.h"
+
+// 인터페이스
 #include "Function/PlayerInterface.h"
 
 AClimbableObjectBase::AClimbableObjectBase()

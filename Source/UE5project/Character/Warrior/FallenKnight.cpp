@@ -1,8 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
+
+// 엔진 헤더
 #include "FallenKnight.h"
-#include "FallenKnightAnimInstance.h"
-#include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
+// 입력
+#include "EnhancedInputComponent.h"
+
+// Kismet 유틸리티
+#include "Kismet/GameplayStatics.h"
+
+// 애니메이션
+#include "FallenKnightAnimInstance.h"
+
 
 AFallenKnight::AFallenKnight()
 {
@@ -340,7 +350,7 @@ void AFallenKnight::AttackTimer()
 	{
 		if (HitResult.GetActor()->ActorHasTag("Enemy"))
 		{
-			IPBDamagableInterface* GetDamagedEnemy = Cast<IPBDamagableInterface>(HitResult.GetActor());
+			IHitReactionInterface* GetDamagedEnemy = Cast<IHitReactionInterface>(HitResult.GetActor());
 			GetDamagedEnemy->TakeDamage_Implementation(AttackInfo);
 			if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))
 				GetWorldTimerManager().ClearTimer(AttackTimerHandle);
@@ -412,36 +422,6 @@ void AFallenKnight::DodgeUpdate(float Value)
 	float AdaptCurveValue = Value - PreviousCurveValue;
 	AddActorWorldOffset(DodgeDirection * AdaptCurveValue);
 	PreviousCurveValue = Value;
-
-	/*
-	FVector NewLocation;
-	FVector Start = GetActorLocation();
-	FVector End = Start + (GetActorUpVector() * -200.0f);
-
-	FHitResult HitResult;
-	FCollisionQueryParams CollisionParams;
-	CollisionParams.AddIgnoredActor(this);
-
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams))
-	{
-		FVector Normal = HitResult.ImpactNormal;
-		FVector CorrectedDirection = FVector::VectorPlaneProject(DodgeDirection, Normal).GetSafeNormal();
-		NewLocation = (CorrectedDirection * 100.0f * Value);
-	}
-	else
-	{
-		NewLocation = (DodgeDirection * 100.0f * Value);
-	}
-	*/
-
-	//AddMovementInput(NewLocation, Value);
-	//GetCharacterMovement()->Velocity = NewLocation;
-	//GetCharacterMovement()->RootMotion
-	//SetAnimRootMotionTranslationScale
-	//GetCharacterMovement()->AddImpulse(NewLocation, true);
-	
-	//AddActorWorldOffset(NewLocation, true, &BlockResult);
-	//SetActorLocation(InitPosition + NewLocation, true, &BlockResult);
 }
 
 void AFallenKnight::DodgeUpdateFin()
@@ -469,6 +449,7 @@ void AFallenKnight::Block(bool CanParried)
 	}
 }
 
+/*
 void AFallenKnight::TakeDamage_Implementation(FAttackInfo DamageInfo)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Take Damage"));
@@ -502,9 +483,11 @@ void AFallenKnight::TakeDamage_Implementation(FAttackInfo DamageInfo)
 		break;
 	}
 }
+*/
 
 HitResponse AFallenKnight::CharResponse(bool CanBlocked, bool CanAvoid, bool CanParry)
 {
+	/*
 	const CharState CurState = GetCharState();
 	switch (CurState)
 	{
@@ -536,6 +519,8 @@ HitResponse AFallenKnight::CharResponse(bool CanBlocked, bool CanAvoid, bool Can
 	default:
 		return HitResponse::None;
 	}
+	*/
+	return HitResponse::None;
 }
 
 CharState AFallenKnight::GetCharState()

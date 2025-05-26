@@ -2,17 +2,25 @@
 
 #pragma once
 
+// 엔진 헤더
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
+// 입력
 #include "InputActionValue.h"
-#include "Camera/CameraComponent.h"
-#include "EnhancedInputComponent.h"
-#include "Components/BoxComponent.h"
+
+// 구조체, 자료형
 #include "../PEnumHeader.h"
+
+// 인터페이스
 #include "../Function/Interact/InteractInterface.h"
 #include "../Function/Interact/Ride/RideInterface.h"
 #include "../Function/ViewDataInterface.h"
+
+// 태그
 #include "GameplayTagContainer.h"
+
+
 #include "Ride.generated.h"
 
 class UCharacterMovementComponent;
@@ -20,6 +28,7 @@ class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
 class UBoxComponent;
+class UCameraComponent;
 
 UENUM(BlueprintType)
 enum class HorseDirection : uint8

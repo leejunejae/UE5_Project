@@ -4,16 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Components/BoxComponent.h"
 #include "Engine/DataTable.h"
 #include "../Function/Interact/InteractInterface.h"
-#include "../Function/Interact/Dialogue/DialogueSystem.h"
-#include "../Function/Interact/Dialogue/ScriptWidget.h"
 #include "GameplayTagContainer.h"
 #include "PBNPCBase.generated.h"
 
 class UDialogueSystem;
 class UBoxComponent;
+class UScriptWidget;
+class UDialogueSystem;
 
 UCLASS()
 class UE5PROJECT_API APBNPCBase : public ACharacter, public IInteractInterface

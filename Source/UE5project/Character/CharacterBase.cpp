@@ -1,25 +1,49 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+// 기본 헤더
 #include "CharacterBase.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/PawnMovementComponent.h"
+
+// 이동
 #include "GameFramework/CharacterMovementComponent.h"
+
+// 콜리전
+#include "Components/CapsuleComponent.h"
+
+// 카메라
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+
+// 입력
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "Components/InputComponent.h"
+#include "InputMappingContext.h"
+
+// Kismet 유틸리티
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetTextLibrary.h"
-#include "Kismet/KismetStringLibrary.h"
-#include "KismetAnimationLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Components/InputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "InputMappingContext.h"
+
+// UI
 #include "../Function/DefaultWidget.h"
-#include "Warrior/CharacterBaseAnimInstance.h"
 #include "Blueprint/UserWidget.h"
-#include "AIController.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
+
+// 애니메이션
+#include "Warrior/CharacterBaseAnimInstance.h"
+
+// 참조할 액터
+#include "PlayerRide.h"
+
+// 인터페이스
 #include "../Function/Interact/InteractInterface.h" ///삭제 예정
 #include "../Function/Interact/Ride/RideInterface.h"
-#include "PlayerRide.h"
+
+// 유저 컴포넌트
+#include "../Function/Combat/StatComponent.h"
+#include "../Function/Combat/AttackComponent.h"
+#include "../Function/Combat/HitReactionComponent.h"
+#include "../Function/Interact/ClimbComponent.h"
+#include "../Function/Interact/InteractComponent.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase()
@@ -27,14 +51,20 @@ ACharacterBase::ACharacterBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
-	DamageComponent = CreateDefaultSubobject<UPBDamageSystem>(TEXT("DamageComponent"));
-	DamageComponent->bAutoActivate = true;
+	StatComponent = CreateDefaultSubobject<UStatComponent>(TEXT("StatComponent"));
+	StatComponent->bAutoActivate = true;
+
+	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
+	AttackComponent->bAutoActivate = true;
+
+	HitReactionComponent = CreateDefaultSubobject<UHitReactionComponent>(TEXT("HitReactionComponent"));
+	HitReactionComponent->bAutoActivate = true;
+
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
 	InteractComponent->bAutoActivate = true;
+
 	ClimbComponent = CreateDefaultSubobject<UClimbComponent>(TEXT("ClimbComponent"));
 	ClimbComponent->bAutoActivate = true;
-	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
-	MotionWarpingComponent->bAutoActivate = true;
 
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
@@ -124,8 +154,11 @@ ACharacterBase::ACharacterBase()
 
 	DefaultWidgetClass = DEFAULTWIDGET.Class;
 
-	NavigationInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavigationInvokerComponent"));
-	NavigationInvokerComponent->SetGenerationRadii(500.0f, 500.0f);
+	static ConstructorHelpers::FObjectFinder<UDataTable> HitReactionDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/FallenKnightHitReaction_DT.FallenKnightHitReaction_DT'"));
+	if (HitReactionDT_Asset.Succeeded())
+	{
+		HitReactionComponent->SetHitReactionDT(HitReactionDT_Asset.Object);
+	}
 
 	CanMovementInput = true;
 	CurGroundStance = EGroundStance::Jog;
@@ -159,7 +192,8 @@ void ACharacterBase::BeginPlay()
 		DefaultWidget = CreateWidget<UDefaultWidget>(PlayerController, DefaultWidgetClass);
 	}
 
-	DamageComponent->SetHealth(GetMaxHP());
+	StatComponent->OnDeath.BindUObject(this, &ACharacterBase::Death);
+	StatComponent->InitializeStats();
 
 	InitSpringArmLocation = SpringArm->GetRelativeLocation();
 }
@@ -318,8 +352,6 @@ void ACharacterBase::PostInitializeComponents()
 
 	InteractComponent->OnArrivedInteractionPoint.BindUObject(this, &ACharacterBase::HandleArrivedInteractionPoint);
 
-	DamageComponent->OnDeath.BindUFunction(this, FName("Death"));
-
 	CharacterBaseAnim->OnEnterLocomotion.BindUObject(this, &ACharacterBase::EnterLocomotion);
 
 	CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &ACharacterBase::LeftLocomotion);
@@ -332,17 +364,6 @@ void ACharacterBase::PostInitializeComponents()
 		});
 
 	CharacterBaseAnim->OnDodgeStart.AddLambda([this]()->void {
-		/*
-		if (RollSounds.Num() > 0)
-		{
-			int32 RandomIndex = FMath::RandRange(0, RollSounds.Num() - 1);
-			USoundCue* SelectedSound = RollSounds[RandomIndex];
-			if (SelectedSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, SelectedSound, GetActorLocation());
-			}
-		}
-		*/
 		IsDodge = true;
 		IsRoll = false;
 		});
@@ -518,15 +539,11 @@ void ACharacterBase::Look(const FInputActionValue& value)
 
 void ACharacterBase::StartMoveInput()
 {
-	UE_LOG(LogTemp, Warning, TEXT("MovementInput"));
-
 	IsMovementInput = true;
 }
 
 void ACharacterBase::EndMoveInput()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Does NotMovementInput"));
-
 	IsMovementInput = false;
 }
 
@@ -1120,6 +1137,19 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 	IsInteraction = true;
 }
 
+void ACharacterBase::OnHit_Implementation(const FAttackInfo& AttackInfo, const FVector HitPoint)
+{
+	if (HitReactionComponent != nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Character Hit"));
+		FHitReactionRequest InputReaction = {
+			AttackInfo.Feature.begin()->Response,
+			HitPoint
+		};
+		HitReactionComponent->ExecuteHitResponse(InputReaction);
+	}
+}
+
 void ACharacterBase::SpawnRide()
 {
 	if (!CanRide)
@@ -1156,6 +1186,9 @@ void ACharacterBase::DespawnRide_Implementation(FVector InitVelocity)
 	}
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	SpringArm->bEnableCameraLag = false;
+	SpringArm->bEnableCameraRotationLag = false;
 
 	if (Ride->GetClass()->ImplementsInterface(UViewDataInterface::StaticClass()))
 	{
@@ -1229,6 +1262,8 @@ void ACharacterBase::CameraSettingTimer()
 
 	if (CheckTargetArmLength && CheckSpringArmLocation)
 	{
+		SpringArm->bEnableCameraLag = true;
+		SpringArm->bEnableCameraRotationLag = true;
 		GetWorld()->GetTimerManager().ClearTimer(CameraSettingTimerHandle);
 	}
 }
@@ -1321,31 +1356,30 @@ void ACharacterBase::DisMountEnd()
 	*/
 }
 
-// ���� �ý��� �������̽� //
+/*
 void ACharacterBase::TakeDamage_Implementation(FAttackInfo DamageInfo)
 {
-	IPBDamagableInterface::TakeDamage_Implementation(DamageInfo);
+	IHitReactionInterface::TakeDamage_Implementation(DamageInfo);
 }
 
 float ACharacterBase::GetMaxHealth_Implementation()
 {
-	IPBDamagableInterface::GetMaxHealth_Implementation();
+	IHitReactionInterface::GetMaxHealth_Implementation();
 
-	return DamageComponent->GetfloatValue("MaxHealth");
+	return StatComponent->GetfloatValue("MaxHealth");
 }
 
 float ACharacterBase::GetHealth_Implementation()
 {
-	IPBDamagableInterface::GetHealth_Implementation();
+	IHitReactionInterface::GetHealth_Implementation();
 
-	return DamageComponent->GetfloatValue("Health");
+	return StatComponent->GetfloatValue("Health");
 }
 
 float ACharacterBase::Heal_Implementation(float amount)
 {
-	IPBDamagableInterface::Heal_Implementation(amount);
+	IHitReactionInterface::Heal_Implementation(amount);
 
-	return DamageComponent->Heal(amount);
+	return StatComponent->Heal(amount);
 }
-
-// ���� �ý��� �������̽� //
+*/

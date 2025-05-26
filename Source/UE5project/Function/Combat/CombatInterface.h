@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "CombatStruct.h"
+#include "CombatData.h"
 #include "CombatInterface.generated.h"
 
 // This class does not need to be modified.

@@ -1,31 +1,30 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "CombatStruct.h"
+#include "AttackData.h"
 
 // Sets default values
-ACombatStruct::ACombatStruct()
+AAttackData::AAttackData()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
 
 }
 
 // Called when the game starts or when spawned
-void ACombatStruct::BeginPlay()
+void AAttackData::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-uint32 GetTypeHash(const FAttackInfo& AttackInfo)
+uint32 GetTypeHash(const FAttackFeature& AttackFeature)
 {
-	return GetTypeHash(AttackInfo.FeatureID);
+	return GetTypeHash(AttackFeature.FeatureID);
 }
 
-uint32 GetTypeHash(const FAttackData& AttackData)
+uint32 GetTypeHash(const FAttackInfo& AttackInfo)
 {
-	return GetTypeHash(AttackData.SectionName);
+	return GetTypeHash(AttackInfo.SectionName);
 }
 
 uint32 GetTypeHash(const FNextAttackList& NextAttackList)

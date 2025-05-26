@@ -2,36 +2,51 @@
 
 #pragma once
 
+// 기본 헤더
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "../BaseCharacterHeader.h"
 #include "InputActionValue.h"
-#include "Camera/CameraComponent.h"
-#include <Engine/Classes/Components/CapsuleComponent.h>
-#include "EnhancedInputComponent.h"
+
+// 구조체, 자료형 
+#include "../BaseCharacterHeader.h"
+#include "../ClimbHeader.h"
+#include "../PEnumHeader.h"
+
+// 인터페이스
 #include "../Function/PlayerInterface.h"
-#include "../Function/Combat/PBDamagableInterface.h"
-#include "../Function/Combat/PBDamageSystem.h"
-#include "../Function/Interact/ClimbComponent.h"
+#include "../Function/Combat/HitReactionInterface.h"
 #include "../Function/Interact/ClimbInterface.h"
-#include "../Enemy/Human/PBEHuman.h"
-#include "NavigationSystem.h"
-#include "NavigationInvokerComponent.h"
-#include "../Function/Interact/InteractComponent.h"
 #include "../Function/ViewDataInterface.h"
-#include "Sound/SoundCue.h" 
-#include "MotionWarpingComponent.h"
+
+// 컴포넌트
 #include "CharacterBase.generated.h"
 
-class USkeletalMeshComponent;
-class UStaticMeshComponent;
+
+// 삭제예정
+//#include "Camera/CameraComponent.h"
+//#include <Engine/Classes/Components/CapsuleComponent.h>
+//#include "EnhancedInputComponent.h"
+//#include "../Function/Combat/StatComponent.h"
+//#include "../Function/Interact/ClimbComponent.h"
+//#include "../Enemy/Human/PBEHuman.h"
+//#include "NavigationSystem.h"
+//#include "../Function/Interact/InteractComponent.h"
+//#include "Sound/SoundCue.h" 
+
 class UInputMappingContext;
 class UInputAction;
+class UCameraComponent;
 class USpringArmComponent;
 class UCharacterMovementComponent;
-class UPBDamageSystem;
+
+class UStatComponent;
+class UAttackComponent;
+class UHitReactionComponent;
 class UClimbComponent;
 class UInteractComponent;
+
+//class USkeletalMeshComponent;
+//class UStaticMeshComponent;;
 
 DECLARE_DELEGATE(FOnSingleDelegate);
 
@@ -46,7 +61,7 @@ enum class CharState : uint8
 };
 
 UCLASS()
-class UE5PROJECT_API ACharacterBase : public ACharacter, public IPBDamagableInterface, public IPlayerInterface, public IClimbInterface, public IViewDataInterface
+class UE5PROJECT_API ACharacterBase : public ACharacter, public IHitReactionInterface, public IPlayerInterface, public IClimbInterface, public IViewDataInterface
 {
 	GENERATED_BODY()
 
@@ -111,8 +126,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
 
-	UPROPERTY(VisibleAnywhere, Category = Combat)
-		UPBDamageSystem* DamageComponent;
+	UPROPERTY(VisibleAnywhere, Category = Stat)
+		UStatComponent* StatComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = Attack)
+		UAttackComponent* AttackComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = HitReaction)
+		UHitReactionComponent* HitReactionComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Climb)
 		UClimbComponent* ClimbComponent;
@@ -230,10 +251,12 @@ public:
 	virtual bool IsPlayer_Implementation();
 	virtual TOptional<FVector> GetCharBoneLocation(FName BoneName);
 
+	/*
 	virtual void TakeDamage_Implementation(FAttackInfo DamageInfo) override;
 	virtual float Heal_Implementation(float amount) override;
 	virtual float GetHealth_Implementation() override;
 	virtual float GetMaxHealth_Implementation() override;
+	*/
 
 	UFUNCTION()
 		virtual void Death();
@@ -382,4 +405,13 @@ public:
 protected:
 	void HandleArrivedInteractionPoint();
 #pragma endregion 
+
+#pragma region Combat
+
+#pragma region HitReaction
+public:
+	virtual void OnHit_Implementation(const FAttackInfo& AttackInfo, const FVector HitPoint) override;
+#pragma endregion HitReaction
+
+#pragma endregion Combat
 };

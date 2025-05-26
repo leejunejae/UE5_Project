@@ -30,7 +30,7 @@ public:
 
 
 	/* Function for Hit */
-	void TakeDamage_Implementation(FAttackInfo DamageInfo) override;
+	//void TakeDamage_Implementation(FAttackInfo DamageInfo) override;
 	HitResponse CharResponse(bool CanBlocked, bool CanAvoid, bool CanParry);
 	CharState GetCharState();
 	HitResponse GetCharResponse();
@@ -95,7 +95,7 @@ private:
 		class UCharacterBaseAnimInstance* FallenKnightAnim;
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
-		class UPBDamageSystem* FallenKnightDMGSystem;
+		class UStatComponent* FallenKnightDMGSystem;
 
 	//Dodge TImeline
 	UPROPERTY(EditAnywhere, Category = Timeline)
@@ -164,8 +164,4 @@ private:
 
 	UFUNCTION()
 		void IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
-
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
-		TArray<USoundCue*> RollSounds;
 };

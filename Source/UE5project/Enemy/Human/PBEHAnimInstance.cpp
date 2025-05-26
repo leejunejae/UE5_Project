@@ -4,6 +4,7 @@
 #include "PBEHAnimInstance.h"
 #include "PBEHuman.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "KismetAnimationLibrary.h"
 
 UPBEHAnimInstance::UPBEHAnimInstance()
 {
@@ -23,8 +24,8 @@ void UPBEHAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (Character)
 	{
 		Speed = Character->GetVelocity().Size();
-		Direction = CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
-		IsDead = Character->GetHealth_Implementation() < 0.0f;
+		Direction = UKismetAnimationLibrary::CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
+		//IsDead = Character->GetHealth_Implementation() < 0.0f;
 		IsInAir = Character->GetMovementComponent()->IsFalling();
 	}
 }

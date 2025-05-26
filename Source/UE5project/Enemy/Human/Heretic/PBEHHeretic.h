@@ -4,14 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "../PBEHuman.h"
-#include "../../../Item/PBSkill_Teleport.h"
-#include "../../../Item/PBSkill_TeleportFin.h"
-#include "../../../Item/PBProjectile.h"
-#include "../../../Item/PBProjectile_Darkball.h"
-#include "../../../Item/PBSkill_Portal.h"
-#include "../../../Item/PBSkill_DarkSawTooth.h"
-#include "../../../Item/PBSkill_DarkBeam.h"
-#include "../../../Item/PBSkill_DarkTornado.h"
 #include "PBEHHeretic.generated.h"
 
 /**

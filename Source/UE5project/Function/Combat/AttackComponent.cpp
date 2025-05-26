@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "CombatComponent.h"
+#include "AttackComponent.h"
 #include "GameFramework/Character.h"
-#include "PBDamagableInterface.h"
+#include "HitReactionInterface.h"
 #include "CombatInterface.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values for this component's properties
-UCombatComponent::UCombatComponent()
+UAttackComponent::UAttackComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -19,7 +19,7 @@ UCombatComponent::UCombatComponent()
 
 
 // Called when the game starts
-void UCombatComponent::BeginPlay()
+void UAttackComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -28,24 +28,24 @@ void UCombatComponent::BeginPlay()
 }
 
 // Called every frame
-void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UAttackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
 }
 
-void UCombatComponent::SetAttackDT(UDataTable* InitDialogueDT)
+void UAttackComponent::SetAttackDT(const UDataTable* AttackDT)
 {
-	AttackListDT = InitDialogueDT;
+	AttackListDT = AttackDT;
 }
 
-void UCombatComponent::AnalysisAttackData(FName RowName, FName StartSection)
+void UAttackComponent::AnalysisAttackData(FName RowName, FName StartSection)
 {
 	if (!AttackListDT)
 		return;
 
-	CurAttackDTRow = AttackListDT->FindRow<FAttackDataStruct>(RowName, "");
+	CurAttackDTRow = AttackListDT->FindRow<FAttackInfoList>(RowName, "");
 	if (CurAttackDTRow == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("DT Not Found"));
@@ -62,14 +62,14 @@ void UCombatComponent::AnalysisAttackData(FName RowName, FName StartSection)
 		*/
 }
 
-void UCombatComponent::ExecuteAttack(FName SectionName)
+void UAttackComponent::ExecuteAttack(FName SectionName)
 {
 	//AnimInstance->Montage_Play();
 
-	FAttackData DataForFind;
+	FAttackInfo DataForFind;
 	DataForFind.SectionName = SectionName;
-	CurAttack = CurAttackDTRow->AttackDataList.Find(DataForFind);
-	const FAttackData* FoundData = CurAttack;
+	CurAttack = CurAttackDTRow->AttackInfo.Find(DataForFind);
+	const FAttackInfo* FoundData = CurAttack;
 
 	if (FoundData != nullptr)
 	{
@@ -86,16 +86,11 @@ void UCombatComponent::ExecuteAttack(FName SectionName)
 		if(OnMontageEndedDelegate.IsBound())
 			OnMontageEndedDelegate.Unbind();
 
-		OnMontageEndedDelegate.BindUObject(this, &UCombatComponent::OnMontageEnded, FoundData);
+		OnMontageEndedDelegate.BindUObject(this, &UAttackComponent::OnMontageEnded, FoundData);
 		AnimInstance->Montage_SetBlendingOutDelegate(OnMontageEndedDelegate);
-		AnimInstance->OnPlayMontageNotifyBegin.AddDynamic(this, &UCombatComponent::OnMontageNotifyBegin);
-		AnimInstance->OnPlayMontageNotifyEnd.AddDynamic(this, &UCombatComponent::OnMontageNotifyEnd);
+		AnimInstance->OnPlayMontageNotifyBegin.AddDynamic(this, &UAttackComponent::OnMontageNotifyBegin);
+		AnimInstance->OnPlayMontageNotifyEnd.AddDynamic(this, &UAttackComponent::OnMontageNotifyEnd);
 		//UE_LOG(LogTemp, Warning, TEXT("Cur Attack : %s"), *CurAttack->SectionName.ToString());
-	
-		if (FoundData->NeedMotionWarp)
-		{
-			OnMotionWarp.ExecuteIfBound();
-		}
 	}
 	else
 	{
@@ -105,7 +100,7 @@ void UCombatComponent::ExecuteAttack(FName SectionName)
 	}
 }
 
-void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, const FAttackData* CurAnimData)
+void UAttackComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, const FAttackInfo* CurAnimData)
 {
 	// 몽타주가 종료되었을 때의 처리
 	if (!(CurAnimData->Anim == Montage))
@@ -133,7 +128,7 @@ void UCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, 
 	}
 }
 
-void UCombatComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
+void UAttackComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
 {
 	/*
 	UE_LOG(LogTemp, Warning, TEXT("Sequence Asset: %s"), *BranchingPointPayload.SequenceAsset->GetName());
@@ -155,7 +150,7 @@ void UCombatComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
 				UE_LOG(LogTemp, Warning, TEXT("WeaponAttack"));
 				UStaticMeshComponent* Weapon = ICombatInterface::Execute_GetWeapon(GetOwner());
 				Weapon->SetGenerateOverlapEvents(true);
-				Weapon->OnComponentBeginOverlap.AddDynamic(this, &UCombatComponent::TriggerBegin);
+				Weapon->OnComponentBeginOverlap.AddDynamic(this, &UAttackComponent::TriggerBegin);
 				/*
 				GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, [this]() {
 					UStaticMeshComponent* Weapon = ICombatInterface::Execute_GetWeapon(GetOwner());
@@ -187,14 +182,14 @@ void UCombatComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
 	}
 }
 
-void UCombatComponent::OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
+void UAttackComponent::OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Notify End"));
 	if (NotifyName == FName("WeaponAttack"))
 	{
 		UStaticMeshComponent* Weapon = ICombatInterface::Execute_GetWeapon(GetOwner());
 		Weapon->SetGenerateOverlapEvents(false);
-		Weapon->OnComponentBeginOverlap.RemoveDynamic(this, &UCombatComponent::Detect_Collision);
+		Weapon->OnComponentBeginOverlap.RemoveDynamic(this, &UAttackComponent::Detect_Collision);
 		//GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
 	}
 	/*
@@ -213,18 +208,18 @@ void UCombatComponent::OnMontageNotifyEnd(FName NotifyName, const FBranchingPoin
 }
 
 
-void UCombatComponent::Detect_Collision(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void UAttackComponent::Detect_Collision(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Overlap Detect"));
-	if (OtherActor->GetClass()->ImplementsInterface(UPBDamagableInterface::StaticClass()))
+	if (OtherActor->GetClass()->ImplementsInterface(UHitReactionInterface::StaticClass()))
 	{
-		IPBDamagableInterface* GetDamagedActor = Cast<IPBDamagableInterface>(OtherActor);
+		IHitReactionInterface* GetDamagedActor = Cast<IHitReactionInterface>(OtherActor);
 		//UE_LOG(LogTemp, Warning, TEXT("Damagable Actor"));
 		//GetDamagedActor->TakeDamage_Implementation(CurAttack->Feature);
 	}
 }
 
-void UCombatComponent::Detect_LineTrace(FAttackInfo AttackFeature, FVector StartLoc, FVector EndLoc, bool IsDrawLine)
+void UAttackComponent::Detect_LineTrace(FAttackFeature AttackFeature, FVector StartLoc, FVector EndLoc, bool IsDrawLine)
 {
 	FHitResult HitResult;
 	FCollisionQueryParams CollisionParams;
@@ -246,20 +241,20 @@ void UCombatComponent::Detect_LineTrace(FAttackInfo AttackFeature, FVector Start
 
 	if (bHit)
 	{
-		if (HitResult.GetActor()->GetClass()->ImplementsInterface(UPBDamagableInterface::StaticClass()))
+		if (HitResult.GetActor()->GetClass()->ImplementsInterface(UHitReactionInterface::StaticClass()))
 		{
-			IPBDamagableInterface* GetDamagedActor = Cast<IPBDamagableInterface>(HitResult.GetActor());
+			IHitReactionInterface* GetDamagedActor = Cast<IHitReactionInterface>(HitResult.GetActor());
 			//UE_LOG(LogTemp, Warning, TEXT("Damagable Actor"));
-			GetDamagedActor->TakeDamage_Implementation(AttackFeature);
+			//GetDamagedActor->TakeDamage_Implementation(AttackFeature);
 		}
 	}
 }
 
-void UCombatComponent::Detect_Circular(FName AttackName, FVector Center, FVector Direction, FVector VerticalVector, float StartAngle, float EndAngle, float Radius, int TraceNum, bool IsDrawLine)
+void UAttackComponent::Detect_Circular(FName AttackName, FVector Center, FVector Direction, FVector VerticalVector, float StartAngle, float EndAngle, float Radius, int TraceNum, bool IsDrawLine)
 {
-	FAttackInfo DataForFind;
+	FAttackFeature DataForFind;
 	DataForFind.FeatureID = AttackName;
-	const FAttackInfo* AttackFeature = CurAttack->Feature.Find(DataForFind);
+	const FAttackFeature* AttackFeature = CurAttack->Feature.Find(DataForFind);
 	if (AttackFeature == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed To Find AttackFeature With Name : %s"), *AttackName.ToString());
@@ -286,7 +281,7 @@ void UCombatComponent::Detect_Circular(FName AttackName, FVector Center, FVector
 	}
 }
 
-void UCombatComponent::Detect_Circular(FAttackInfo AttackFeature, FVector Center, FVector Direction, FVector VerticalVector, float StartAngle, float EndAngle, float Radius, int TraceNum, bool IsDrawLine)
+void UAttackComponent::Detect_Circular(FAttackFeature AttackFeature, FVector Center, FVector Direction, FVector VerticalVector, float StartAngle, float EndAngle, float Radius, int TraceNum, bool IsDrawLine)
 {
 	FVector ForwardVector = Direction.GetSafeNormal();
 	FVector RightVector = FVector::CrossProduct(VerticalVector, ForwardVector).GetSafeNormal();
@@ -308,7 +303,7 @@ void UCombatComponent::Detect_Circular(FAttackInfo AttackFeature, FVector Center
 	}
 }
 
-void UCombatComponent::Detect_Sphere(FVector StartLoc, FVector EndLoc, float Radius)
+void UAttackComponent::Detect_Sphere(FVector StartLoc, FVector EndLoc, float Radius)
 {
 	FHitResult HitResult;
 	FCollisionQueryParams CollisionParams;
@@ -345,14 +340,14 @@ void UCombatComponent::Detect_Sphere(FVector StartLoc, FVector EndLoc, float Rad
 
 	if (bHit)
 	{
-		if (HitResult.GetActor()->GetClass()->ImplementsInterface(UPBDamagableInterface::StaticClass()))
+		if (HitResult.GetActor()->GetClass()->ImplementsInterface(UHitReactionInterface::StaticClass()))
 		{
-			//IPBDamagableInterface::Execute_TakeDamage(HitResult.GetActor(), CurAttack->Feature);
+			//IHitReactionInterface::Execute_TakeDamage(HitResult.GetActor(), CurAttack->Feature);
 		}
 	}
 }
 
-void UCombatComponent::Detect_Capsule(FVector StartLoc, FVector EndLoc, FVector Extent)
+void UAttackComponent::Detect_Capsule(FVector StartLoc, FVector EndLoc, FVector Extent)
 {
 	FHitResult HitResult;
 	FCollisionQueryParams CollisionParams;
@@ -374,7 +369,7 @@ void UCombatComponent::Detect_Capsule(FVector StartLoc, FVector EndLoc, FVector 
 	}
 }
 
-void UCombatComponent::Detect_Box(FVector StartLoc, FVector EndLoc, FVector HalfExtent)
+void UAttackComponent::Detect_Box(FVector StartLoc, FVector EndLoc, FVector HalfExtent)
 {
 	FHitResult HitResult;
 	FCollisionQueryParams CollisionParams;
@@ -396,32 +391,32 @@ void UCombatComponent::Detect_Box(FVector StartLoc, FVector EndLoc, FVector Half
 	}
 }
 
-void UCombatComponent::InflictDamage(AActor* Target)
+void UAttackComponent::InflictDamage(AActor* Target)
 {
 }
 
-void UCombatComponent::SetDashDistance()
+void UAttackComponent::SetDashDistance()
 {
 }
 
-void UCombatComponent::SetWeaponData(FVector Start, FVector End, FVector Add)
+void UAttackComponent::SetWeaponData(FVector Start, FVector End, FVector Add)
 {
-	CurRange.RangeBegin = Start;
-	CurRange.RangeEnd = End;
-	CurRange.AddValue = Add;
+	//CurRange.RangeBegin = Start;
+	//CurRange.RangeEnd = End;
+	//CurRange.AddValue = Add;
 }
 
-void UCombatComponent::TriggerBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void UAttackComponent::TriggerBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor!=GetOwner())
 	{
-		if (OtherActor->GetClass()->ImplementsInterface(UPBDamagableInterface::StaticClass()))
+		if (OtherActor->GetClass()->ImplementsInterface(UHitReactionInterface::StaticClass()))
 		{
-			FAttackInfo DataForFind;
+			FAttackFeature DataForFind;
 			DataForFind.FeatureID = "WeaponAttack";
-			IPBDamagableInterface::Execute_TakeDamage(OtherActor, *CurAttack->Feature.Find(DataForFind));
+			//IHitReactionInterface::Execute_TakeDamage(OtherActor, *CurAttack->Feature.Find(DataForFind));
 			/*
-			IPBDamagableInterface* GetDamagedActor = Cast<IPBDamagableInterface>(OtherActor);
+			IHitReactionInterface* GetDamagedActor = Cast<IHitReactionInterface>(OtherActor);
 			GetDamagedActor->TakeDamage_Implementation(CurAttack->Feature);
 			*/
 		}
