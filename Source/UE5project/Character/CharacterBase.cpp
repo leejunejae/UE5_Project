@@ -39,6 +39,7 @@
 #include "../Function/Interact/Ride/RideInterface.h"
 
 // 유저 컴포넌트
+#include "../Function/CharacterStatusComponent.h"
 #include "../Function/Combat/StatComponent.h"
 #include "../Function/Combat/AttackComponent.h"
 #include "../Function/Combat/HitReactionComponent.h"
@@ -51,6 +52,10 @@ ACharacterBase::ACharacterBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
+
+	CharacterStatusComponent = CreateDefaultSubobject<UCharacterStatusComponent>(TEXT("CharacterStatusComponent"));
+	CharacterStatusComponent->bAutoActivate = true;
+
 	StatComponent = CreateDefaultSubobject<UStatComponent>(TEXT("StatComponent"));
 	StatComponent->bAutoActivate = true;
 
@@ -358,13 +363,13 @@ void ACharacterBase::PostInitializeComponents()
 
 	CharacterBaseAnim->OnDodgeEnd.AddLambda([this]()->void {
 		CanDodge = true;
-		IsDodge = false;
+		//IsDodge = false;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
 		});
 
 	CharacterBaseAnim->OnDodgeStart.AddLambda([this]()->void {
-		IsDodge = true;
+		//IsDodge = true;
 		IsRoll = false;
 		});
 
@@ -623,7 +628,7 @@ void ACharacterBase::Dodge()
 
 void ACharacterBase::Block()
 {
-	IsBlock = true;
+	//IsBlock = true;
 }
 
 void ACharacterBase::Jump()
@@ -1137,6 +1142,16 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 	IsInteraction = true;
 }
 
+void ACharacterBase::OnBlock()
+{
+	CharacterStatusComponent->SetCombatState(ECharacterCombatState::Block);
+}
+
+void ACharacterBase::OffBlock()
+{
+	CharacterStatusComponent->SetCombatState(ECharacterCombatState::Normal);
+}
+
 void ACharacterBase::OnHit_Implementation(const FAttackInfo& AttackInfo, const FVector HitPoint)
 {
 	if (HitReactionComponent != nullptr)
@@ -1144,6 +1159,9 @@ void ACharacterBase::OnHit_Implementation(const FAttackInfo& AttackInfo, const F
 		UE_LOG(LogTemp, Warning, TEXT("Character Hit"));
 		FHitReactionRequest InputReaction = {
 			AttackInfo.Feature.begin()->Response,
+			AttackInfo.Feature.begin()->CanBlocked,
+			AttackInfo.Feature.begin()->CanParried,
+			AttackInfo.Feature.begin()->CanAvoid,
 			HitPoint
 		};
 		HitReactionComponent->ExecuteHitResponse(InputReaction);

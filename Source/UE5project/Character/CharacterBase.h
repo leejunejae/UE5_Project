@@ -11,7 +11,7 @@
 #include "../BaseCharacterHeader.h"
 #include "../ClimbHeader.h"
 #include "../PEnumHeader.h"
-
+#include "../StatusData.h"
 // 인터페이스
 #include "../Function/PlayerInterface.h"
 #include "../Function/Combat/HitReactionInterface.h"
@@ -39,6 +39,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UCharacterMovementComponent;
 
+class UCharacterStatusComponent;
 class UStatComponent;
 class UAttackComponent;
 class UHitReactionComponent;
@@ -49,16 +50,6 @@ class UInteractComponent;
 //class UStaticMeshComponent;;
 
 DECLARE_DELEGATE(FOnSingleDelegate);
-
-UENUM(BlueprintType)
-enum class CharState : uint8
-{
-	None UMETA(DisplayName = "None"),
-	Block UMETA(DisplayName = "Block"),
-	Dodge UMETA(DisplayName = "Dodge"),
-	Invincible UMETA(DisplayName = "Invincible"),
-	Parry UMETA(DislplayName = "Parry"),
-};
 
 UCLASS()
 class UE5PROJECT_API ACharacterBase : public ACharacter, public IHitReactionInterface, public IPlayerInterface, public IClimbInterface, public IViewDataInterface
@@ -125,6 +116,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
+
+	UPROPERTY(VisibleAnywhere, Category = Status)
+		UCharacterStatusComponent* CharacterStatusComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Stat)
 		UStatComponent* StatComponent;
@@ -201,13 +195,8 @@ protected:
 	bool IsAttack;
 	bool IsRoll;
 	bool CanDodge;
-	bool IsDodge;
-	bool IsBlock;
 	bool IsInteraction;
 	bool CanInput=true;
-	float AttackRange;
-	float Vertical;
-	float Horizontal;
 	float InputDirection;
 	float TargetSpeed=300.0f;
 
@@ -409,6 +398,10 @@ protected:
 #pragma region Combat
 
 #pragma region HitReaction
+protected:
+	void OnBlock();
+	void OffBlock();
+
 public:
 	virtual void OnHit_Implementation(const FAttackInfo& AttackInfo, const FVector HitPoint) override;
 #pragma endregion HitReaction

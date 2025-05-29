@@ -32,7 +32,6 @@ public:
 	/* Function for Hit */
 	//void TakeDamage_Implementation(FAttackInfo DamageInfo) override;
 	HitResponse CharResponse(bool CanBlocked, bool CanAvoid, bool CanParry);
-	CharState GetCharState();
 	HitResponse GetCharResponse();
 	void ResetResponse();
 
@@ -125,7 +124,6 @@ private:
 	HitResponse CurResponse;
 
 	bool IsInvincible;
-	bool IsParry;
 	bool AttackInput;
 	bool CanAttack;
 	bool NextDodge;
@@ -150,8 +148,6 @@ private:
 	void SwitchStance() override;
 	void ResetAttackState();
 	void AttackTimer();
-	void OnBlock();
-	void OffBlock();
 
 	void SetAttackInfo(float Amount, HitResponse Response, bool Invincible = false, bool CanBlocked = false, bool CanParried = false, bool ForceInterrupt = true);
 

@@ -113,7 +113,6 @@ AFallenKnight::AFallenKnight()
 
 	IsAttack = false;
 
-	AttackRange = 200.0f;
 	CanAttack = true;
 	CanDodge = true;
 	CurHandRight = true;
@@ -195,16 +194,16 @@ void AFallenKnight::PostInitializeComponents()
 			});
 
 		FallenKnightAnim->OnParryEnd.AddLambda([this]()->void {
-			IsParry = false;
+			//IsParry = false;
 			CanDodge = true;
 			});
 
 		FallenKnightAnim->OnResetHurt.AddLambda([this]()->void {
 			IsAttack = false;
 			CurResponse = HitResponse::None;
-			IsDodge = false;
-			IsBlock = false;
-			IsParry = false;
+			//IsDodge = false;
+			//IsBlock = false;
+			//IsParry = false;
 			IsInvincible = false;
 			});
 
@@ -224,7 +223,7 @@ void AFallenKnight::PostInitializeComponents()
 			});
 
 		FallenKnightAnim->OnCanDodge.AddLambda([this]()->void {
-			IsDodge = false;
+			//IsDodge = false;
 			CanDodge = true;
 			});
 
@@ -359,18 +358,6 @@ void AFallenKnight::AttackTimer()
 	*/
 }
 
-void AFallenKnight::OnBlock()
-{
-	IsBlock = true;
-	//UE_LOG(LogTemp, Warning, TEXT("Block on"));
-}
-
-void AFallenKnight::OffBlock()
-{
-	IsBlock = false;
-	//UE_LOG(LogTemp, Warning, TEXT("Block off"));
-}
-
 void AFallenKnight::SwitchStance()
 {
 	CurStance = CurStance == WarriorStance::UA ? WarriorStance::SNS : WarriorStance::UA;
@@ -408,8 +395,7 @@ void AFallenKnight::Dodge()
 	//CanDodge = false;
 	
 	CanDodge = false;
-	IsDodge = true;
-	IsRoll = true;
+	//IsDodge = true;
 	//GetCharacterMovement()->bOrientRotationToMovement = false;
 	InitPosition = GetActorLocation();
 	DodgeTimeline.PlayFromStart();
@@ -523,20 +509,6 @@ HitResponse AFallenKnight::CharResponse(bool CanBlocked, bool CanAvoid, bool Can
 	return HitResponse::None;
 }
 
-CharState AFallenKnight::GetCharState()
-{
-	if (IsInvincible)
-		return CharState::Invincible;
-	else if (IsDodge)
-		return CharState::Dodge;
-	else if (IsParry)
-		return CharState::Parry;
-	else if (IsBlock)
-		return CharState::Block;
-	else
-		return CharState::None;
-}
-
 HitResponse AFallenKnight::GetCharResponse()
 {
 	return CurResponse;
@@ -549,7 +521,7 @@ void AFallenKnight::ResetResponse()
 
 void AFallenKnight::Parrying()
 {
-	IsParry = true;
+	//IsParry = true;
 	CanDodge = false;
 }
 
@@ -575,12 +547,14 @@ bool AFallenKnight::IsRolling()
 
 bool AFallenKnight::IsBlocking()
 {
-	return IsBlock;
+	//return IsBlock;
+	return false;
 }
 
 bool AFallenKnight::IsParrying()
 {
-	return IsParry;
+	//return IsParry;
+	return false;
 }
 
 bool AFallenKnight::IsHit()

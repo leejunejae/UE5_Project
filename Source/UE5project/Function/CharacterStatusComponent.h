@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "../StatusData.h"
 #include "CharacterStatusComponent.generated.h"
 
 
@@ -20,9 +21,21 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+#pragma region Combat
+public:
+	bool IsDodging() const { return CombatState == ECharacterCombatState::Dodge; }
+	bool IsBlocking() const { return CombatState == ECharacterCombatState::Block; }
+	bool IsParrying() const { return CombatState == ECharacterCombatState::Parry; }
+	bool IsInvincible() const { return CombatState == ECharacterCombatState::Invincible; }
+	
+	bool CanTransition(const ECharacterCombatState NewState) const;
 
-		
+
+	ECharacterCombatState GetCombatState() const { return CombatState; }
+
+	void SetCombatState(ECharacterCombatState NewState);
+
+private:
+	ECharacterCombatState CombatState;
+#pragma endregion Combat
 };

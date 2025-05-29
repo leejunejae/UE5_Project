@@ -34,6 +34,9 @@ public:
 
 	float CalculateHitAngle(const FVector HitPoint);
 
+	HitResponse EvaluateHitResponse(const HitResponse& InputResponse, const bool CanBlocked, const bool CanParried, const bool CanAvoid, const float HitAngle);
+
+
 private:
 	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 		const class UDataTable* HitReactionListDT;

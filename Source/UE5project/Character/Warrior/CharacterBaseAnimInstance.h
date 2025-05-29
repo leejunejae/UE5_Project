@@ -9,6 +9,7 @@
 #include "../../PEnumHeader.h"
 #include "../../BaseCharacterHeader.h"
 #include "../../Function/Combat/CombatData.h"
+#include "../../StatusData.h"
 
 // 인터페이스
 #include "../../Function/IAnimInstance.h"
@@ -236,6 +237,8 @@ private:
 
 	FName GetAttackMontageSectionName(int32 Section);
 #pragma region State & Stance
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
+		ECharacterCombatState CharacterCombatState;
 
 #pragma region State & Stance_IK
 private:

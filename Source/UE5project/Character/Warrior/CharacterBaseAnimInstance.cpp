@@ -4,6 +4,7 @@
 #include "CharacterBaseAnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "../../Function/CharacterStatusComponent.h"
 
 // 참조할 액터
 #include "FallenKnight.h" // CharacterBase로 변경예정
@@ -50,6 +51,13 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		IsRoll = Character->IsRolling();
 		Response = Character->GetCharResponse();
 		ComboCount = Character->CheckCombo();
+		
+
+		UCharacterStatusComponent* StatusComp = Character->FindComponentByClass<UCharacterStatusComponent>();
+		if (StatusComp)
+		{
+			CharacterCombatState = StatusComp->GetCombatState();
+		}
 
 		//if (FMath::IsNearlyEqual(Speed, 0.0f) && CurrentState==ECharacterState::Ride)
 		//{
@@ -109,7 +117,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			else
 				InputDirection = UKismetMathLibrary::DegAtan2(InputDirectionX, InputDirectionY);
 
-			float BlendAlpha = IsBlock ? 0.99f : 0.01f;
+			float BlendAlpha = CharacterCombatState == ECharacterCombatState::Block ? 0.99f : 0.01f;
 			BlockBlend = FMath::FInterpTo(BlockBlend, BlendAlpha, DeltaSeconds, 10.0f);
 
 			TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
@@ -762,14 +770,21 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterLadderState()
 
 float UCharacterBaseAnimInstance::GetAnimDirection(float DeltaSeconds)
 {
-	float PrevCharacterYaw = CharacterYaw;
-	CharacterYaw = Character->GetActorRotation().Yaw;
-	
-	float DeltaCharacterYaw = CharacterYaw - PrevCharacterYaw;
-	float LeanAngle = FMath::Clamp((UKismetMathLibrary::SafeDivide(DeltaCharacterYaw, DeltaSeconds) / 200.0f), -1.0f, 1.0f);
-		 
+	if (Speed > 200.0f)
+	{
+		float PrevCharacterYaw = CharacterYaw;
+		CharacterYaw = Character->GetActorRotation().Yaw;
 
-	return LeanAngle;
+		float DeltaCharacterYaw = CharacterYaw - PrevCharacterYaw;
+		float LeanAngle = FMath::Clamp((UKismetMathLibrary::SafeDivide(DeltaCharacterYaw, DeltaSeconds) / 200.0f), -1.0f, 1.0f);
+
+
+		return LeanAngle;
+	}
+	else
+	{
+		return 0.0f;
+	}
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterIdleState()

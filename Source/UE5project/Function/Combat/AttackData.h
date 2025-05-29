@@ -128,9 +128,4 @@ class UE5PROJECT_API AAttackData : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AAttackData();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 };

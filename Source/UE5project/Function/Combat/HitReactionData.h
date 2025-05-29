@@ -8,6 +8,12 @@
 #include "GameFramework/Actor.h"
 #include "HitReactionData.generated.h"
 
+UENUM(BlueprintType)
+enum class EAnimLoopType : uint8
+{
+	Time UMETA(DisplayName="Time"),
+	Condition UMETA(DisplayName="Condition")
+};
 
 UENUM(BlueprintType)
 enum class EHitPointVertical : uint8
@@ -37,11 +43,11 @@ struct FHitReactionRequest
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		HitResponse Response;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FVector HitPoint;
+	HitResponse Response;
+	bool CanBlocked;
+	bool CanParried;
+	bool CanAvoid;
+	FVector HitPoint;
 };
 
 USTRUCT(Atomic, BlueprintType)
@@ -65,7 +71,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
 		bool IsLoop;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "IsLoop == true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "IsLoop"))
+		EAnimLoopType AnimLoopType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "IsLoop && AnimLoopType == EAnimLoopType::Time"))
 		float LoopTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))

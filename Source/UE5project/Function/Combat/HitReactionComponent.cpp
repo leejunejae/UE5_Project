@@ -3,6 +3,7 @@
 
 #include "HitReactionComponent.h"
 #include "GameFramework/Character.h"
+#include "../CharacterStatusComponent.h"
 
 // Sets default values for this component's properties
 UHitReactionComponent::UHitReactionComponent()
@@ -42,10 +43,14 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 {
 	if (!HitReactionListDT) return;
 
+	float HitAngle = CalculateHitAngle(ReactionData.HitPoint);
+
+	HitResponse Response = EvaluateHitResponse(ReactionData.Response, ReactionData.CanBlocked, ReactionData.CanParried, ReactionData.CanAvoid, HitAngle);
+
 	const UEnum* EnumPtr = StaticEnum<HitResponse>();
 	if (!EnumPtr) return;
 
-	FName ResponseRowName = FName(EnumPtr->GetNameStringByValue(static_cast<int64>(ReactionData.Response)));
+	FName ResponseRowName = FName(EnumPtr->GetNameStringByValue(static_cast<int64>(Response)));
 
 	CurHitReactionDTRow = HitReactionListDT->FindRow<FHitReactionInfoList>(ResponseRowName, "");
 
@@ -63,8 +68,6 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 		{ EHitPointHorizontal::Left, -90.0f },
 		{ EHitPointHorizontal::FrontLeft, -45.0f }
 	};
-
-	float HitAngle = CalculateHitAngle(ReactionData.HitPoint);
 
 	float MatchScore = 180.0f;
 
@@ -90,7 +93,11 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *MatchInfo->SectionName.ToString());
 		AnimInstance->Montage_Play(MatchInfo->Anim);
 		AnimInstance->Montage_JumpToSection(MatchInfo->SectionName);
-		//UE_LOG(LogTemp, Warning, TEXT("Current Section : %s"), *FoundData->SectionName.ToString());
+		
+		if (MatchInfo->IsLoop)
+		{
+
+		}
 	}
 }
 
@@ -105,5 +112,34 @@ float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)
 	float HitAngle = FMath::FindDeltaAngleDegrees(CharacterYaw, HitYaw);
 
 	return HitAngle;
+}
+
+HitResponse UHitReactionComponent::EvaluateHitResponse(const HitResponse& InputResponse, const bool CanBlocked, const bool CanParried, const bool CanAvoid, const float HitAngle)
+{
+	UCharacterStatusComponent* StatusComp = GetOwner()->FindComponentByClass<UCharacterStatusComponent>();
+
+	const ECharacterCombatState CombatState = StatusComp->GetCombatState();
+
+	switch (CombatState)
+	{
+	case ECharacterCombatState::Block:
+	{
+		if (CanBlocked && (HitAngle >= -60.0f && HitAngle <= 60.0f))
+		{
+			switch (InputResponse)
+			{
+			case HitResponse::Flinch: return HitResponse::Block;
+			case HitResponse::KnockBack: return HitResponse::Block;
+			case HitResponse::KnockDown: return HitResponse::BlockLarge;
+			}
+		}
+		else
+		{
+			return InputResponse;
+		}
+	}
+	default:
+		return InputResponse;
+	}
 }
 

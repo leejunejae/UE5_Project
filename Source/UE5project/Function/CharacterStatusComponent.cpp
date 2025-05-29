@@ -1,14 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Function/CharacterStatusComponent.h"
+#include "CharacterStatusComponent.h"
 
 // Sets default values for this component's properties
 UCharacterStatusComponent::UCharacterStatusComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
 }
@@ -23,12 +20,36 @@ void UCharacterStatusComponent::BeginPlay()
 	
 }
 
-
-// Called every frame
-void UCharacterStatusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+bool UCharacterStatusComponent::CanTransition(const ECharacterCombatState NewState) const
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	switch (CombatState)
+	{
+	case ECharacterCombatState::Normal:
+		return true;
+	case ECharacterCombatState::Block:
+		return NewState != ECharacterCombatState::Block;
+	case ECharacterCombatState::Dodge:
+	{
+		return NewState == ECharacterCombatState::Invincible;
+	}
+	case ECharacterCombatState::Parry:
+	{
+		return NewState == ECharacterCombatState::Invincible;
+	}
+	case ECharacterCombatState::Invincible:
+	{
+		return false;
+	}
+	default:
+		return false;
+	}
+}
 
-	// ...
+void UCharacterStatusComponent::SetCombatState(ECharacterCombatState NewState)
+{
+	if (!CanTransition(NewState))
+		return;
+
+	CombatState = NewState;
 }
 
