@@ -10,6 +10,8 @@
 
 #include "HitReactionComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UHitReactionComponent : public UActorComponent
@@ -28,20 +30,25 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void InitializeComponentLogic();
+
 	void SetHitReactionDT(const UDataTable* HitReactionDT);
-
 	void ExecuteHitResponse(const FHitReactionRequest ReactionData);
-
+	void PlayReaction(const FHitReactionInfo* HitReaction, const FName SectionName = NAME_None);
 	float CalculateHitAngle(const FVector HitPoint);
-
 	HitResponse EvaluateHitResponse(const HitResponse& InputResponse, const bool CanBlocked, const bool CanParried, const bool CanAvoid, const float HitAngle);
 
+	void OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo* HitReaction, const FName SectionName);
 
+	FOnMultiDelegate OnHitAirReaction;
+	
 private:
-	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Meta = (AllowPrivateAccess = true))
 		const class UDataTable* HitReactionListDT;
 
 	FHitReactionInfoList* CurHitReactionDTRow;
 	FHitReactionInfo* CurHitReaction;
-	UAnimInstance* AnimInstance;
+	//UAnimInstance* AnimInstance;
+
+	FOnMontageEnded OnHitReactionDelegate;
 };

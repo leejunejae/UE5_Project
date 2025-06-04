@@ -2,6 +2,8 @@
 
 
 #include "CharacterStatusComponent.h"
+#include "GameFramework/Character.h" 
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values for this component's properties
 UCharacterStatusComponent::UCharacterStatusComponent()
@@ -16,8 +18,17 @@ void UCharacterStatusComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UCharacterStatusComponent* StatusComp = GetOwner()->FindComponentByClass<UCharacterStatusComponent>();
 	// ...
-	
+}
+
+bool UCharacterStatusComponent::IsInAir() const
+{
+	if (const ACharacter* Character = Cast<ACharacter>(GetOwner()))
+	{
+		return Character->GetCharacterMovement()->IsFalling();
+	}
+	return false;
 }
 
 bool UCharacterStatusComponent::CanTransition(const ECharacterCombatState NewState) const

@@ -90,12 +90,6 @@ private:
 
 	FTimerHandle MoveSpeedTimerHandle;
 
-	UPROPERTY(VisibleAnywhere, Category = Animation)
-		class UCharacterBaseAnimInstance* FallenKnightAnim;
-
-	UPROPERTY(VisibleAnywhere, Category = Combat)
-		class UStatComponent* FallenKnightDMGSystem;
-
 	//Dodge TImeline
 	UPROPERTY(EditAnywhere, Category = Timeline)
 		UCurveFloat* DodgeCurve;

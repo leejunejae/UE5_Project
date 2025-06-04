@@ -7,6 +7,8 @@
 #include "../StatusData.h"
 #include "CharacterStatusComponent.generated.h"
 
+class ACharacter;
+class UCharacterMovementComponent;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UCharacterStatusComponent : public UActorComponent
@@ -27,6 +29,7 @@ public:
 	bool IsBlocking() const { return CombatState == ECharacterCombatState::Block; }
 	bool IsParrying() const { return CombatState == ECharacterCombatState::Parry; }
 	bool IsInvincible() const { return CombatState == ECharacterCombatState::Invincible; }
+	bool IsInAir() const;
 	
 	bool CanTransition(const ECharacterCombatState NewState) const;
 

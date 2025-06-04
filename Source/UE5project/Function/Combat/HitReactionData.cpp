@@ -17,7 +17,7 @@ void AHitReactionData::BeginPlay()
 	
 }
 
-uint32 GetTypeHash(const FHitReactionInfo& HitReactionInfo)
+uint32 GetTypeHash(const FHitReactionAnimData& HitReactionAnimData)
 {
-	return GetTypeHash(HitReactionInfo.SectionName);
+	return GetTypeHash(HitReactionAnimData.SectionName);
 }

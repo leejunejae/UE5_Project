@@ -322,6 +322,7 @@ private:
 	////////////////////////////////////
 	// Variables For FootIK
 	////////////////////////////////////
+private:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 		bool CanMovementInput = true;
 
@@ -329,6 +330,7 @@ private:
 
 	float GetAnimDirection(float DeltaSeconds);
 
+public:
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EnterIdleState();
 
@@ -338,6 +340,7 @@ private:
 
 
 #pragma region Ground_Quick Turn
+public:
 	void ResetTurn_Implementation() override;
 
 	UFUNCTION(BlueprintCallable)
@@ -439,6 +442,18 @@ private:
 #pragma endregion Ladder
 
 #pragma endregion State & Stance
+
+
+#pragma region HitReaction
+public:
+	void SetHitAir(bool HitState);
+	void ResetHitAir_Implementation() override;
+
+protected:
+	UPROPERTY(BlueprintReadOnly, Category = HitReaction, Meta = (AllowPrivateAccess = true))
+		bool bIsHitAir = false;
+
+#pragma endregion HitReaction
 
 
 #pragma region Debug Region

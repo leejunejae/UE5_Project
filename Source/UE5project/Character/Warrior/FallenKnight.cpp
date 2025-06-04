@@ -17,14 +17,6 @@
 AFallenKnight::AFallenKnight()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
-	/*
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh>WARRIOR_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/SK_Fallen_Knight.SK_Fallen_Knight"));
-	if (WARRIOR_MESH.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(WARRIOR_MESH.Object);
-	}
-	*/
 
 	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Parry(TEXT("/Game/00_Character/C_Input/C_Parry.C_Parry"));
 	if (IP_Parry.Succeeded())
@@ -58,14 +50,12 @@ AFallenKnight::AFallenKnight()
 	HatMesh->SetupAttachment(GetMesh());
 	HatMesh->SetLeaderPoseComponent(GetMesh());
 
-	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Weapon"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> WEAPON_MESH(TEXT("/Game/Asset/SnSAnimsetPro/Models/Sword/Sword.Sword"));
 	if (WEAPON_MESH.Succeeded())
 	{
 		WeaponMesh->SetStaticMesh(WEAPON_MESH.Object);
 	}
-
-	SubEquipMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SubEquip"));
+	
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SUBEQUIP_MESH(TEXT("/Game/Asset/Bjorn_Viking/Mesh/SM_Bjorn_Viking_Shield.SM_Bjorn_Viking_Shield"));
 	if (SUBEQUIP_MESH.Succeeded())
 	{
@@ -163,15 +153,15 @@ void AFallenKnight::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
-	FallenKnightAnim = Cast<UFallenKnightAnimInstance>(GetMesh()->GetAnimInstance());
-	//FallenKnightAnim = Cast<UCharacterBaseAnimInstance>(GetMesh()->GetAnimInstance());
+	CharacterBaseAnim = Cast<UFallenKnightAnimInstance>(GetMesh()->GetAnimInstance());
+	//CharacterBaseAnim = Cast<UCharacterBaseAnimInstance>(GetMesh()->GetAnimInstance());
 
-	if (FallenKnightAnim)
+	if (CharacterBaseAnim)
 	{
-		FallenKnightAnim->OnMontageEnded.AddDynamic(this, &AFallenKnight::IsMontageEnded);
-		FallenKnightAnim->OnMontageBlendingOut.AddDynamic(this, &AFallenKnight::IsMontageBlendingOut);
+		CharacterBaseAnim->OnMontageEnded.AddDynamic(this, &AFallenKnight::IsMontageEnded);
+		CharacterBaseAnim->OnMontageBlendingOut.AddDynamic(this, &AFallenKnight::IsMontageBlendingOut);
 
-		FallenKnightAnim->OnSetAttackDirection.AddLambda([this]()->void {
+		CharacterBaseAnim->OnSetAttackDirection.AddLambda([this]()->void {
 			FVector LastMovementInput = GetLastMovementInputVector();
 			if (!LastMovementInput.IsNearlyZero())
 			{
@@ -180,11 +170,11 @@ void AFallenKnight::PostInitializeComponents()
 			}
 			});
 
-		FallenKnightAnim->OnNextAttackCheck.AddLambda([this]()->void {
+		CharacterBaseAnim->OnNextAttackCheck.AddLambda([this]()->void {
 			CanAttack = true;
 			});
 
-		FallenKnightAnim->OnEndAttack.AddLambda([this]()->void {
+		CharacterBaseAnim->OnEndAttack.AddLambda([this]()->void {
 			CurrentCombo = 0;
 			IsAction = false;
 			IsAttack = false;
@@ -193,12 +183,12 @@ void AFallenKnight::PostInitializeComponents()
 			//bUseControllerRotationYaw = true;
 			});
 
-		FallenKnightAnim->OnParryEnd.AddLambda([this]()->void {
+		CharacterBaseAnim->OnParryEnd.AddLambda([this]()->void {
 			//IsParry = false;
 			CanDodge = true;
 			});
 
-		FallenKnightAnim->OnResetHurt.AddLambda([this]()->void {
+		CharacterBaseAnim->OnResetHurt.AddLambda([this]()->void {
 			IsAttack = false;
 			CurResponse = HitResponse::None;
 			//IsDodge = false;
@@ -207,7 +197,7 @@ void AFallenKnight::PostInitializeComponents()
 			IsInvincible = false;
 			});
 
-		FallenKnightAnim->OnAttackStart.AddLambda([this]()->void {
+		CharacterBaseAnim->OnAttackStart.AddLambda([this]()->void {
 			FVector LastMovementInput = GetLastMovementInputVector();
 			// 이동 방향이 0 벡터가 아닌 경우에만 회전을 수행합니다.
 			if (!LastMovementInput.IsNearlyZero())
@@ -222,18 +212,18 @@ void AFallenKnight::PostInitializeComponents()
 			CanDodge = false;
 			});
 
-		FallenKnightAnim->OnCanDodge.AddLambda([this]()->void {
+		CharacterBaseAnim->OnCanDodge.AddLambda([this]()->void {
 			//IsDodge = false;
 			CanDodge = true;
 			});
 
 		/*
-		FallenKnightAnim->OnEquipEnd.AddLambda([this]()->void {
+		CharacterBaseAnim->OnEquipEnd.AddLambda([this]()->void {
 			CanAttack = true;
 			CanDodge = true;
 			});
 
-		FallenKnightAnim->OnHolsterEnd.AddLambda([this]()->void {
+		CharacterBaseAnim->OnHolsterEnd.AddLambda([this]()->void {
 			CanAttack = true;
 			CanDodge = true;
 			});
@@ -243,16 +233,16 @@ void AFallenKnight::PostInitializeComponents()
 
 void AFallenKnight::IsMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (nullptr==FallenKnightAnim)
+	if (nullptr==CharacterBaseAnim)
 		return;
 
 }
 
 void AFallenKnight::IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (nullptr == FallenKnightAnim)
+	if (nullptr == CharacterBaseAnim)
 		return;
-/*	MontageType Type = FallenKnightAnim->CheckMontage(Montage);
+/*	MontageType Type = CharacterBaseAnim->CheckMontage(Montage);
 
 	switch (Type)
 	{
@@ -418,7 +408,7 @@ void AFallenKnight::DodgeUpdateFin()
 void AFallenKnight::Death()
 {
 	Super::Death();
-	if (nullptr == FallenKnightAnim)
+	if (nullptr == CharacterBaseAnim)
 		return;
 }
 

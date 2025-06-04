@@ -51,22 +51,13 @@ public:
 };
 
 USTRUCT(Atomic, BlueprintType)
-struct FHitReactionInfo : public FTableRowBase
+struct FHitReactionAnimData
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UAnimMontage* Anim;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
 		FName SectionName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
-		EHitPointVertical HitPointVertical;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
-		EHitPointHorizontal HitPointHorizontal;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
 		bool IsLoop;
@@ -86,13 +77,35 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "HasNextReaction == true"))
 		FName NextSection;
 
-	inline bool operator==(const FHitReactionInfo& Other) const
+	inline bool operator==(const FHitReactionAnimData& Other) const
 	{
 		return SectionName == Other.SectionName;
 	}
 };
 
-uint32 GetTypeHash(const FHitReactionInfo& HitReactionInfo);
+uint32 GetTypeHash(const FHitReactionAnimData& HitReactionAnimData);
+
+USTRUCT(Atomic, BlueprintType)
+struct FHitReactionInfo
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UAnimMontage* Anim;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSet<FHitReactionAnimData> HitReactionAnimData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "!HitReactionAnimData.IsEmpty()"))
+		EHitPointVertical HitPointVertical;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "!HitReactionAnimData.IsEmpty()"))
+		EHitPointHorizontal HitPointHorizontal;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "!HitReactionAnimData.IsEmpty()"))
+		FText Discription;
+};
 
 USTRUCT(Atomic, BlueprintType)
 struct FHitReactionInfoList : public FTableRowBase
@@ -104,7 +117,7 @@ public:
 		HitResponse HitReactionID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TSet<FHitReactionInfo> HitReactionInfo;
+		TArray<FHitReactionInfo> HitReactionInfo;
 };
 
 UCLASS()

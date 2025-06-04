@@ -95,11 +95,6 @@ private:
 	FVector PastLastInputVector;
 /* PRIVATE VARIATION */
 
-/* PRIVATE FUNCTION */
-private:
-	void Initialization();
-/* PRIVATE FUNCTION */
-
 
 /* PROTECTED VARIATION */
 protected:
@@ -265,7 +260,7 @@ public:
 /* Public FUNCTION */
 
 #pragma region Animation
-private:
+protected:
 	UPROPERTY(VisibleAnywhere, Category = Animation)
 		class UCharacterBaseAnimInstance* CharacterBaseAnim;
 
@@ -402,8 +397,11 @@ protected:
 	void OnBlock();
 	void OffBlock();
 
+	void HandleHitAir();
+
 public:
 	virtual void OnHit_Implementation(const FAttackInfo& AttackInfo, const FVector HitPoint) override;
+
 #pragma endregion HitReaction
 
 #pragma endregion Combat

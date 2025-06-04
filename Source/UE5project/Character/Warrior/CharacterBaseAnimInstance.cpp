@@ -51,7 +51,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		IsRoll = Character->IsRolling();
 		Response = Character->GetCharResponse();
 		ComboCount = Character->CheckCombo();
-		
 
 		UCharacterStatusComponent* StatusComp = Character->FindComponentByClass<UCharacterStatusComponent>();
 		if (StatusComp)
@@ -76,7 +75,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			LeftFootIKTypeAlpha = FMath::FInterpTo(LeftFootIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
 
 			RightFootIKAlpha = GetCurveValue(FName("EnableRightLegIK"));
-			LeftFootIKAlpha = GetCurveValue(FName("Enable_Footik_l"));
+			LeftFootIKAlpha = GetCurveValue(FName("EnableLeftLegIK"));
 
 			Speed = Character->GetVelocity().Length();
 			Direction = GetAnimDirection(DeltaSeconds);
@@ -150,7 +149,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			CurLadderStance = Character->GetCurLadderStance();
 
 			RightFootIKAlpha = GetCurveValue(FName("EnableRightLegIK"));
-			LeftFootIKAlpha = GetCurveValue(FName("Enable_Footik_l"));
+			LeftFootIKAlpha = GetCurveValue(FName("EnableLeftLegIK"));
 
 			if (GetCurveValue(LockIK) > 0.0f && bIsClimb)
 			{
@@ -495,6 +494,16 @@ void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName&
 void UCharacterBaseAnimInstance::CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds)
 {
 	AlphaValue = 1.0f - GetCurveValue(CurveName);
+}
+
+void UCharacterBaseAnimInstance::SetHitAir(bool HitState)
+{
+	bIsHitAir = HitState;
+}
+
+void UCharacterBaseAnimInstance::ResetHitAir_Implementation()
+{
+	SetHitAir(false);
 }
 
 void UCharacterBaseAnimInstance::DebugLadderStance()

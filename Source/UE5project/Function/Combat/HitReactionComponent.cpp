@@ -21,8 +21,27 @@ void UHitReactionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	AnimInstance = GetOwner()->GetComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
+	//AnimInstance = GetOwner()->GetComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
+
+	USkeletalMeshComponent* Mesh = GetOwner()->GetComponentByClass<USkeletalMeshComponent>();
+	UE_LOG(LogTemp, Warning, TEXT("Found mesh: %s"), *Mesh->GetName());
+
+	if (!Mesh)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Mesh is nullptr"));
+	}
+	else if (!Mesh->SkeletalMesh)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Mesh->SkeletalMesh is nullptr"));
+	}
+	else if (!Mesh->AnimClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Mesh->AnimClass is nullptr"));
+	}
+	else if (!Mesh->IsRegistered())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Mesh is not registered"));
+	}
 }
 
 
@@ -32,6 +51,11 @@ void UHitReactionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void UHitReactionComponent::InitializeComponentLogic()
+{
+	
 }
 
 void UHitReactionComponent::SetHitReactionDT(const UDataTable* HitReactionDT)
@@ -46,6 +70,11 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 	float HitAngle = CalculateHitAngle(ReactionData.HitPoint);
 
 	HitResponse Response = EvaluateHitResponse(ReactionData.Response, ReactionData.CanBlocked, ReactionData.CanParried, ReactionData.CanAvoid, HitAngle);
+	if (Response == HitResponse::HitAir)
+	{
+		if(OnHitAirReaction.IsBound()) OnHitAirReaction.Broadcast();
+		return;
+	}
 
 	const UEnum* EnumPtr = StaticEnum<HitResponse>();
 	if (!EnumPtr) return;
@@ -53,8 +82,6 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 	FName ResponseRowName = FName(EnumPtr->GetNameStringByValue(static_cast<int64>(Response)));
 
 	CurHitReactionDTRow = HitReactionListDT->FindRow<FHitReactionInfoList>(ResponseRowName, "");
-
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *ResponseRowName.ToString());
 
 	if (!CurHitReactionDTRow) return;
 
@@ -86,18 +113,60 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 			MatchInfo = &Info;
 		}
 	}
-	
-	if (MatchInfo && AnimInstance)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%f"), HitAngle);
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *MatchInfo->SectionName.ToString());
-		AnimInstance->Montage_Play(MatchInfo->Anim);
-		AnimInstance->Montage_JumpToSection(MatchInfo->SectionName);
-		
-		if (MatchInfo->IsLoop)
-		{
 
-		}
+	if (MatchInfo)
+	{
+		PlayReaction(MatchInfo, MatchInfo->HitReactionAnimData.begin()->SectionName);
+	}
+}
+
+void UHitReactionComponent::PlayReaction(const FHitReactionInfo* HitReaction, const FName SectionName)
+{
+	UAnimInstance* AnimInstance = Cast<ACharacter>(GetOwner())->GetMesh()->GetAnimInstance();
+		//GetOwner()->GetComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
+
+	if (!AnimInstance) return;
+
+	AnimInstance->Montage_Play(HitReaction->Anim, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, false);
+
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *SectionName.ToString());
+
+	FHitReactionAnimData DataForFind;
+	DataForFind.SectionName = SectionName;
+	const FHitReactionAnimData* FoundData = HitReaction->HitReactionAnimData.Find(DataForFind);
+
+	if (!FoundData)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Data Not Found"));
+		return;
+	}
+
+	AnimInstance->Montage_JumpToSection(FoundData->SectionName);
+
+	if (OnHitReactionDelegate.IsBound())
+		OnHitReactionDelegate.Unbind();
+
+	OnHitReactionDelegate.BindUObject(this, &UHitReactionComponent::OnHitReactionEnded, HitReaction, FoundData->SectionName);
+	AnimInstance->Montage_SetBlendingOutDelegate(OnHitReactionDelegate);
+}
+
+void UHitReactionComponent::OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo* HitReaction, const FName SectionName)
+{
+	if (Montage != HitReaction->Anim) return;
+
+	FHitReactionAnimData DataForFind;
+	DataForFind.SectionName = SectionName;
+	const FHitReactionAnimData* FoundData = HitReaction->HitReactionAnimData.Find(DataForFind);
+
+	if (!FoundData) return;
+
+	if (FoundData->IsLoop)
+	{
+		PlayReaction(HitReaction, SectionName);
+	}
+	else if (FoundData->HasNextReaction)
+	{
+		PlayReaction(HitReaction, FoundData->NextSection);
 	}
 }
 
@@ -118,7 +187,14 @@ HitResponse UHitReactionComponent::EvaluateHitResponse(const HitResponse& InputR
 {
 	UCharacterStatusComponent* StatusComp = GetOwner()->FindComponentByClass<UCharacterStatusComponent>();
 
+	if (!StatusComp) return InputResponse;
+
 	const ECharacterCombatState CombatState = StatusComp->GetCombatState();
+
+	if (StatusComp->IsInAir() && CombatState != ECharacterCombatState::Invincible)
+	{
+		return HitResponse::HitAir;
+	}
 
 	switch (CombatState)
 	{

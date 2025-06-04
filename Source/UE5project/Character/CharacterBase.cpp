@@ -74,6 +74,8 @@ ACharacterBase::ACharacterBase()
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+
+	GetCapsuleComponent()->SetCapsuleHalfHeight(90.0f);
 	//GetMesh()->SetOwnerNoSee(true);
 
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext>PBC_Context(TEXT("/Game/00_Character/C_Input/C_BasicInput.C_BasicInput"));
@@ -165,10 +167,29 @@ ACharacterBase::ACharacterBase()
 		HitReactionComponent->SetHitReactionDT(HitReactionDT_Asset.Object);
 	}
 
+	GetMesh()->SetGenerateOverlapEvents(true);
+
+	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Weapon"));
+	WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+	WeaponMesh->SetCollisionProfileName(FName("Weapon"));
+	//WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	SubEquipMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SubEquip"));
+	SubEquipMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+	SubEquipMesh->SetCollisionProfileName(FName("Weapon"));
+	//SubEquipMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	CanMovementInput = true;
 	CurGroundStance = EGroundStance::Jog;
-	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+
+	GetCharacterMovement()->MaxWalkSpeed = 450.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
+	GetCharacterMovement()->MaxAcceleration = 800.0f;
+	GetCharacterMovement()->bUseSeparateBrakingFriction = true;
+	GetCharacterMovement()->JumpZVelocity = 500.0f;
+	GetCharacterMovement()->AirControl = 1.0f;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	//GetCharacterMovement()->MaxStepHeight
 
 	ClimbComponent->SetMinGripInterval(MinGripInterval);
 	ClimbComponent->SetMaxGripInterval(MaxGripInterval);
@@ -286,20 +307,6 @@ void ACharacterBase::Tick(float DeltaTime)
 	*/
 }
 
-void ACharacterBase::Initialization()
-{
-	//JumpHold = false;
-	//JumpTime = 0;
-	IsAttack = false;
-	IsRun = false;
-	CurrentDirection = MovementDirection::Bwd;
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	GetCharacterMovement()->JumpZVelocity = 800.0f;
-	GetCharacterMovement()->MaxFlySpeed = 350.0f;
-	GetCharacterMovement()->BrakingDecelerationFlying = 1000.0f;
-}
-
 void ACharacterBase::CameraSetting()
 {
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -308,7 +315,9 @@ void ACharacterBase::CameraSetting()
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
 
-	SpringArm->TargetArmLength = 500.0f;
+	SpringArm->TargetArmLength = 200.0f;
+	SpringArm->SocketOffset = FVector(0.0f, 60.0f, 0.0f);
+	SpringArm->SetRelativeLocation(FVector(0.0f, 0.0f, 90.0f));
 	SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	SpringArm->bUsePawnControlRotation = true;
 	SpringArm->bInheritPitch = true;
@@ -319,8 +328,7 @@ void ACharacterBase::CameraSetting()
 	SpringArm->bEnableCameraRotationLag = true;
 
 	bUseControllerRotationYaw = false;
-	//GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 300.0f, 0.0f);
 }
 
 // Called to bind functionality to input
@@ -357,39 +365,48 @@ void ACharacterBase::PostInitializeComponents()
 
 	InteractComponent->OnArrivedInteractionPoint.BindUObject(this, &ACharacterBase::HandleArrivedInteractionPoint);
 
-	CharacterBaseAnim->OnEnterLocomotion.BindUObject(this, &ACharacterBase::EnterLocomotion);
 
-	CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &ACharacterBase::LeftLocomotion);
+	if (CharacterBaseAnim)
+	{
+		CharacterBaseAnim->OnEnterLocomotion.BindUObject(this, &ACharacterBase::EnterLocomotion);
 
-	CharacterBaseAnim->OnDodgeEnd.AddLambda([this]()->void {
-		CanDodge = true;
-		//IsDodge = false;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
-		});
+		CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &ACharacterBase::LeftLocomotion);
 
-	CharacterBaseAnim->OnDodgeStart.AddLambda([this]()->void {
-		//IsDodge = true;
-		IsRoll = false;
-		});
+		CharacterBaseAnim->OnDodgeEnd.AddLambda([this]()->void {
+			CanDodge = true;
+			//IsDodge = false;
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+			//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
+			});
+
+		CharacterBaseAnim->OnDodgeStart.AddLambda([this]()->void {
+			//IsDodge = true;
+			IsRoll = false;
+			});
 
 
-	CharacterBaseAnim->OnEnterWalkState.AddLambda([this]()->void {
-		CurrentState = ECharacterState::Ground;
-		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		CanRide = true;
-		});
+		CharacterBaseAnim->OnEnterWalkState.AddLambda([this]()->void {
+			CurrentState = ECharacterState::Ground;
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			CanRide = true;
+			});
 
-	CharacterBaseAnim->OnEnterLadderState.AddLambda([this]()->void {
-		CurrentState = ECharacterState::Ladder;
-		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		});
+		CharacterBaseAnim->OnEnterLadderState.AddLambda([this]()->void {
+			CurrentState = ECharacterState::Ladder;
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			});
 
-	CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
-	CharacterBaseAnim->OnMountEnd.AddUObject(this, &ACharacterBase::MountEnd);
-	CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &ACharacterBase::DisMountEnd);
+		CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
+		CharacterBaseAnim->OnMountEnd.AddUObject(this, &ACharacterBase::MountEnd);
+		CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &ACharacterBase::DisMountEnd);
+	}
+
+	if (HitReactionComponent)
+	{
+		HitReactionComponent->OnHitAirReaction.AddUObject(this, &ACharacterBase::HandleHitAir);
+	}
 }
 
 /* Input Action */
@@ -1152,11 +1169,16 @@ void ACharacterBase::OffBlock()
 	CharacterStatusComponent->SetCombatState(ECharacterCombatState::Normal);
 }
 
+void ACharacterBase::HandleHitAir()
+{
+	CharacterBaseAnim->SetHitAir(true);
+	UE_LOG(LogTemp, Warning, TEXT("Hit Air"));
+}
+
 void ACharacterBase::OnHit_Implementation(const FAttackInfo& AttackInfo, const FVector HitPoint)
 {
 	if (HitReactionComponent != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Character Hit"));
 		FHitReactionRequest InputReaction = {
 			AttackInfo.Feature.begin()->Response,
 			AttackInfo.Feature.begin()->CanBlocked,

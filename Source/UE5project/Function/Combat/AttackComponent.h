@@ -35,9 +35,6 @@ protected:
 	//void SetMovementMode();
 
 public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 	void SetAttackDT(const UDataTable* AttackDT);
 	void AnalysisAttackData(FName RowName, FName StartSection = FName("None"));
 	void ExecuteAttack(FName SectionName);
