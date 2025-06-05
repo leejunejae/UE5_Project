@@ -41,6 +41,7 @@
 // 유저 컴포넌트
 #include "../Function/CharacterStatusComponent.h"
 #include "../Function/Combat/StatComponent.h"
+#include "../Function/Combat/CombatComponent.h"
 #include "../Function/Combat/AttackComponent.h"
 #include "../Function/Combat/HitReactionComponent.h"
 #include "../Function/Interact/ClimbComponent.h"
@@ -58,6 +59,9 @@ ACharacterBase::ACharacterBase()
 
 	StatComponent = CreateDefaultSubobject<UStatComponent>(TEXT("StatComponent"));
 	StatComponent->bAutoActivate = true;
+
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	CombatComponent->bAutoActivate = true;
 
 	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
 	AttackComponent->bAutoActivate = true;
@@ -1175,16 +1179,26 @@ void ACharacterBase::HandleHitAir()
 	UE_LOG(LogTemp, Warning, TEXT("Hit Air"));
 }
 
-void ACharacterBase::OnHit_Implementation(const FAttackInfo& AttackInfo, const FVector HitPoint)
+void ACharacterBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 {
-	if (HitReactionComponent != nullptr)
+	float HitAngle = CombatComponent->CalculateHitAngle(AttackInfo.HitPoint);
+	HitResponse Response = CombatComponent->EvaluateHitResponse(
+		AttackInfo
+	);
+
+	if (StatComponent)
+	{
+		StatComponent->ChangeHealth(AttackInfo.Damage, EHPChangeType::DirectDamage);
+	}
+
+	if (HitReactionComponent)
 	{
 		FHitReactionRequest InputReaction = {
-			AttackInfo.Feature.begin()->Response,
-			AttackInfo.Feature.begin()->CanBlocked,
-			AttackInfo.Feature.begin()->CanParried,
-			AttackInfo.Feature.begin()->CanAvoid,
-			HitPoint
+			Response,
+			AttackInfo.CanBlocked,
+			AttackInfo.CanParried,
+			AttackInfo.CanAvoid,
+			HitAngle
 		};
 		HitReactionComponent->ExecuteHitResponse(InputReaction);
 	}

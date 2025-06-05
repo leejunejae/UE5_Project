@@ -36,5 +36,5 @@ public:
 		//void TakeDamage(FAttackInfo DamageInfo);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		void OnHit(const FAttackInfo& AttackInfo, const FVector HitPoint);
+		void OnHit(const FAttackRequest& AttackInfo);
 };

@@ -35,8 +35,6 @@ public:
 	void SetHitReactionDT(const UDataTable* HitReactionDT);
 	void ExecuteHitResponse(const FHitReactionRequest ReactionData);
 	void PlayReaction(const FHitReactionInfo* HitReaction, const FName SectionName = NAME_None);
-	float CalculateHitAngle(const FVector HitPoint);
-	HitResponse EvaluateHitResponse(const HitResponse& InputResponse, const bool CanBlocked, const bool CanParried, const bool CanAvoid, const float HitAngle);
 
 	void OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo* HitReaction, const FName SectionName);
 

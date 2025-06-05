@@ -17,7 +17,6 @@ enum class TraceType : uint8
 	Box UMETA(DisplayName = "Box"),
 };
 
-
 USTRUCT(BlueprintType)
 struct FAttackFeature
 {
@@ -30,13 +29,10 @@ public:
 		float Amount;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName SectionName;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		HitResponse Response;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TraceType RangeType;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool CanBlocked;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

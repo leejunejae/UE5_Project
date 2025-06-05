@@ -47,7 +47,7 @@ public:
 	bool CanBlocked;
 	bool CanParried;
 	bool CanAvoid;
-	FVector HitPoint;
+	float HitAngle;
 };
 
 USTRUCT(Atomic, BlueprintType)

@@ -9,6 +9,23 @@
 
 DECLARE_DELEGATE(FOnDeathDelegate);
 
+
+UENUM()
+enum class EHPChangeType : uint8
+{
+	DirectDamage UMETA(DisplayName = "DirectDamage"),
+	TrueDamage UMETA(DisplayName = "TrueDamage"),
+	Heal UMETA(DisplayName = "Heal"),
+};
+
+UENUM()
+enum class ESPChangeType : uint8
+{
+	Blocked UMETA(DisplayName = "Blocked"),
+	Dodge UMETA(DisplayName = "Dodge"),
+	Heal UMETA(DisplayName = "Heal"),
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UStatComponent : public UActorComponent
 {
@@ -28,10 +45,13 @@ public:
 public:
 	void InitializeStats();
 
-	void ChangeMaxHealth(float Amount);
-	void ChangeMaxStamina(float Amount);
-	void ChangeHealth(float Amount);
-	void ChangeStamina(float Amount);
+	void ChangeMaxHealth(const float Amount);
+	void ChangeMaxStamina(const float Amount);
+	void ChangeHealth(const float Amount, const EHPChangeType HPChangeType);
+	void ChangeStamina(const float Amount, const ESPChangeType SPChangeType);
+
+	FORCEINLINE float GetStamina() const { return Stamina; }
+	FORCEINLINE float GetDefensePower() const { return DefensivePower; }
 
 
 protected:
@@ -39,12 +59,18 @@ protected:
 	float MaxHealth = 100.0f;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
 	float MaxStamina = 100.0f;
-	float Defense;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
 	float Health;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
 	float Stamina;
+
+
+	//float StrikingPower;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
+	float DefensivePower;
+
+	//float 
 	
 	bool IsDead;
 };

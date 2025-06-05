@@ -67,10 +67,10 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 {
 	if (!HitReactionListDT) return;
 
-	float HitAngle = CalculateHitAngle(ReactionData.HitPoint);
+	//float HitAngle = CalculateHitAngle(ReactionData.HitPoint);
 
-	HitResponse Response = EvaluateHitResponse(ReactionData.Response, ReactionData.CanBlocked, ReactionData.CanParried, ReactionData.CanAvoid, HitAngle);
-	if (Response == HitResponse::HitAir)
+	//HitResponse Response = EvaluateHitResponse(ReactionData.Response, ReactionData.CanBlocked, ReactionData.CanParried, ReactionData.CanAvoid, HitAngle);
+	if (ReactionData.Response == HitResponse::HitAir)
 	{
 		if(OnHitAirReaction.IsBound()) OnHitAirReaction.Broadcast();
 		return;
@@ -79,7 +79,7 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 	const UEnum* EnumPtr = StaticEnum<HitResponse>();
 	if (!EnumPtr) return;
 
-	FName ResponseRowName = FName(EnumPtr->GetNameStringByValue(static_cast<int64>(Response)));
+	FName ResponseRowName = FName(EnumPtr->GetNameStringByValue(static_cast<int64>(ReactionData.Response)));
 
 	CurHitReactionDTRow = HitReactionListDT->FindRow<FHitReactionInfoList>(ResponseRowName, "");
 
@@ -105,7 +105,7 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 		EHitPointHorizontal CurrentPoint = Info.HitPointHorizontal;
 
 		float PointToAngle = DirectionToYaw[CurrentPoint];
-		float AngleDiff = FMath::Abs(FMath::FindDeltaAngleDegrees(HitAngle, PointToAngle));
+		float AngleDiff = FMath::Abs(FMath::FindDeltaAngleDegrees(ReactionData.HitAngle, PointToAngle));
 
 		if (AngleDiff < MatchScore)
 		{
@@ -169,53 +169,3 @@ void UHitReactionComponent::OnHitReactionEnded(UAnimMontage* Montage, bool bInte
 		PlayReaction(HitReaction, FoundData->NextSection);
 	}
 }
-
-float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)
-{
-	FVector CharacterLocation = GetOwner()->GetActorLocation();
-	FVector ImpactVector = HitPoint - CharacterLocation;
-	FRotator HitRotator = ImpactVector.Rotation();
-
-	float HitYaw = HitRotator.Yaw;
-	float CharacterYaw = GetOwner()->GetActorRotation().Yaw;
-	float HitAngle = FMath::FindDeltaAngleDegrees(CharacterYaw, HitYaw);
-
-	return HitAngle;
-}
-
-HitResponse UHitReactionComponent::EvaluateHitResponse(const HitResponse& InputResponse, const bool CanBlocked, const bool CanParried, const bool CanAvoid, const float HitAngle)
-{
-	UCharacterStatusComponent* StatusComp = GetOwner()->FindComponentByClass<UCharacterStatusComponent>();
-
-	if (!StatusComp) return InputResponse;
-
-	const ECharacterCombatState CombatState = StatusComp->GetCombatState();
-
-	if (StatusComp->IsInAir() && CombatState != ECharacterCombatState::Invincible)
-	{
-		return HitResponse::HitAir;
-	}
-
-	switch (CombatState)
-	{
-	case ECharacterCombatState::Block:
-	{
-		if (CanBlocked && (HitAngle >= -60.0f && HitAngle <= 60.0f))
-		{
-			switch (InputResponse)
-			{
-			case HitResponse::Flinch: return HitResponse::Block;
-			case HitResponse::KnockBack: return HitResponse::Block;
-			case HitResponse::KnockDown: return HitResponse::BlockLarge;
-			}
-		}
-		else
-		{
-			return InputResponse;
-		}
-	}
-	default:
-		return InputResponse;
-	}
-}
-

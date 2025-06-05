@@ -41,6 +41,7 @@ class UCharacterMovementComponent;
 
 class UCharacterStatusComponent;
 class UStatComponent;
+class UCombatComponent;
 class UAttackComponent;
 class UHitReactionComponent;
 class UClimbComponent;
@@ -117,6 +118,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = Stat)
 		UStatComponent* StatComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = Combat)
+		UCombatComponent* CombatComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
 		UAttackComponent* AttackComponent;
@@ -400,7 +404,7 @@ protected:
 	void HandleHitAir();
 
 public:
-	virtual void OnHit_Implementation(const FAttackInfo& AttackInfo, const FVector HitPoint) override;
+	virtual void OnHit_Implementation(const FAttackRequest& AttackInfo) override;
 
 #pragma endregion HitReaction
 

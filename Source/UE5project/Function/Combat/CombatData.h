@@ -6,7 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "CombatData.generated.h"
 
-
 // 피격 유형 결정
 UENUM(BlueprintType)
 enum class HitResponse : uint8
@@ -43,6 +42,30 @@ enum class AttackType : uint8
 	Light UMETA(DisplayName = "Light"),
 	Heavy UMETA(DisplayName = "Heavy"),
 	AOE UMETA(DisplayName = "AOE"),
+};
+
+USTRUCT(BlueprintType)
+struct FAttackRequest
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Damage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float BaseAttackPower;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		HitResponse Response;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FVector HitPoint;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool CanBlocked;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool CanParried;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool CanAvoid;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<Debuff> DebuffList;
 };
 
 /*
