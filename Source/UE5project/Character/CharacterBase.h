@@ -157,7 +157,6 @@ protected:
 	bool IsClimb;
 	bool IsClimbUp;
 
-	//float InputX, InputY;
 	FVector InputVector;
 	FVector DodgeVector;
 	FVector DodgeDirection;
@@ -209,23 +208,12 @@ public:
 	virtual bool IsPlayer_Implementation();
 	virtual TOptional<FVector> GetCharBoneLocation(FName BoneName);
 
-	/*
-	virtual void TakeDamage_Implementation(FAttackInfo DamageInfo) override;
-	virtual float Heal_Implementation(float amount) override;
-	virtual float GetHealth_Implementation() override;
-	virtual float GetMaxHealth_Implementation() override;
-	*/
-
 	bool GetIsMovementInput();
 	float GetRideSpeed();
 	float GetRideDirection();
 	FVector GetInputDirection();
 
-	// Get Charcter Stat
-	FString GetName();
-	int32 GetMaxHP();
-	int32 GetOffensePower();
-	int32 GetDefenseCap();
+
 /* Public FUNCTION */
 #pragma region Status
 private:
