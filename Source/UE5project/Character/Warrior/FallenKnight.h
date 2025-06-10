@@ -24,27 +24,10 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void Death() override;
-
-	virtual void Block(bool CanParried) override;
-
-
-	/* Function for Hit */
-	void TakeDamage_Implementation(FAttackInfo DamageInfo) override;
-	HitResponse CharResponse(bool CanBlocked, bool CanAvoid, bool CanParry);
-	CharState GetCharState();
-	HitResponse GetCharResponse();
-	void ResetResponse();
-
 	int GetAttackSeed();
 	bool IsAttackInput();
 	bool IsAttacking();
 	bool IsRolling();
-	bool IsBlocking();
-	bool IsParrying();
-	bool IsHit();
-	bool IsGuard();
-	bool GetCurHand();
 	bool GetNextDodge();
 	int32 CheckCombo();
 	WarriorStance GetStance();
@@ -86,16 +69,7 @@ private:
 		USkeletalMeshComponent* ArmorMesh;
 		*/
 
-	UPROPERTY(EditAnywhere, Category = Input)
-		UInputAction* ParryAction;
-
 	FTimerHandle MoveSpeedTimerHandle;
-
-	UPROPERTY(VisibleAnywhere, Category = Animation)
-		class UCharacterBaseAnimInstance* FallenKnightAnim;
-
-	UPROPERTY(VisibleAnywhere, Category = Combat)
-		class UPBDamageSystem* FallenKnightDMGSystem;
 
 	//Dodge TImeline
 	UPROPERTY(EditAnywhere, Category = Timeline)
@@ -118,18 +92,10 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		int32 CurrentCombo=0;
 
-	int32 AttackSeed;
-
-	bool Hit;
-	bool Guard;
-	HitResponse CurResponse;
-
 	bool IsInvincible;
-	bool IsParry;
 	bool AttackInput;
 	bool CanAttack;
 	bool NextDodge;
-	bool CurHandRight;
 	bool CanInputBuffer;
 
 	bool SetCharDirection;
@@ -145,27 +111,16 @@ private:
 
 	void AttackInputEnd();
 	void Dodge() override;
-	void Parrying();
 
 	void SwitchStance() override;
 	void ResetAttackState();
 	void AttackTimer();
-	void OnBlock();
-	void OffBlock();
-
-	void SetAttackInfo(float Amount, HitResponse Response, bool Invincible = false, bool CanBlocked = false, bool CanParried = false, bool ForceInterrupt = true);
 
 	FTimerHandle AttackTimerHandle;
-
-	TQueue<WarriorVar> ActionQueue;
 
 	UFUNCTION()
 		void IsMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	UFUNCTION()
 		void IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
-
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
-		TArray<USoundCue*> RollSounds;
 };

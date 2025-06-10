@@ -2,8 +2,8 @@
 
 
 #include "PBEHHSAnimInstance.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "PBEHHereticSoldier.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 UPBEHHSAnimInstance::UPBEHHSAnimInstance()

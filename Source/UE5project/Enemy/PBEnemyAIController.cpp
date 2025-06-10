@@ -45,7 +45,7 @@ void APBEnemyAIController::OnRepeatTimer()
 	if (nullptr == CurrentPawn)
 		return;
 
-	//¿ùµå»ó¿¡ ¹èÄ¡µÈ ³»ºñ¸Þ½¬¸¦ ¾ò¾î¿Â´Ù
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â´ï¿½
 	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
 	if (NavSystem == nullptr)
 	{
@@ -56,7 +56,7 @@ void APBEnemyAIController::OnRepeatTimer()
 	FNavLocation NextLocation;
 	if (NavSystem->GetRandomPointInNavigableRadius(FVector::ZeroVector, 500.0f, NextLocation))
 	{
-		//¸ñÇ¥ À§Ä¡ ·Î±×¸¦ Ç¥±âÇÑ´Ù.
+		//ï¿½ï¿½Ç¥ ï¿½ï¿½Ä¡ ï¿½Î±×¸ï¿½ Ç¥ï¿½ï¿½ï¿½Ñ´ï¿½.
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, NextLocation.Location);
 		UE_LOG(LogTemp, Warning, TEXT("Next Location: %s"), *NextLocation.Location.ToString());
 	}

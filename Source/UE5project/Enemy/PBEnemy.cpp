@@ -4,7 +4,7 @@
 #include "PBEnemy.h"
 #include "PBEnemyAIController.h"
 
-#include <Engine/Classes/Components/CapsuleComponent.h>
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 APBEnemy::APBEnemy()

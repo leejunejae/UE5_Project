@@ -10,7 +10,7 @@ void UWidgetInterface::SetUp()
 	this->AddToViewport();
 
 	FInputModeUIOnly InputModeData;
-	this->bIsFocusable = true;
+	this->SetIsFocusable(true);
 	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 
 	UWorld* World = GetWorld();
@@ -26,7 +26,7 @@ void UWidgetInterface::SetUp()
 /* WidgetMenu�� ����Ʈ���� ������ �� ����Ǵ� �Լ� */
 void UWidgetInterface::OffWidget()
 {
-	this->RemoveFromViewport();
+	this->RemoveFromParent();
 
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;

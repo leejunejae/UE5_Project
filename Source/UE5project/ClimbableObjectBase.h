@@ -2,16 +2,24 @@
 
 #pragma once
 
+// 기본 헤더
 #include "CoreMinimal.h"
-#include "Components/BoxComponent.h"
-#include "Components/InstancedStaticMeshComponent.h"
 #include "MapObjectBase.h"
+
+// 인터페이스
 #include "Function/Interact/InteractInterface.h"
 #include "Function/Interact/ClimbObjectInterface.h"
+
+// 태그
 #include "GameplayTagContainer.h"
+
+// 구조체, 자료형
 #include "ClimbHeader.h"
+
+
 #include "ClimbableObjectBase.generated.h"
 
+class UBoxComponent;
 /**
  * 
  */

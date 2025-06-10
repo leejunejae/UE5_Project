@@ -113,7 +113,7 @@ void UScriptWidget::CloseDialogue()
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	FInputModeGameOnly CharacterInputMode;
 	PlayerController->SetInputMode(CharacterInputMode);
-	RemoveFromViewport();
+	RemoveFromParent();
 	IInteractInterface::Execute_EndInteract(DialogueActor);
 }
 

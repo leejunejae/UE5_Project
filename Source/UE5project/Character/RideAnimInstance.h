@@ -2,9 +2,13 @@
 
 #pragma once
 
+// 기본 헤더
 #include "CoreMinimal.h"
-#include "../PEnumHeader.h"
 #include "Animation/AnimInstance.h"
+
+// 구조체, 자료형
+#include "../PEnumHeader.h"
+
 #include "RideAnimInstance.generated.h"
 
 /**

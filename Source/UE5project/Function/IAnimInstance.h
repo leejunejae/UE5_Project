@@ -24,4 +24,7 @@ class UE5PROJECT_API IIAnimInstance
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void ResetTurn();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void ResetHitAir();
 };

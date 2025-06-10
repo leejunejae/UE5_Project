@@ -1,25 +1,51 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+// 기본 헤더
 #include "CharacterBase.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/PawnMovementComponent.h"
+
+// 이동
 #include "GameFramework/CharacterMovementComponent.h"
+
+// 콜리전
+#include "Components/CapsuleComponent.h"
+
+// 카메라
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+
+// 입력
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "Components/InputComponent.h"
+#include "InputMappingContext.h"
+
+// Kismet 유틸리티
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetTextLibrary.h"
-#include "Kismet/KismetStringLibrary.h"
-#include "KismetAnimationLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Components/InputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "InputMappingContext.h"
+
+// UI
 #include "../Function/DefaultWidget.h"
-#include "Warrior/CharacterBaseAnimInstance.h"
 #include "Blueprint/UserWidget.h"
-#include "AIController.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
+
+// 애니메이션
+#include "Warrior/CharacterBaseAnimInstance.h"
+
+// 참조할 액터
+#include "PlayerRide.h"
+
+// 인터페이스
 #include "../Function/Interact/InteractInterface.h" ///삭제 예정
 #include "../Function/Interact/Ride/RideInterface.h"
-#include "PlayerRide.h"
+
+// 유저 컴포넌트
+#include "../Function/CharacterStatusComponent.h"
+#include "../Function/Combat/StatComponent.h"
+#include "../Function/Combat/CombatComponent.h"
+#include "../Function/Combat/AttackComponent.h"
+#include "../Function/Combat/HitReactionComponent.h"
+#include "../Function/Interact/ClimbComponent.h"
+#include "../Function/Interact/InteractComponent.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase()
@@ -27,18 +53,33 @@ ACharacterBase::ACharacterBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
-	DamageComponent = CreateDefaultSubobject<UPBDamageSystem>(TEXT("DamageComponent"));
-	DamageComponent->bAutoActivate = true;
+
+	CharacterStatusComponent = CreateDefaultSubobject<UCharacterStatusComponent>(TEXT("CharacterStatusComponent"));
+	CharacterStatusComponent->bAutoActivate = true;
+
+	StatComponent = CreateDefaultSubobject<UStatComponent>(TEXT("StatComponent"));
+	StatComponent->bAutoActivate = true;
+
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	CombatComponent->bAutoActivate = true;
+
+	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
+	AttackComponent->bAutoActivate = true;
+
+	HitReactionComponent = CreateDefaultSubobject<UHitReactionComponent>(TEXT("HitReactionComponent"));
+	HitReactionComponent->bAutoActivate = true;
+
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
 	InteractComponent->bAutoActivate = true;
+
 	ClimbComponent = CreateDefaultSubobject<UClimbComponent>(TEXT("ClimbComponent"));
 	ClimbComponent->bAutoActivate = true;
-	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
-	MotionWarpingComponent->bAutoActivate = true;
 
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+
+	GetCapsuleComponent()->SetCapsuleHalfHeight(90.0f);
 	//GetMesh()->SetOwnerNoSee(true);
 
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext>PBC_Context(TEXT("/Game/00_Character/C_Input/C_BasicInput.C_BasicInput"));
@@ -107,6 +148,12 @@ ACharacterBase::ACharacterBase()
 		BlockAction = IP_Block.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Parry(TEXT("/Game/00_Character/C_Input/C_Parry.C_Parry"));
+	if (IP_Parry.Succeeded())
+	{
+		ParryAction = IP_Parry.Object;
+	}
+
 	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Interact(TEXT("/Game/00_Character/C_Input/C_Interact.C_Interact"));
 	if (IP_Interact.Succeeded())
 	{
@@ -119,18 +166,38 @@ ACharacterBase::ACharacterBase()
 		SpawnRideAction = IP_SpawnRide.Object;
 	}
 
-	static ConstructorHelpers::FClassFinder<UDefaultWidget> DEFAULTWIDGET(TEXT("/Game/00_Character/C_Source/DefaultWidget_BP"));
-	if (!ensure(DEFAULTWIDGET.Class != nullptr)) return;
+	static ConstructorHelpers::FClassFinder<UDefaultWidget>Class_DefualtWidget(TEXT("/Game/00_Character/C_Source/DefaultWidget_BP"));
+	if (Class_DefualtWidget.Succeeded()) DefaultWidgetClass = Class_DefualtWidget.Class;
 
-	DefaultWidgetClass = DEFAULTWIDGET.Class;
+	static ConstructorHelpers::FObjectFinder<UDataTable> HitReactionDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/FallenKnightHitReaction_DT.FallenKnightHitReaction_DT'"));
+	if (HitReactionDT_Asset.Succeeded())
+	{
+		HitReactionComponent->SetHitReactionDT(HitReactionDT_Asset.Object);
+	}
 
-	NavigationInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavigationInvokerComponent"));
-	NavigationInvokerComponent->SetGenerationRadii(500.0f, 500.0f);
+	GetMesh()->SetGenerateOverlapEvents(true);
+
+	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Weapon"));
+	WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+	WeaponMesh->SetCollisionProfileName(FName("Weapon"));
+	//WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	SubEquipMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SubEquip"));
+	SubEquipMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+	SubEquipMesh->SetCollisionProfileName(FName("Weapon"));
+	//SubEquipMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	CanMovementInput = true;
 	CurGroundStance = EGroundStance::Jog;
-	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+
+	GetCharacterMovement()->MaxWalkSpeed = 450.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
+	GetCharacterMovement()->MaxAcceleration = 800.0f;
+	GetCharacterMovement()->bUseSeparateBrakingFriction = true;
+	GetCharacterMovement()->JumpZVelocity = 500.0f;
+	GetCharacterMovement()->AirControl = 1.0f;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	//GetCharacterMovement()->MaxStepHeight
 
 	ClimbComponent->SetMinGripInterval(MinGripInterval);
 	ClimbComponent->SetMaxGripInterval(MaxGripInterval);
@@ -159,7 +226,8 @@ void ACharacterBase::BeginPlay()
 		DefaultWidget = CreateWidget<UDefaultWidget>(PlayerController, DefaultWidgetClass);
 	}
 
-	DamageComponent->SetHealth(GetMaxHP());
+	//StatComponent->OnDeath.BindUObject(this, &ACharacterBase::Death);
+	StatComponent->InitializeStats();
 
 	InitSpringArmLocation = SpringArm->GetRelativeLocation();
 }
@@ -247,20 +315,6 @@ void ACharacterBase::Tick(float DeltaTime)
 	*/
 }
 
-void ACharacterBase::Initialization()
-{
-	//JumpHold = false;
-	//JumpTime = 0;
-	IsAttack = false;
-	IsRun = false;
-	CurrentDirection = MovementDirection::Bwd;
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	GetCharacterMovement()->JumpZVelocity = 800.0f;
-	GetCharacterMovement()->MaxFlySpeed = 350.0f;
-	GetCharacterMovement()->BrakingDecelerationFlying = 1000.0f;
-}
-
 void ACharacterBase::CameraSetting()
 {
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -269,7 +323,9 @@ void ACharacterBase::CameraSetting()
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
 
-	SpringArm->TargetArmLength = 500.0f;
+	SpringArm->TargetArmLength = 200.0f;
+	SpringArm->SocketOffset = FVector(0.0f, 60.0f, 0.0f);
+	SpringArm->SetRelativeLocation(FVector(0.0f, 0.0f, 90.0f));
 	SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	SpringArm->bUsePawnControlRotation = true;
 	SpringArm->bInheritPitch = true;
@@ -280,8 +336,7 @@ void ACharacterBase::CameraSetting()
 	SpringArm->bEnableCameraRotationLag = true;
 
 	bUseControllerRotationYaw = false;
-	//GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 300.0f, 0.0f);
 }
 
 // Called to bind functionality to input
@@ -297,6 +352,11 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACharacterBase::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacterBase::Jump);
 		//EnhancedInputComponent->BindAction(SwitchStanceAction, ETriggerEvent::Triggered, this, &ACharacterBase::SwitchStance);
+		
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Ongoing, this, &ACharacterBase::OnBlock);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &ACharacterBase::OffBlock);
+		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Triggered, this, &ACharacterBase::Parry);
+		
 		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ACharacterBase::Dodge);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ACharacterBase::Interact);
 
@@ -318,52 +378,53 @@ void ACharacterBase::PostInitializeComponents()
 
 	InteractComponent->OnArrivedInteractionPoint.BindUObject(this, &ACharacterBase::HandleArrivedInteractionPoint);
 
-	DamageComponent->OnDeath.BindUFunction(this, FName("Death"));
 
-	CharacterBaseAnim->OnEnterLocomotion.BindUObject(this, &ACharacterBase::EnterLocomotion);
+	if (CharacterBaseAnim)
+	{
+		CharacterBaseAnim->OnEnterLocomotion.BindUObject(this, &ACharacterBase::EnterLocomotion);
 
-	CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &ACharacterBase::LeftLocomotion);
+		CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &ACharacterBase::LeftLocomotion);
 
-	CharacterBaseAnim->OnDodgeEnd.AddLambda([this]()->void {
-		CanDodge = true;
-		IsDodge = false;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
-		});
+		CharacterBaseAnim->OnDodgeEnd.AddLambda([this]()->void {
+			CanDodge = true;
+			//IsDodge = false;
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+			//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
+			});
 
-	CharacterBaseAnim->OnDodgeStart.AddLambda([this]()->void {
-		/*
-		if (RollSounds.Num() > 0)
-		{
-			int32 RandomIndex = FMath::RandRange(0, RollSounds.Num() - 1);
-			USoundCue* SelectedSound = RollSounds[RandomIndex];
-			if (SelectedSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, SelectedSound, GetActorLocation());
-			}
-		}
-		*/
-		IsDodge = true;
-		IsRoll = false;
-		});
+		CharacterBaseAnim->OnDodgeStart.AddLambda([this]()->void {
+			//IsDodge = true;
+			IsRoll = false;
+			});
 
 
-	CharacterBaseAnim->OnEnterWalkState.AddLambda([this]()->void {
-		CurrentState = ECharacterState::Ground;
-		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		CanRide = true;
-		});
+		CharacterBaseAnim->OnEnterWalkState.AddLambda([this]()->void {
+			CurrentState = ECharacterState::Ground;
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			CanRide = true;
+			});
 
-	CharacterBaseAnim->OnEnterLadderState.AddLambda([this]()->void {
-		CurrentState = ECharacterState::Ladder;
-		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		});
+		CharacterBaseAnim->OnEnterLadderState.AddLambda([this]()->void {
+			CurrentState = ECharacterState::Ladder;
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			});
 
-	CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
-	CharacterBaseAnim->OnMountEnd.AddUObject(this, &ACharacterBase::MountEnd);
-	CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &ACharacterBase::DisMountEnd);
+		CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
+		CharacterBaseAnim->OnMountEnd.AddUObject(this, &ACharacterBase::MountEnd);
+		CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &ACharacterBase::DisMountEnd);
+	}
+
+	if (CharacterStatusComponent)
+	{
+		CharacterStatusComponent->OnDeath.AddUObject(this, &ACharacterBase::OnDeath);
+	}
+
+	if (HitReactionComponent)
+	{
+		HitReactionComponent->OnHitAirReaction.AddUObject(this, &ACharacterBase::HandleHitAir);
+	}
 }
 
 /* Input Action */
@@ -518,15 +579,11 @@ void ACharacterBase::Look(const FInputActionValue& value)
 
 void ACharacterBase::StartMoveInput()
 {
-	UE_LOG(LogTemp, Warning, TEXT("MovementInput"));
-
 	IsMovementInput = true;
 }
 
 void ACharacterBase::EndMoveInput()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Does NotMovementInput"));
-
 	IsMovementInput = false;
 }
 
@@ -602,11 +659,6 @@ void ACharacterBase::Dodge()
 	float TargetLocY = AdjustFactorY - OriginalLocY;;
 
 	DodgeDirection = GetActorForwardVector() * TargetLocY + GetActorRightVector() * TargetLocX;
-}
-
-void ACharacterBase::Block()
-{
-	IsBlock = true;
 }
 
 void ACharacterBase::Jump()
@@ -739,23 +791,6 @@ void ACharacterBase::Attack()
 	//UGameplayStatics::SuggestProjectileVelocity_CustomArc
 }
 
-void ACharacterBase::Death()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Your Character was Dead"));
-}
-
-void ACharacterBase::Block(bool CanParried)
-{
-	if (CanParried)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Your Character Parried"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Your Character Blocked"));
-	}
-}
-
 bool ACharacterBase::GetIsMovementInput()
 {
 	return IsMovementInput;
@@ -825,11 +860,6 @@ ERideStance ACharacterBase::GetCurRideStance()
 float ACharacterBase::GetClimbDistance()
 {
 	return ClimbDistance;
-}
-
-UClimbComponent* ACharacterBase::GetClimbComponent()
-{
-	return ClimbComponent;
 }
 
 void ACharacterBase::SetNextGripDown_Implementation(FName BoneName, int32 Count)
@@ -1120,6 +1150,72 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 	IsInteraction = true;
 }
 
+void ACharacterBase::OnBlock()
+{
+	CharacterStatusComponent->SetCombatState(ECharacterCombatState::Block);
+}
+
+void ACharacterBase::OffBlock()
+{
+	CharacterStatusComponent->SetCombatState(ECharacterCombatState::Normal);
+}
+
+void ACharacterBase::Parry()
+{
+	CharacterStatusComponent
+}
+
+void ACharacterBase::HandleHitAir()
+{
+	CharacterBaseAnim->SetHitAir(true);
+	UE_LOG(LogTemp, Warning, TEXT("Hit Air"));
+}
+
+void ACharacterBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
+{
+	float HitAngle = HitReactionComponent->CalculateHitAngle(AttackInfo.HitPoint);
+	HitResponse Response = HitReactionComponent->EvaluateHitResponse(
+		AttackInfo
+	);
+
+	if (Response == HitResponse::HitAir)
+	{
+		CharacterBaseAnim->SetHitAir(true);
+	}
+
+	if (!CharacterStatusComponent->IsDead())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HitReaction"));
+		FHitReactionRequest InputReaction = {
+			Response,
+			AttackInfo.CanBlocked,
+			AttackInfo.CanParried,
+			AttackInfo.CanAvoid,
+			HitAngle
+		};
+		HitReactionComponent->ExecuteHitResponse(InputReaction);
+	}
+}
+
+void ACharacterBase::OnDeathEnd_Implementation()
+{
+	// 사망 시 UI 호출
+	// 스탯 초기화
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true); // 일단 꺼줌
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 사망효과로 교체
+	SetLifeSpan(5.0f);
+}
+
+void ACharacterBase::OnDeath()
+{
+	// 기본 UI 비활성화
+	APlayerController* MyController = Cast<APlayerController>(GetController());
+	DisableInput(MyController);
+}
+
 void ACharacterBase::SpawnRide()
 {
 	if (!CanRide)
@@ -1156,6 +1252,9 @@ void ACharacterBase::DespawnRide_Implementation(FVector InitVelocity)
 	}
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	SpringArm->bEnableCameraLag = false;
+	SpringArm->bEnableCameraRotationLag = false;
 
 	if (Ride->GetClass()->ImplementsInterface(UViewDataInterface::StaticClass()))
 	{
@@ -1229,6 +1328,8 @@ void ACharacterBase::CameraSettingTimer()
 
 	if (CheckTargetArmLength && CheckSpringArmLocation)
 	{
+		SpringArm->bEnableCameraLag = true;
+		SpringArm->bEnableCameraRotationLag = true;
 		GetWorld()->GetTimerManager().ClearTimer(CameraSettingTimerHandle);
 	}
 }
@@ -1321,31 +1422,30 @@ void ACharacterBase::DisMountEnd()
 	*/
 }
 
-// ���� �ý��� �������̽� //
+/*
 void ACharacterBase::TakeDamage_Implementation(FAttackInfo DamageInfo)
 {
-	IPBDamagableInterface::TakeDamage_Implementation(DamageInfo);
+	IHitReactionInterface::TakeDamage_Implementation(DamageInfo);
 }
 
 float ACharacterBase::GetMaxHealth_Implementation()
 {
-	IPBDamagableInterface::GetMaxHealth_Implementation();
+	IHitReactionInterface::GetMaxHealth_Implementation();
 
-	return DamageComponent->GetfloatValue("MaxHealth");
+	return StatComponent->GetfloatValue("MaxHealth");
 }
 
 float ACharacterBase::GetHealth_Implementation()
 {
-	IPBDamagableInterface::GetHealth_Implementation();
+	IHitReactionInterface::GetHealth_Implementation();
 
-	return DamageComponent->GetfloatValue("Health");
+	return StatComponent->GetfloatValue("Health");
 }
 
 float ACharacterBase::Heal_Implementation(float amount)
 {
-	IPBDamagableInterface::Heal_Implementation(amount);
+	IHitReactionInterface::Heal_Implementation(amount);
 
-	return DamageComponent->Heal(amount);
+	return StatComponent->Heal(amount);
 }
-
-// ���� �ý��� �������̽� //
+*/

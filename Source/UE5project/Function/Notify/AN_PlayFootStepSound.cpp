@@ -7,7 +7,7 @@
 
 void UAN_PlayFootStepSound::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
-    if (!MeshComp || !Animation)
+    if (!MeshComp || !MeshComp->GetOwner() || !Animation)
     {
         return;
     }

@@ -1,17 +1,40 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+// 기본 헤더
 #include "Ride.h"
+
+// 카메라
 #include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+
+// 이동
 #include "GameFramework/CharacterMovementComponent.h"
-#include <Engine/Classes/Components/CapsuleComponent.h>
+
+// 콜리전
+#include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
+
+// 입력
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
+
+// Kismet 유틸리티
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetTextLibrary.h"
-#include "EnhancedInputSubsystems.h"
-#include "InputMappingContext.h"
+
+// UI
 #include "Components/WidgetComponent.h"
+
+// 인터페이스
 #include "../Function/PlayerInterface.h"
+
+// 애니메이션
 #include "RideAnimInstance.h"
+
+
+
 
 // Sets default values
 ARide::ARide()
@@ -100,10 +123,10 @@ ARide::ARide()
 	SpringArm->bInheritRoll = true;
 	SpringArm->bInheritYaw = true;
 	SpringArm->bDoCollisionTest = true;
-	//SpringArm->bEnableCameraLag = true;
-	//SpringArm->bEnableCameraRotationLag = true;
-	//SpringArm->CameraLagSpeed = 10.0f;
-	//SpringArm->CameraRotationLagSpeed = 10.0f;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->bEnableCameraRotationLag = true;
+	SpringArm->CameraLagSpeed = 10.0f;
+	SpringArm->CameraRotationLagSpeed = 10.0f;
 
 	bUseControllerRotationYaw = false;
 
@@ -358,6 +381,9 @@ void ARide::Mount_Implementation(ACharacter* RiderCharacter, FVector InitVelocit
 {
 	IRideInterface::Mount_Implementation(RiderCharacter, InitVelocity);
 
+	SpringArm->bEnableCameraLag = false;
+	SpringArm->bEnableCameraRotationLag = false;
+
 	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
 		EAttachmentRule::KeepWorld,
 		EAttachmentRule::KeepWorld,
@@ -453,6 +479,8 @@ void ARide::CameraSettingTimer()
 	{
 		SpringArm->TargetArmLength = 300.0f;
 		GetWorld()->GetTimerManager().ClearTimer(CameraSettingTimerHandle);
+		SpringArm->bEnableCameraLag = true;
+		SpringArm->bEnableCameraRotationLag = true;
 	}
 }
 
