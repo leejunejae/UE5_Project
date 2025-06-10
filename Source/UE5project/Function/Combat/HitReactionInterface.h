@@ -37,4 +37,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void OnHit(const FAttackRequest& AttackInfo);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void OnDeathEnd();
 };

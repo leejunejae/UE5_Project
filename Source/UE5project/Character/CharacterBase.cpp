@@ -148,6 +148,12 @@ ACharacterBase::ACharacterBase()
 		BlockAction = IP_Block.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Parry(TEXT("/Game/00_Character/C_Input/C_Parry.C_Parry"));
+	if (IP_Parry.Succeeded())
+	{
+		ParryAction = IP_Parry.Object;
+	}
+
 	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Interact(TEXT("/Game/00_Character/C_Input/C_Interact.C_Interact"));
 	if (IP_Interact.Succeeded())
 	{
@@ -160,10 +166,8 @@ ACharacterBase::ACharacterBase()
 		SpawnRideAction = IP_SpawnRide.Object;
 	}
 
-	static ConstructorHelpers::FClassFinder<UDefaultWidget> DEFAULTWIDGET(TEXT("/Game/00_Character/C_Source/DefaultWidget_BP"));
-	if (!ensure(DEFAULTWIDGET.Class != nullptr)) return;
-
-	DefaultWidgetClass = DEFAULTWIDGET.Class;
+	static ConstructorHelpers::FClassFinder<UDefaultWidget>Class_DefualtWidget(TEXT("/Game/00_Character/C_Source/DefaultWidget_BP"));
+	if (Class_DefualtWidget.Succeeded()) DefaultWidgetClass = Class_DefualtWidget.Class;
 
 	static ConstructorHelpers::FObjectFinder<UDataTable> HitReactionDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/FallenKnightHitReaction_DT.FallenKnightHitReaction_DT'"));
 	if (HitReactionDT_Asset.Succeeded())
@@ -222,7 +226,7 @@ void ACharacterBase::BeginPlay()
 		DefaultWidget = CreateWidget<UDefaultWidget>(PlayerController, DefaultWidgetClass);
 	}
 
-	StatComponent->OnDeath.BindUObject(this, &ACharacterBase::Death);
+	//StatComponent->OnDeath.BindUObject(this, &ACharacterBase::Death);
 	StatComponent->InitializeStats();
 
 	InitSpringArmLocation = SpringArm->GetRelativeLocation();
@@ -348,6 +352,11 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACharacterBase::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacterBase::Jump);
 		//EnhancedInputComponent->BindAction(SwitchStanceAction, ETriggerEvent::Triggered, this, &ACharacterBase::SwitchStance);
+		
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Ongoing, this, &ACharacterBase::OnBlock);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &ACharacterBase::OffBlock);
+		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Triggered, this, &ACharacterBase::Parry);
+		
 		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ACharacterBase::Dodge);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ACharacterBase::Interact);
 
@@ -405,6 +414,11 @@ void ACharacterBase::PostInitializeComponents()
 		CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
 		CharacterBaseAnim->OnMountEnd.AddUObject(this, &ACharacterBase::MountEnd);
 		CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &ACharacterBase::DisMountEnd);
+	}
+
+	if (CharacterStatusComponent)
+	{
+		CharacterStatusComponent->OnDeath.AddUObject(this, &ACharacterBase::OnDeath);
 	}
 
 	if (HitReactionComponent)
@@ -647,11 +661,6 @@ void ACharacterBase::Dodge()
 	DodgeDirection = GetActorForwardVector() * TargetLocY + GetActorRightVector() * TargetLocX;
 }
 
-void ACharacterBase::Block()
-{
-	//IsBlock = true;
-}
-
 void ACharacterBase::Jump()
 {
 	if (!IsLocomotion)
@@ -782,23 +791,6 @@ void ACharacterBase::Attack()
 	//UGameplayStatics::SuggestProjectileVelocity_CustomArc
 }
 
-void ACharacterBase::Death()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Your Character was Dead"));
-}
-
-void ACharacterBase::Block(bool CanParried)
-{
-	if (CanParried)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Your Character Parried"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Your Character Blocked"));
-	}
-}
-
 bool ACharacterBase::GetIsMovementInput()
 {
 	return IsMovementInput;
@@ -868,11 +860,6 @@ ERideStance ACharacterBase::GetCurRideStance()
 float ACharacterBase::GetClimbDistance()
 {
 	return ClimbDistance;
-}
-
-UClimbComponent* ACharacterBase::GetClimbComponent()
-{
-	return ClimbComponent;
 }
 
 void ACharacterBase::SetNextGripDown_Implementation(FName BoneName, int32 Count)
@@ -1173,6 +1160,11 @@ void ACharacterBase::OffBlock()
 	CharacterStatusComponent->SetCombatState(ECharacterCombatState::Normal);
 }
 
+void ACharacterBase::Parry()
+{
+	CharacterStatusComponent
+}
+
 void ACharacterBase::HandleHitAir()
 {
 	CharacterBaseAnim->SetHitAir(true);
@@ -1181,18 +1173,19 @@ void ACharacterBase::HandleHitAir()
 
 void ACharacterBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 {
-	float HitAngle = CombatComponent->CalculateHitAngle(AttackInfo.HitPoint);
-	HitResponse Response = CombatComponent->EvaluateHitResponse(
+	float HitAngle = HitReactionComponent->CalculateHitAngle(AttackInfo.HitPoint);
+	HitResponse Response = HitReactionComponent->EvaluateHitResponse(
 		AttackInfo
 	);
 
-	if (StatComponent)
+	if (Response == HitResponse::HitAir)
 	{
-		StatComponent->ChangeHealth(AttackInfo.Damage, EHPChangeType::DirectDamage);
+		CharacterBaseAnim->SetHitAir(true);
 	}
 
-	if (HitReactionComponent)
+	if (!CharacterStatusComponent->IsDead())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("HitReaction"));
 		FHitReactionRequest InputReaction = {
 			Response,
 			AttackInfo.CanBlocked,
@@ -1202,6 +1195,25 @@ void ACharacterBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 		};
 		HitReactionComponent->ExecuteHitResponse(InputReaction);
 	}
+}
+
+void ACharacterBase::OnDeathEnd_Implementation()
+{
+	// 사망 시 UI 호출
+	// 스탯 초기화
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true); // 일단 꺼줌
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 사망효과로 교체
+	SetLifeSpan(5.0f);
+}
+
+void ACharacterBase::OnDeath()
+{
+	// 기본 UI 비활성화
+	APlayerController* MyController = Cast<APlayerController>(GetController());
+	DisableInput(MyController);
 }
 
 void ACharacterBase::SpawnRide()

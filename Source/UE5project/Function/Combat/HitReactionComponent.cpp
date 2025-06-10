@@ -4,6 +4,8 @@
 #include "HitReactionComponent.h"
 #include "GameFramework/Character.h"
 #include "../CharacterStatusComponent.h"
+#include "../../StatusData.h"
+#include "StatComponent.h"
 
 // Sets default values for this component's properties
 UHitReactionComponent::UHitReactionComponent()
@@ -70,11 +72,11 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 	//float HitAngle = CalculateHitAngle(ReactionData.HitPoint);
 
 	//HitResponse Response = EvaluateHitResponse(ReactionData.Response, ReactionData.CanBlocked, ReactionData.CanParried, ReactionData.CanAvoid, HitAngle);
-	if (ReactionData.Response == HitResponse::HitAir)
-	{
-		if(OnHitAirReaction.IsBound()) OnHitAirReaction.Broadcast();
-		return;
-	}
+	//if (ReactionData.Response == HitResponse::HitAir || ReactionData.Response == HitResponse::DeathLarge)
+	//{
+	//	if(OnHitAirReaction.IsBound()) OnHitAirReaction.Broadcast();
+	//	return;
+	//}
 
 	const UEnum* EnumPtr = StaticEnum<HitResponse>();
 	if (!EnumPtr) return;
@@ -168,4 +170,111 @@ void UHitReactionComponent::OnHitReactionEnded(UAnimMontage* Montage, bool bInte
 	{
 		PlayReaction(HitReaction, FoundData->NextSection);
 	}
+}
+
+float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)
+{
+	FVector CharacterLocation = GetOwner()->GetActorLocation();
+	FVector ImpactVector = HitPoint - CharacterLocation;
+	FRotator HitRotator = ImpactVector.Rotation();
+
+	float HitYaw = HitRotator.Yaw;
+	float CharacterYaw = GetOwner()->GetActorRotation().Yaw;
+	float HitAngle = FMath::FindDeltaAngleDegrees(CharacterYaw, HitYaw);
+
+	return HitAngle;
+}
+
+HitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& AttackRequest)
+{
+	UCharacterStatusComponent* StatusComp = GetOwner()->FindComponentByClass<UCharacterStatusComponent>();
+
+	if (!StatusComp) return AttackRequest.Response;
+
+	const ECharacterCombatState CombatState = StatusComp->GetCombatState();
+
+	if (CombatState == ECharacterCombatState::Invincible) return HitResponse::None;
+
+	HitResponse FinalResponse = AttackRequest.Response;
+
+	switch (CombatState)
+	{
+	case ECharacterCombatState::Normal:
+	{
+		if (StatusComp->IsInAir())
+			FinalResponse = HitResponse::HitAir;
+		break;
+	}
+	case ECharacterCombatState::Dodge:
+	{
+		if (AttackRequest.CanAvoid)
+		{
+			FinalResponse = HitResponse::None;
+		}
+		break;
+	}
+	case ECharacterCombatState::Invincible:
+	{
+		FinalResponse = HitResponse::None;
+		break;
+	}
+	case ECharacterCombatState::Block:
+	{
+	float HitAngle = CalculateHitAngle(AttackRequest.HitPoint);
+		if (AttackRequest.CanBlocked && (HitAngle >= -60.0f || HitAngle <= 60.0f))
+		{
+			switch (AttackRequest.Response)
+			{
+			case HitResponse::Flinch:
+			case HitResponse::KnockBack:
+				FinalResponse = HitResponse::Block;
+				break;
+			case HitResponse::KnockDown:
+				FinalResponse = HitResponse::BlockLarge;
+				break;
+			}
+		}
+		break;
+	}
+	case ECharacterCombatState::Parry:
+	{
+		float HitAngle = CalculateHitAngle(AttackRequest.HitPoint);
+		if (AttackRequest.CanParried && (HitAngle >= -60.0f || HitAngle <= 60.0f))
+		{
+			FinalResponse = HitResponse::None;
+			// 패링시 발동될 델리게이트 추가
+		}
+		break;
+	}
+	}
+
+	UStatComponent* StatComp = GetOwner()->FindComponentByClass<UStatComponent>();
+	if (StatComp)
+	{
+		switch (FinalResponse)
+		{
+		case HitResponse::Flinch:
+		case HitResponse::KnockBack:
+		case HitResponse::KnockDown:
+		case HitResponse::HitAir:
+		{
+			float CurHealth = StatComp->GetHealth();
+			StatComp->ChangeHealth(AttackRequest.Damage, EHPChangeType::DirectDamage);
+			break;
+		}
+		case HitResponse::Block:
+		case HitResponse::BlockLarge:
+		{
+			float CurStamina = StatComp->GetStamina();
+			bool IsStaminaEnough = StatComp->ChangeStamina(AttackRequest.BaseAttackPower, ESPChangeType::Blocked);
+			if (IsStaminaEnough)
+			{
+				FinalResponse = FinalResponse == HitResponse::Block ? HitResponse::BlockBreak : HitResponse::BlockStun;
+			}
+			break;
+		}
+		}
+	}
+
+	return FinalResponse;
 }

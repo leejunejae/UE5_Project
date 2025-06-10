@@ -10,6 +10,8 @@
 class ACharacter;
 class UCharacterMovementComponent;
 
+DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UCharacterStatusComponent : public UActorComponent
 {
@@ -25,20 +27,27 @@ protected:
 
 #pragma region Combat
 public:
-	bool IsDodging() const { return CombatState == ECharacterCombatState::Dodge; }
-	bool IsBlocking() const { return CombatState == ECharacterCombatState::Block; }
-	bool IsParrying() const { return CombatState == ECharacterCombatState::Parry; }
-	bool IsInvincible() const { return CombatState == ECharacterCombatState::Invincible; }
+	FORCEINLINE bool IsDodging() const { return CombatState == ECharacterCombatState::Dodge; }
+	FORCEINLINE bool IsBlocking() const { return CombatState == ECharacterCombatState::Block; }
+	FORCEINLINE bool IsParrying() const { return CombatState == ECharacterCombatState::Parry; }
+	FORCEINLINE bool IsInvincible() const { return CombatState == ECharacterCombatState::Invincible; }
+	FORCEINLINE bool IsDead() const { return bIsDead; }
 	bool IsInAir() const;
+
+	void HandleDeath();
 	
 	bool CanTransition(const ECharacterCombatState NewState) const;
-
 
 	ECharacterCombatState GetCombatState() const { return CombatState; }
 
 	void SetCombatState(ECharacterCombatState NewState);
 
+public:
+	FOnMultiDelegate OnDeath;
+
 private:
 	ECharacterCombatState CombatState;
+
+	bool bIsDead = false;
 #pragma endregion Combat
 };

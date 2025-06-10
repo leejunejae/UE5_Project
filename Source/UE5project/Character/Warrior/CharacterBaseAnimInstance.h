@@ -107,9 +107,6 @@ private:
 		bool IsAttackInput;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		bool IsBlock;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		bool IsParry;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
@@ -450,8 +447,14 @@ public:
 	void ResetHitAir_Implementation() override;
 
 protected:
+	FORCEINLINE void HandleDeath() { bIsDead = true; }
+
+private:
 	UPROPERTY(BlueprintReadOnly, Category = HitReaction, Meta = (AllowPrivateAccess = true))
 		bool bIsHitAir = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = HitReaction, Meta = (AllowPrivateAccess = true))
+		bool bIsDead = false;
 
 #pragma endregion HitReaction
 

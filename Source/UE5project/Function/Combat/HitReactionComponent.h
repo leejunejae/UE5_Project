@@ -36,6 +36,9 @@ public:
 	void ExecuteHitResponse(const FHitReactionRequest ReactionData);
 	void PlayReaction(const FHitReactionInfo* HitReaction, const FName SectionName = NAME_None);
 
+	HitResponse EvaluateHitResponse(const FAttackRequest& AttackRequest);
+	float CalculateHitAngle(const FVector HitPoint);
+
 	void OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo* HitReaction, const FName SectionName);
 
 	FOnMultiDelegate OnHitAirReaction;

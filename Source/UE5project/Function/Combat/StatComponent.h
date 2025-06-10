@@ -7,7 +7,7 @@
 #include "../../PEnumHeader.h"
 #include "StatComponent.generated.h"
 
-DECLARE_DELEGATE(FOnDeathDelegate);
+DECLARE_DELEGATE(FOnSingleDelegate);
 
 
 UENUM()
@@ -40,16 +40,18 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	FOnDeathDelegate OnDeath;
+	FOnSingleDelegate OnDeath;
 
 public:
 	void InitializeStats();
 
 	void ChangeMaxHealth(const float Amount);
 	void ChangeMaxStamina(const float Amount);
-	void ChangeHealth(const float Amount, const EHPChangeType HPChangeType);
-	void ChangeStamina(const float Amount, const ESPChangeType SPChangeType);
+	bool ChangeHealth(const float Amount, const EHPChangeType HPChangeType);
+	bool ChangeStamina(const float Amount, const ESPChangeType SPChangeType);
 
+
+	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetStamina() const { return Stamina; }
 	FORCEINLINE float GetDefensePower() const { return DefensivePower; }
 
@@ -70,7 +72,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
 	float DefensivePower;
 
-	//float 
-	
-	bool IsDead;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
+	float GuardRate;
 };

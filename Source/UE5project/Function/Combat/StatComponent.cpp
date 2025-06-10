@@ -39,7 +39,7 @@ void UStatComponent::ChangeMaxStamina(const float Amount)
 	MaxStamina += Amount;
 }
 
-void UStatComponent::ChangeHealth(const float Amount, const EHPChangeType HPChangeType)
+bool UStatComponent::ChangeHealth(const float Amount, const EHPChangeType HPChangeType)
 {
 	float Delta = Amount;
 	switch (HPChangeType)
@@ -55,16 +55,33 @@ void UStatComponent::ChangeHealth(const float Amount, const EHPChangeType HPChan
 	}
 
 	Health = FMath::Clamp(Health - Delta, 0.0f, MaxHealth);
-
-	UE_LOG(LogTemp, Warning, TEXT("%f"), Health);
-
+	
 	if (Health <= 0.0f)
 	{
-		IsDead = true;
+		//UE_LOG(LogTemp, Warning, TEXT("Death Delegate"));
+		OnDeath.ExecuteIfBound();
 	}
+
+	return Health > 0.0f ? true : false;
 }
 
-void UStatComponent::ChangeStamina(const float Amount, const ESPChangeType SPChangeType)
+bool UStatComponent::ChangeStamina(const float Amount, const ESPChangeType SPChangeType)
 {
-	Stamina = FMath::Clamp(Stamina - Amount, 0.0f, MaxStamina);
+	float Delta = Amount;
+	
+	switch (SPChangeType)
+	{
+	case ESPChangeType::Blocked:
+		Delta *= (1.0f - (GuardRate / 100.0f));
+		break;
+	case ESPChangeType::Dodge:
+		break;
+	case ESPChangeType::Heal:
+		Delta *= -1.0f;
+		break;
+	}
+
+	Stamina = FMath::Clamp(Stamina - Delta, 0.0f, MaxStamina);
+
+	return Stamina > 0.0f ? true : false;
 }

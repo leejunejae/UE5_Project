@@ -31,6 +31,11 @@ void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 	Character = Cast<AFallenKnight>(TryGetPawnOwner());
 
+	if (Character)
+	{
+		Character->GetCharacterStatusComponent()->OnDeath.AddUObject(this, &UCharacterBaseAnimInstance::HandleDeath);
+	}
+
 	SeedSwitch = true;
 }
 
@@ -46,22 +51,9 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		IsInAir = Character->GetMovementComponent()->IsFalling();
 		IsAttack = Character->IsAttacking();
 		IsAttackInput = Character->IsAttackInput();
-		IsBlock = Character->IsBlocking();
-		IsParry = Character->IsParrying();
 		IsRoll = Character->IsRolling();
-		Response = Character->GetCharResponse();
 		ComboCount = Character->CheckCombo();
-
-		UCharacterStatusComponent* StatusComp = Character->FindComponentByClass<UCharacterStatusComponent>();
-		if (StatusComp)
-		{
-			CharacterCombatState = StatusComp->GetCombatState();
-		}
-
-		//if (FMath::IsNearlyEqual(Speed, 0.0f) && CurrentState==ECharacterState::Ride)
-		//{
-		//	Speed = LastSpeed;
-		//}
+		CharacterCombatState = Character->GetCharacterStatusComponent()->GetCombatState();
 
 		switch (CurrentState)
 		{

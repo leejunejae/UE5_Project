@@ -17,12 +17,6 @@
 AFallenKnight::AFallenKnight()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Parry(TEXT("/Game/00_Character/C_Input/C_Parry.C_Parry"));
-	if (IP_Parry.Succeeded())
-	{
-		ParryAction = IP_Parry.Object;
-	}
 	
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MAIN_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/Separated_Mesh/Character/SK_full_body.SK_full_body"));
 	if (MAIN_MESH.Succeeded())
@@ -143,9 +137,6 @@ void AFallenKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	{
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Ongoing, this, &AFallenKnight::Attack);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AFallenKnight::AttackInputEnd);
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Ongoing, this, &AFallenKnight::OnBlock);
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &AFallenKnight::OffBlock);
-		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Triggered, this, &AFallenKnight::Parrying);
 	}
 }
 
@@ -405,116 +396,6 @@ void AFallenKnight::DodgeUpdateFin()
 	PreviousCurveValue = 0.0f;
 }
 
-void AFallenKnight::Death()
-{
-	Super::Death();
-	if (nullptr == CharacterBaseAnim)
-		return;
-}
-
-void AFallenKnight::Block(bool CanParried)
-{
-	Super::Block(CanParried);
-	if (CanParried)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Your Character Parried"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Your Character Blocked"));
-	}
-}
-
-/*
-void AFallenKnight::TakeDamage_Implementation(FAttackInfo DamageInfo)
-{
-	//UE_LOG(LogTemp, Warning, TEXT("Take Damage"));
-	const HitResponse Response = CharResponse(DamageInfo.CanBlocked, DamageInfo.CanAvoid, DamageInfo.CanParried);
-	switch (Response)
-	{
-	case HitResponse::Hit:
-		if (GetCharacterMovement()->IsFalling())
-		{
-			CurResponse = HitResponse::HitAir;
-			UE_LOG(LogTemp, Warning, TEXT("HitAir"));
-		}
-		else
-		{
-			CurResponse = DamageInfo.Type == AttackType::Light ? HitResponse::Hit : HitResponse::HitLarge;
-			UE_LOG(LogTemp, Warning, TEXT("Hit"));
-		}
-		IsInvincible = true;
-		break;
-	case HitResponse::Block:
-		CurResponse = DamageInfo.Type == AttackType::Light ? HitResponse::Block : HitResponse::BlockLarge;
-		IsInvincible = true;
-		break;
-	case HitResponse::Parry:
-		IsInvincible = true;
-		break;
-	case HitResponse::Invincible:
-		UE_LOG(LogTemp, Warning, TEXT("Invincible"));
-		break;
-	default:
-		break;
-	}
-}
-*/
-
-HitResponse AFallenKnight::CharResponse(bool CanBlocked, bool CanAvoid, bool CanParry)
-{
-	/*
-	const CharState CurState = GetCharState();
-	switch (CurState)
-	{
-	case CharState::None:
-		return HitResponse::Hit;
-	case CharState::Block:
-		if (!CanBlocked || GetCharacterMovement()->IsFalling())
-			return HitResponse::Hit;
-		else
-			return HitResponse::Block;
-	case CharState::Parry:
-		if (!CanParry || GetCharacterMovement()->IsFalling())
-			return HitResponse::Hit;
-		else
-			return HitResponse::Parry;
-	case CharState::Dodge:
-		if (!CanAvoid)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("State : Hit"));
-			return HitResponse::Hit;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("State : Dodge"));
-			return HitResponse::Invincible;
-		}
-	case CharState::Invincible:
-		return HitResponse::Invincible;
-	default:
-		return HitResponse::None;
-	}
-	*/
-	return HitResponse::None;
-}
-
-HitResponse AFallenKnight::GetCharResponse()
-{
-	return CurResponse;
-}
-
-void AFallenKnight::ResetResponse()
-{
-	CurResponse = HitResponse::None;
-}
-
-void AFallenKnight::Parrying()
-{
-	//IsParry = true;
-	CanDodge = false;
-}
-
 int AFallenKnight::GetAttackSeed()
 {
 	return AttackSeed;
@@ -533,33 +414,6 @@ bool AFallenKnight::IsAttacking()
 bool AFallenKnight::IsRolling()
 {
 	return IsRoll;
-}
-
-bool AFallenKnight::IsBlocking()
-{
-	//return IsBlock;
-	return false;
-}
-
-bool AFallenKnight::IsParrying()
-{
-	//return IsParry;
-	return false;
-}
-
-bool AFallenKnight::IsHit()
-{
-	return Hit;
-}
-
-bool AFallenKnight::IsGuard()
-{
-	return Guard;
-}
-
-bool AFallenKnight::GetCurHand()
-{
-	return CurHandRight;
 }
 
 bool AFallenKnight::GetNextDodge()
