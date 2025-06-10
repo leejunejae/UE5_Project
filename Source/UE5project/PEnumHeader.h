@@ -139,43 +139,6 @@ enum class RangeCheck : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FCharacterInfo
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FString CName;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 CMaxHP;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 COffensePower;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 CDefenseCap;
-
-public:
-	void SetName(FString Name)
-	{
-		CName = Name;
-	}
-
-	void SetMaxHP(int32 MaxHP)
-	{
-		CMaxHP = MaxHP;
-	}
-
-	void SetOffensePower(int32 OffensePower)
-	{
-		COffensePower = OffensePower;
-	}
-
-	void SetDefenseCap(int32 DefenseCap)
-	{
-		CDefenseCap = DefenseCap;
-	}
-};
-
-USTRUCT(BlueprintType)
 struct FEnemyInfo
 {
 	GENERATED_BODY()

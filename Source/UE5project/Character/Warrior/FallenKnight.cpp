@@ -99,12 +99,6 @@ AFallenKnight::AFallenKnight()
 
 	CanAttack = true;
 	CanDodge = true;
-	CurHandRight = true;
-
-	CharInfo.SetName("Warrior");
-	CharInfo.SetMaxHP(100);
-	CharInfo.SetOffensePower(10);
-	CharInfo.SetDefenseCap(10);
 }
 
 void AFallenKnight::BeginPlay()
@@ -181,10 +175,6 @@ void AFallenKnight::PostInitializeComponents()
 
 		CharacterBaseAnim->OnResetHurt.AddLambda([this]()->void {
 			IsAttack = false;
-			CurResponse = HitResponse::None;
-			//IsDodge = false;
-			//IsBlock = false;
-			//IsParry = false;
 			IsInvincible = false;
 			});
 
@@ -296,7 +286,6 @@ void AFallenKnight::Attack()
 
 	IsAttack = true;
 	AttackInput = true;
-	CurHandRight = !CurHandRight;
 
 	UE_LOG(LogTemp, Warning, TEXT("input"));
 	//}
@@ -394,11 +383,6 @@ void AFallenKnight::DodgeUpdate(float Value)
 void AFallenKnight::DodgeUpdateFin()
 {
 	PreviousCurveValue = 0.0f;
-}
-
-int AFallenKnight::GetAttackSeed()
-{
-	return AttackSeed;
 }
 
 bool AFallenKnight::IsAttackInput()

@@ -172,8 +172,6 @@ protected:
 	float InputDirection;
 	float TargetSpeed=300.0f;
 
-	FCharacterInfo CharInfo;
-
 	ACharacter* Ride;
 
 	FVector InitSpringArmLocation;

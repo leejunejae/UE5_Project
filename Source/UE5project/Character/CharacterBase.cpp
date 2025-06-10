@@ -817,26 +817,6 @@ FVector ACharacterBase::GetInputDirection()
 	return DodgeVector;
 }
 
-FString ACharacterBase::GetName()
-{
-	return CharInfo.CName;
-}
-
-int32 ACharacterBase::GetMaxHP()
-{
-	return CharInfo.CMaxHP;
-}
-
-int32 ACharacterBase::GetOffensePower()
-{
-	return CharInfo.COffensePower;
-}
-
-int32 ACharacterBase::GetDefenseCap()
-{
-	return CharInfo.CDefenseCap;
-}
-
 ECharacterState ACharacterBase::GetCurrentState()
 {
 	return CurrentState;
@@ -1162,7 +1142,7 @@ void ACharacterBase::OffBlock()
 
 void ACharacterBase::Parry()
 {
-	CharacterStatusComponent
+	//CharacterStatusComponent
 }
 
 void ACharacterBase::HandleHitAir()

@@ -23,8 +23,6 @@ public:
 	AFallenKnight();
 
 	virtual void BeginPlay() override;
-
-	int GetAttackSeed();
 	bool IsAttackInput();
 	bool IsAttacking();
 	bool IsRolling();

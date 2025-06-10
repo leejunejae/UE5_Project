@@ -35,8 +35,6 @@ void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 	{
 		Character->GetCharacterStatusComponent()->OnDeath.AddUObject(this, &UCharacterBaseAnimInstance::HandleDeath);
 	}
-
-	SeedSwitch = true;
 }
 
 void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)

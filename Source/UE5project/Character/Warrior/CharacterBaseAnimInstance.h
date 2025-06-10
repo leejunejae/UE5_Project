@@ -135,9 +135,6 @@ private:
 		int32 ComboCount;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		int32 AttackSeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		WarriorStance CurStance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
@@ -361,10 +358,6 @@ private:
 private:
 	float InputDirectionX;
 	float InputDirectionY;
-
-	bool SeedSwitch;
-	float TargetSpeed;
-	float TargetDirection;
 
 protected:
 	float YawLastTick = 0.0f;
