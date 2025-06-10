@@ -3,6 +3,7 @@
 
 #include "PBEMAnimInstance.h"
 #include "PBEHHeretic.h"
+#include "KismetAnimationLibrary.h"
 
 UPBEMAnimInstance::UPBEMAnimInstance()
 {
@@ -38,7 +39,7 @@ void UPBEMAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (Character)
 	{
 		Speed = Character->GetVelocity().Size();
-		Direction = CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
+		Direction = UKismetAnimationLibrary::CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
 		IsSummon = Character->CheckBool(HereticVar::Summon);
 		Tornado = Character->CheckBool(HereticVar::Tornado);
 		SawTooth = Character->CheckBool(HereticVar::SawTooth);

@@ -3,8 +3,8 @@
 
 #include "AN_GetBoneLocation.h"
 
-void UAN_GetBoneLocation::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UAN_GetBoneLocation::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	Super::Notify(MeshComp, Animation);
+	Super::Notify(MeshComp, Animation, EventReference);
 
 }

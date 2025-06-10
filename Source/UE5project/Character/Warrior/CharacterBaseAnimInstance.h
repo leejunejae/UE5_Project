@@ -2,11 +2,19 @@
 
 #pragma once
 
+// 엔진 헤더
 #include "CoreMinimal.h"
+
+// 구조체, 자료형
 #include "../../PEnumHeader.h"
 #include "../../BaseCharacterHeader.h"
-#include "../../Function/Combat/CombatStruct.h"
+#include "../../Function/Combat/CombatData.h"
+#include "../../StatusData.h"
+
+// 인터페이스
 #include "../../Function/IAnimInstance.h"
+
+
 #include "Animation/AnimInstance.h"
 #include "CharacterBaseAnimInstance.generated.h"
 
@@ -97,9 +105,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		bool IsAttackInput;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		bool IsBlock;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		bool IsParry;
@@ -229,6 +234,33 @@ private:
 
 	FName GetAttackMontageSectionName(int32 Section);
 #pragma region State & Stance
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
+		ECharacterCombatState CharacterCombatState;
+
+#pragma region State & Stance_IK
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float RightFootIKAlpha;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float LeftFootIKAlpha;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float RightFootIKTypeAlpha;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float LeftFootIKTypeAlpha;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		float RightHandIKTypeAlpha;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		float LeftHandIKTypeAlpha;
+
+	FName LockIK = TEXT("LockIK");
+	TMap<FName, EBodyType> BoneNameToBodyType;
+#pragma endregion State & Stance_IK
+
 private:
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EnterWalkState();
@@ -264,10 +296,30 @@ protected:
 	TTuple<FVector, float> FootTrace(FName SocketName);
 	void FootRotation(float DeltaTime, FVector TargetNormal, FRotator* FootRotator, float fInterpSpeed);
 
-#pragma region Movement
+#pragma region Ground_IK
+private:
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FRotator LeftFootRotator;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FRotator RightFootRotator;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		float PelvisOffset;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FVector LeftFootGroundOffset;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FVector RightFootGroundOffset;
+
+#pragma endregion Ground_IK
+
+#pragma region Ground_Movement
 	////////////////////////////////////
 	// Variables For FootIK
 	////////////////////////////////////
+private:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 		bool CanMovementInput = true;
 
@@ -275,15 +327,17 @@ protected:
 
 	float GetAnimDirection(float DeltaSeconds);
 
+public:
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EnterIdleState();
 
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_LeftIdleState();
-#pragma endregion
+#pragma endregion Ground_Movement
 
 
-#pragma region Quick Turn
+#pragma region Ground_Quick Turn
+public:
 	void ResetTurn_Implementation() override;
 
 	UFUNCTION(BlueprintCallable)
@@ -294,10 +348,10 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = QuickTurn, Meta = (AllowPrivateAccess = true))
 		bool bQuickTurn;
-#pragma endregion
+#pragma endregion Ground_Quick Turn
 
 
-#pragma region Turn In Place
+#pragma region Ground_Turn In Place
 
 private:
 	// Turn In Place // 
@@ -323,11 +377,35 @@ protected:
 	float TurnDirection = 0.0f;
 	bool IsMove = false;
 
-#pragma endregion
+#pragma endregion Ground_Turn In Place
 
-#pragma endregion
+#pragma endregion Ground
+
 
 #pragma region Ladder
+
+#pragma region Ladder_IK
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FVector LeftFootLadderOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
+		FVector RightFootLadderOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		FVector LeftHandLadderOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
+		FVector RightHandLadderOffset;
+
+	FVectorCurveNameSet Hand_L_CurveNameSet = { TEXT("Hand_L_Translation_X"), TEXT("Hand_L_Translation_Y") , TEXT("Hand_L_Translation_Z") };
+	FVectorCurveNameSet Hand_R_CurveNameSet = { TEXT("Hand_R_Translation_X"), TEXT("Hand_R_Translation_Y") , TEXT("Hand_R_Translation_Z") };
+	FVectorCurveNameSet Foot_L_CurveNameSet = { TEXT("Foot_L_Translation_X"), TEXT("Foot_L_Translation_Y") , TEXT("Foot_L_Translation_Z") };
+	FVectorCurveNameSet Foot_R_CurveNameSet = { TEXT("Foot_R_Translation_X"), TEXT("Foot_R_Translation_Y") , TEXT("Foot_R_Translation_Z") };
+
+	float Hand_L_Y_Distance;
+	float Hand_R_Y_Distance;
+	float Foot_L_Y_Distance;
+	float Foot_R_Y_Distance;
+#pragma endregion Ladder_IK
+
 protected:
 	//virtual void NativeNotify(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 
@@ -350,7 +428,6 @@ protected:
 	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FVectorCurveNameSet CurveNameList, FVector& BoneTarget, float LimbYDistance, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
 	
 	void CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds);
-	TOptional<FVector> SetIKTargetLocation(FName BoneName, FName MiddleBoneName, float CurveValue, float DeltaSeconds, float AdjCoefft = 1.0f);
 
 private:
 	bool bIsClimb;
@@ -359,130 +436,27 @@ private:
 	float CurveValue_Root_Rotator;
 
 	float RootCurveDifferenceSum = 0.0f;
-#pragma endregion 
+#pragma endregion Ladder
 
-#pragma endregion 
+#pragma endregion State & Stance
 
 
-#pragma region Character IK
+#pragma region HitReaction
+public:
+	void SetHitAir(bool HitState);
+	void ResetHitAir_Implementation() override;
+
+protected:
+	FORCEINLINE void HandleDeath() { bIsDead = true; }
+
 private:
+	UPROPERTY(BlueprintReadOnly, Category = HitReaction, Meta = (AllowPrivateAccess = true))
+		bool bIsHitAir = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Ladder, Meta = (AllowPrivateAccess = true))
-		float LadderIKAlpha;
+	UPROPERTY(BlueprintReadOnly, Category = HitReaction, Meta = (AllowPrivateAccess = true))
+		bool bIsDead = false;
 
-	FName LockIK = TEXT("LockIK");
-	TMap<FName, EBodyType> BoneNameToBodyType;
-
-#pragma region FootIK
-////////////////////////////////////
-// Variables For FootIK
-////////////////////////////////////
-private:
-	// FootIK Variable for Blueprint
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		FRotator LeftFootRotator;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		FRotator RightFootRotator;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float PelvisOffset;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float LeftFootOffset;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float RightFootOffset;
-
-	// For Ladder IK
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float RightFootIKAlpha;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float LeftFootIKAlpha;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float RightFootIKTypeAlpha;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float LeftFootIKTypeAlpha;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		FVector LeftFootTarget;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		FVector RightFootTarget;
-
-	FVectorCurveNameSet Hand_L_CurveNameSet = { TEXT("Hand_L_Translation_X"), TEXT("Hand_L_Translation_Y") , TEXT("Hand_L_Translation_Z") };
-	FVectorCurveNameSet Hand_R_CurveNameSet = { TEXT("Hand_R_Translation_X"), TEXT("Hand_R_Translation_Y") , TEXT("Hand_R_Translation_Z") };
-	FVectorCurveNameSet Foot_L_CurveNameSet = { TEXT("Foot_L_Translation_X"), TEXT("Foot_L_Translation_Y") , TEXT("Foot_L_Translation_Z") };
-	FVectorCurveNameSet Foot_R_CurveNameSet = { TEXT("Foot_R_Translation_X"), TEXT("Foot_R_Translation_Y") , TEXT("Foot_R_Translation_Z") };
-
-	float Hand_L_Y_Distance;
-	float Hand_R_Y_Distance;
-	float Foot_L_Y_Distance;
-	float Foot_R_Y_Distance;
-
-	FName Foot_L_Translation_Z = TEXT("Foot_L_Translation_Z");
-	FName Foot_R_Translation_Z = TEXT("Foot_R_Translation_Z");
-	FName Foot_L_Translation_Y = TEXT("Foot_L_Translation_Y");
-	FName Foot_R_Translation_Y = TEXT("Foot_R_Translation_Y");
-
-
-	FName Pelvis_Curve = TEXT("Enable_Pelvis");
-	
-
-	//FName Foot_L_Translation_Z = TEXT("Enable_Footik_l");
-	//FName Foot_R_Translation_Z = TEXT("Enable_FootIK_R");
-	//FName Pelvis_Curve = TEXT("Enable_Pelvis");
-
-	FVector CurveValue_Foot_L;
-	FVector CurveValue_Foot_R;
-
-
-#pragma endregion 
-
-#pragma region HandIK
-
-////////////////////////////////////
-// Methods For HandIK
-////////////////////////////////////Foot_L_Translation_Z
-
-////////////////////////////////////
-// Variables For HandIK
-////////////////////////////////////
-private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float RightHandIKTypeAlpha;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float LeftHandIKTypeAlpha;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float LeftHandIKAlpha;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float RightHandIKAlpha;
-
-	// Actual Hand Position
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		FVector LeftHandTarget;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		FVector RightHandTarget;
-
-	FName Hand_L_Translation_Z = TEXT("Hand_L_Translation_Z");
-	FName Hand_R_Translation_Z = TEXT("Hand_R_Translation_Z");
-
-	FName Hand_L_Translation_Y = TEXT("Hand_L_Translation_Y");
-	FName Hand_R_Translation_Y = TEXT("Hand_R_Translation_Y");
-
-	// For Ladder IK
-	//FName Hand_L_Translation_Z = TEXT("Enable_HandIK_L");
-	//FName Hand_R_Translation_Z = TEXT("Enable_HandIK_R");
-
-	FVector CurveValue_Hand_L;
-	FVector CurveValue_Hand_R;
-
-#pragma endregion
-	
-
-#pragma endregion 
-
+#pragma endregion HitReaction
 
 
 #pragma region Debug Region
@@ -492,5 +466,5 @@ private:
 private:
 	float PelvisCurveSum = 0.0f;
 	float AdjustCurveSum = 0.0f;
-#pragma endregion
+#pragma endregion Debug Region
 };

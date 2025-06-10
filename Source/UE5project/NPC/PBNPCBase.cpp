@@ -2,11 +2,14 @@
 
 
 #include "PBNPCBase.h"
-#include <Engine/Classes/Components/CapsuleComponent.h>
+#include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "../Function/PlayerInterface.h"
 #include "../Function/Interact/Dialogue/ScriptWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "../Function/Interact/Dialogue/ScriptWidget.h"
+#include "../Function/Interact/Dialogue/DialogueSystem.h"
 
 // Sets default values
 APBNPCBase::APBNPCBase()

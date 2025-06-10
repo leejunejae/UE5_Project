@@ -73,6 +73,9 @@ void UCurveEditorSubtractionFilter::ApplyFilter_Impl(TSharedRef<FCurveEditor> In
 				case EArithmeticType::Multiplation:
 					NextKeyVal = SelectedKeyPositions[KeyIndex].OutputValue * Value;
 					break;
+				default:
+					NextKeyVal = 0.0f;
+					break;
 				}
 
 				SelectedKeyPositions[KeyIndex].OutputValue = NextKeyVal;

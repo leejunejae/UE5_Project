@@ -4,13 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "../PBEnemy.h"
+
+// 구조체, 자료형
 #include "../../PEnumHeader.h"
 #include "../../EnemyHeader.h"
-#include "../../Function/Combat/PBDamagableInterface.h"
-#include "../../Function/Combat/PBDamageSystem.h"
-#include "../../Function/Combat/CombatComponent.h"
+
+// 인터페이스
+#include "../../Function/Combat/HitReactionInterface.h"
 #include "../../Function/Combat/CombatInterface.h"
+
+// 이동
 #include "MotionWarpingComponent.h"
+
+// 데이터테이블
 #include "Engine/DataTable.h"
 #include "PBEHuman.generated.h"
 
@@ -18,12 +24,13 @@
  * 
  */
 class UCharacterMovementComponent;
-class UPBDamageSystem;
+class UStatComponent;
+class UAttackComponent;
 
 DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
 
 UCLASS()
-class UE5PROJECT_API APBEHuman : public APBEnemy, public IPBDamagableInterface, public ICombatInterface
+class UE5PROJECT_API APBEHuman : public APBEnemy, public IHitReactionInterface, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -33,10 +40,12 @@ public:
 	void SetMovementSpeed(float speed);
 	FRangeInfo GetIdealRange();
 
+	/*
 	virtual void TakeDamage_Implementation(FAttackInfo DamageInfo);
 	virtual float Heal_Implementation(float amount);
 	virtual float GetHealth_Implementation();
 	virtual float GetMaxHealth_Implementation();
+	*/
 
 	virtual UStaticMeshComponent* GetWeapon_Implementation();
 
@@ -91,10 +100,10 @@ protected:
 	FEnemyInfo EnemyInfo;
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
-		UPBDamageSystem* DamageSystem;
+		UStatComponent* statcomponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
-		UCombatComponent* CombatComponent;
+		UAttackComponent* AttackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Combat)
 		UMotionWarpingComponent* MotionWarpComp;

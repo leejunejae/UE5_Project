@@ -1,12 +1,28 @@
  // Fill out your copyright notice in the Description page of Project Settings.
 #include "PBEHHereticSoldier.h"
-#include "PBEHHereticSoldierAI.h"
-#include "PBEHHSAnimInstance.h"
+
+// 이동
 #include "GameFramework/CharacterMovementComponent.h"
+
+// AI
+#include "PBEHHereticSoldierAI.h"
+
+// 애니메이션
+#include "PBEHHSAnimInstance.h"
+
+// Kismet 유틸리티
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+
+// 머터리얼
 #include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
+
+// 컴포넌트
+#include "../../../Function/Combat/AttackComponent.h"
+#include "../../../Function/Combat/StatComponent.h"
+
+// 파티클
 #include "NiagaraComponent.h"
 
 APBEHHereticSoldier::APBEHHereticSoldier()
@@ -101,10 +117,9 @@ APBEHHereticSoldier::APBEHHereticSoldier()
 	static ConstructorHelpers::FObjectFinder<UDataTable> AttackDT_Asset(TEXT("DataTable'/Game/Enemy/E_Human/EH_HereticSoldier/HSoldierAttackDT.HSoldierAttackDT'"));
 	if (AttackDT_Asset.Succeeded())
 	{
-		AttackDT = AttackDT_Asset.Object;
+		AttackComponent->SetAttackDT(AttackDT_Asset.Object);
 	}
 
-	CombatComponent->SetAttackDT(AttackDT);
 }
 
 void APBEHHereticSoldier::BeginPlay()
@@ -246,7 +261,7 @@ void APBEHHereticSoldier::PostInitializeComponents()
 	}
 
 	/*
-	CombatComponent->OnMotionWarp.BindLambda([this]()->void {
+	AttackComponent->OnMotionWarp.BindLambda([this]()->void {
 		FVector TargetLoc = Target->GetActorLocation();
 		FVector CharLoc = GetActorLocation();
 
@@ -285,7 +300,7 @@ void APBEHHereticSoldier::ResetCombo()
 void APBEHHereticSoldier::Attack(FName AttackName, ACharacter* Target)
 {
 	//HSoldierAnim->PlayMontage(FName("Combo1"));
-	CombatComponent->AnalysisAttackData(AttackName);
+	AttackComponent->AnalysisAttackData(AttackName);
 	MotionWarpComp->AddOrUpdateWarpTargetFromLocation(TEXT("Warp"), Target->GetActorLocation());
 	MotionWarpComp->AddOrUpdateWarpTargetFromLocation(TEXT("Smash"), Target->GetActorLocation());
 	
@@ -319,19 +334,19 @@ void APBEHHereticSoldier::OnMontageNotifyBegin(FName NotifyName, const FBranchin
 	{
 		for (int i = -1; i <= 1; i++)
 		{
-			CombatComponent->Detect_Circular(NotifyName, GetActorLocation() + GetActorForwardVector() * 150.0f + GetActorRightVector() * 30.0f * i - FVector(0.0f, 0.0f, 90.0f), GetActorForwardVector(), -GetActorUpVector(), 0.0f, 30.0f, 1050.0f, 10);
+			AttackComponent->Detect_Circular(NotifyName, GetActorLocation() + GetActorForwardVector() * 150.0f + GetActorRightVector() * 30.0f * i - FVector(0.0f, 0.0f, 90.0f), GetActorForwardVector(), -GetActorUpVector(), 0.0f, 30.0f, 1050.0f, 10);
 		}
 	}
 	else if (NotifyName == FName("Rush"))
 	{
 		for (int i = -1; i <= 1; i++)
 		{
-			CombatComponent->Detect_Circular(NotifyName, GetActorLocation() + GetActorForwardVector() * 150.0f + GetActorRightVector() * 30.0f * i - FVector(0.0f, 0.0f, 90.0f), GetActorForwardVector(), GetActorRightVector(), 0.0f, 30.0f, 1050.0f, 10);
+			AttackComponent->Detect_Circular(NotifyName, GetActorLocation() + GetActorForwardVector() * 150.0f + GetActorRightVector() * 30.0f * i - FVector(0.0f, 0.0f, 90.0f), GetActorForwardVector(), GetActorRightVector(), 0.0f, 30.0f, 1050.0f, 10);
 		}
 	}
 	else if (NotifyName == FName("Sweep"))
 	{
-		CombatComponent->Detect_Circular(NotifyName, GetActorLocation(), GetActorForwardVector(), GetActorRightVector(), -180.0f, 180.0f, 800.0f, 72, false);
+		AttackComponent->Detect_Circular(NotifyName, GetActorLocation(), GetActorForwardVector(), GetActorRightVector(), -180.0f, 180.0f, 800.0f, 72, false);
 	}
 }
 
@@ -360,7 +375,6 @@ void APBEHHereticSoldier::Death()
 void APBEHHereticSoldier::Block(bool DefenseMode)
 {
 	IsBlock = true;
-	DamageSystem->SetBlocking(true);
 	IsDefenseMode = DefenseMode;
 }
 
@@ -416,13 +430,11 @@ void APBEHHereticSoldier::SetHSoldierMode(HSoldierMode NextMode)
 		{
 			IsDefenseMode = false;
 			IsBlock = false;
-			DamageSystem->SetBlocking(false);
 		}
 		else
 		{
 			IsDefenseMode = true;
 			IsBlock = true;
-			DamageSystem->SetBlocking(true);
 		}
 		CurMode = NextMode;
 	}

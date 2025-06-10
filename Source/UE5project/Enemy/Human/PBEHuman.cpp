@@ -2,17 +2,27 @@
 
 
 #include "PBEHuman.h"
-#include <Engine/Classes/Components/CapsuleComponent.h>
+
+// 이동
 #include "GameFramework/CharacterMovementComponent.h"
+
+// 컴포넌트
+#include "../../Function/Combat/StatComponent.h"
+#include "../../Function/Combat/AttackComponent.h"
+
+// 콜리전
+#include "Components/CapsuleComponent.h"
 
 APBEHuman::APBEHuman()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
-	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
-	CombatComponent->bAutoActivate = true;
-	DamageSystem = CreateDefaultSubobject<UPBDamageSystem>(TEXT("DAMAGESYSTEM"));
-	DamageSystem->bAutoActivate = true;
+
+	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
+	AttackComponent->bAutoActivate = true;
+
+	statcomponent = CreateDefaultSubobject<UStatComponent>(TEXT("statcomponent"));
+	statcomponent->bAutoActivate = true;
 
 	MotionWarpComp = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("UMotionWarpingComponent"));
 	MotionWarpComp->bAutoActivate = true;
@@ -32,14 +42,16 @@ APBEHuman::APBEHuman()
 void APBEHuman::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	DamageSystem->OnDeath.BindUFunction(this, FName("Death"));
 }
 
 void APBEHuman::BeginPlay()
 {
 	Super::BeginPlay();
-	DamageSystem->SetHealth(GetMaxHP());
+
+	if (statcomponent != nullptr)
+	{
+		statcomponent->OnDeath.BindUFunction(this, FName("Death"));
+	}
 }
 
 void APBEHuman::Attack(FName AttackName, ACharacter* Target)
@@ -159,36 +171,37 @@ void APBEHuman::Dash(FVector TargetLocation)
 
 }
 
-
-void APBEHuman::TakeDamage_Implementation(FAttackInfo DamageInfo)
-{
-	IPBDamagableInterface::TakeDamage_Implementation(DamageInfo);
-
-	return DamageSystem->TakeDamage(DamageInfo);
-}
-
-float APBEHuman::GetMaxHealth_Implementation()
-{
-	IPBDamagableInterface::GetMaxHealth_Implementation();
-
-	return DamageSystem->GetfloatValue("MaxHealth");
-}
-
 UStaticMeshComponent* APBEHuman::GetWeapon_Implementation()
 {
 	return Weapon;
 }
 
+/*
+void APBEHuman::TakeDamage_Implementation(FAttackInfo DamageInfo)
+{
+	IHitReactionInterface::TakeDamage_Implementation(DamageInfo);
+
+	return statcomponent->TakeDamage(DamageInfo);
+}
+
+float APBEHuman::GetMaxHealth_Implementation()
+{
+	IHitReactionInterface::GetMaxHealth_Implementation();
+
+	return statcomponent->GetfloatValue("MaxHealth");
+}
+
 float APBEHuman::GetHealth_Implementation()
 {
-	IPBDamagableInterface::GetHealth_Implementation();
+	IHitReactionInterface::GetHealth_Implementation();
 
-	return DamageSystem->GetfloatValue("Health");
+	return 0.0f;//statcomponent->GetfloatValue("Health");
 }
 
 float APBEHuman::Heal_Implementation(float amount)
 {
-	IPBDamagableInterface::Heal_Implementation(amount);
+	IHitReactionInterface::Heal_Implementation(amount);
 
-	return DamageSystem->Heal(amount);
+	return statcomponent->Heal(amount);
 }
+*/

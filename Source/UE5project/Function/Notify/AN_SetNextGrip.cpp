@@ -4,9 +4,9 @@
 #include "AN_SetNextGrip.h"
 #include "../Interact/ClimbInterface.h"
 
-void UAN_SetNextGrip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UAN_SetNextGrip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	Super::Notify(MeshComp, Animation);
+	Super::Notify(MeshComp, Animation, EventReference);
 
 	if (MeshComp)
 	{
