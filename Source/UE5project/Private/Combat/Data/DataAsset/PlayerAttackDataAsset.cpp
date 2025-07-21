@@ -3,11 +3,12 @@
 
 #include "Combat/Data/DataAsset/PlayerAttackDataAsset.h"
 
+/*
 uint32 GetTypeHash(const FPlayerAttackDetail& AttackDetail)
 {
 	return GetTypeHash(AttackDetail.SectionName);
 }
-
+*/
 uint32 GetTypeHash(const FPlayerAttackInfo& AttackInfo)
 {
 	return GetTypeHash(AttackInfo.AttackName);

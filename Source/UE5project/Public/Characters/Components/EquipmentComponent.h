@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 
+// 인터페이스
 #include "Characters/Interfaces/EquipmentDataInterface.h"
+#include "Characters/Interfaces/StatInterface.h"
+
 #include "Items/Weapons/Data/WeaponData.h"
 
 #include "EquipmentComponent.generated.h"
@@ -28,6 +31,7 @@ protected:
 
 private:
 	TWeakObjectPtr<ACharacter> CachedCharacter;
+	TScriptInterface<IStatInterface> CachedStat;
 
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		TObjectPtr<UStaticMeshComponent> WeaponMesh;

@@ -6,6 +6,7 @@
 #include "Utils/AnimBoneTransformDataAsset.h"
 #include "Engine/StaticMeshSocket.h"
 #include "Combat/Interfaces/HitReactionInterface.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 
 void UPlayerAttackComponent::ExecuteAttack(FName AttackName, float Playrate)
 {
@@ -44,14 +45,12 @@ void UPlayerAttackComponent::PlayAnimation(FPlayerAttackInfo AttackInfo, int32 i
 {
 	UE_LOG(LogTemp, Warning, TEXT("Playrate = %f"), Playrate);
 	AnimInstance->Montage_Play(AttackInfo.Anim, Playrate);
-	AnimInstance->Montage_JumpToSection(AttackInfo.AttackDetail[index].SectionName);
+	AnimInstance->Montage_JumpToSection(AttackInfo.AttackDetail[index].BaseAttackData.SectionName);
 	//AnimInstance->Montage_SetPlayRate(AttackInfo.Anim, Playrate);
 
 	FOnMontageEnded MontageEndDelegate;
 	MontageEndDelegate.BindUObject(this, &UPlayerAttackComponent::OnMontageEnded);
 	AnimInstance->Montage_SetEndDelegate(MontageEndDelegate, AttackInfo.Anim);
-
-	//AttackInfo.Anim->anim
 }
 
 void UPlayerAttackComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -80,11 +79,13 @@ void UPlayerAttackComponent::SetCurAttackType(EWeaponType WeaponType)
 	CurAttackType = TypedAsset->FindPlayerAttackInfo(WeaponType);
 }
 
-void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponPartInfo WeaponInfo, float StartTime, float EndTime)
+void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsSubWeaponAttack)
 {
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 
-	UAnimBoneTransformDataAsset* TraceTargetBoneTransformData = CurAttackInfo.AttackDetail[ComboIndex].TargetBoneTransformDataAsset.LoadSynchronous();
+	UAnimBoneTransformDataAsset* TraceTargetBoneTransformData = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.TargetBoneTransformDataAsset.LoadSynchronous();
+
+	FWeaponPartInfo CurrentWeaponPart = IsSubWeaponAttack ? WeaponInfo.SubWeapon : WeaponInfo.MainWeapon;
 	
 	if (!DetectTracePrevTime.Key)
 	{
@@ -102,7 +103,7 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 	FVector CurrentHandLocationAtDataWorldTransform = CurrentRootWorldTransform.TransformPosition(CurrentHandLocationAtData);
 
 
-	FTransform TargetWeaponOffset = WeaponInfo.WeaponTransform;
+	FTransform TargetWeaponOffset = CurrentWeaponPart.WeaponTransform;
 
 	const UStaticMeshSocket* StartSocket = WeaponMesh->GetStaticMesh()->FindSocket("Start");
 	const UStaticMeshSocket* EndSocket = WeaponMesh->GetStaticMesh()->FindSocket("End");
@@ -125,7 +126,7 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 	FQuat CurrentTargetWeaponQuat = CurrentHandTransform.TransformRotation(TargetWeaponOffset.GetRotation());
 	FRotator CurrentTargetWeaponRotation = CurrentTargetWeaponQuat.Rotator();
 
-	FTransform CurrentTargetWeaponTransform(CurrentTargetWeaponRotation, CurrentTargetWeaponLocation, WeaponInfo.WeaponTransform.GetScale3D());
+	FTransform CurrentTargetWeaponTransform(CurrentTargetWeaponRotation, CurrentTargetWeaponLocation, CurrentWeaponPart.WeaponTransform.GetScale3D());
 
 	FVector CurrentStartSocketWorldLocation = CurrentTargetWeaponTransform.TransformPosition(StartSocketRelativeLocation);
 	FVector CurrentEndSocketWorldLocation = CurrentTargetWeaponTransform.TransformPosition(EndSocketRelativeLocation);
@@ -143,7 +144,7 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 
 	FVector StartLoc = StartSocketLocation;
 	FVector EndLoc = EndSocketLocation;
-	float Radius = WeaponInfo.HitBoxRadius;
+	float Radius = CurrentWeaponPart.HitBoxRadius;
 
 	float CurWeaponLength = FVector::Distance(StartLoc, EndLoc);
 	float CurHalfHeight = (CurWeaponLength * 0.5f);
@@ -154,9 +155,9 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 
 	DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Green, false, 1.0f);
 
-	FVector HandLocation = Character->GetMesh()->GetSocketLocation(FName("Hand_R"));
-	FVector WeaponLocation = Character->GetMesh()->GetSocketLocation(FName("S_Sword"));
-	FVector TestLocation = Character->GetMesh()->GetSocketLocation(FName("WeaponEnd"));
+	//FVector HandLocation = Character->GetMesh()->GetSocketLocation(FName("Hand_R"));
+	//FVector WeaponLocation = Character->GetMesh()->GetSocketLocation(FName("S_Sword"));
+	//FVector TestLocation = Character->GetMesh()->GetSocketLocation(FName("WeaponEnd"));
 
 	for (int32 i = 1; i <= TraceCorrectionCount; ++i)
 	{
@@ -174,7 +175,7 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 		FQuat PrevTargetWeaponQuat = PrevHandTransform.TransformRotation(TargetWeaponOffset.GetRotation());
 		FRotator PrevTargetWeaponRotation = PrevTargetWeaponQuat.Rotator();
 
-		FTransform PrevTargetWeaponTransform(PrevTargetWeaponRotation, PrevTargetWeaponLocation, WeaponInfo.WeaponTransform.GetScale3D());
+		FTransform PrevTargetWeaponTransform(PrevTargetWeaponRotation, PrevTargetWeaponLocation, CurrentWeaponPart.WeaponTransform.GetScale3D());
 
 		FVector PrevStartSocketWorldLocation = PrevTargetWeaponTransform.TransformPosition(StartSocketRelativeLocation);
 		FVector PrevEndSocketWorldLocation = PrevTargetWeaponTransform.TransformPosition(EndSocketRelativeLocation);
@@ -217,8 +218,6 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 
 		if (bHit)
 		{
-			//float OutDamage = 
-			//FAttackRequest OutAttackData();
 			for (const FHitResult& Result : HitResults)
 			{
 				AActor* HitActor = Result.GetActor();
@@ -228,16 +227,40 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 
 					if (HitActor->Implements<UHitReactionInterface>())
 					{
-						//IHitReactionInterface::Execute_OnHit(HitActor);
+						float OutDamage = WeaponInfo.AttackPower * CurAttackInfo.AttackDetail[ComboIndex].DamageMultiplier;
+						float OutPoiseDamage = WeaponInfo.PoisePower * CurAttackInfo.AttackDetail[ComboIndex].PoiseDamageMultiplier;
+						float OutStanceDamage = WeaponInfo.StancePower * CurAttackInfo.AttackDetail[ComboIndex].StanceDamageMultiplier;
+						HitResponse OutResponse = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.Response;
+						FVector OutHitPoint = Result.ImpactPoint;
+						FString OutHitPointName = Result.PhysMaterial.IsValid() ? Result.PhysMaterial->GetName() : FString();
+						bool OutCanBlocked = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.CanBlocked;
+						bool OutCanParried = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.CanParried;
+						bool OutCanAvoid = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.CanAvoid;
+						TArray<FStatusEffect> OutStatusEffect = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.StatusEffectList;
+
+						FAttackRequest OutAttackData(
+							OutDamage, 
+							OutStanceDamage, 
+							OutPoiseDamage, 
+							OutResponse,
+							OutHitPoint,
+							OutHitPointName,
+							OutCanBlocked,
+							OutCanParried,
+							OutCanAvoid,
+							OutStatusEffect
+							);
+
+						IHitReactionInterface::Execute_OnHit(HitActor, OutAttackData);
 
 					// 피격에 필요한 데이터 전달(인터페이스)
 						UE_LOG(LogTemp, Warning, TEXT("Hit Bone = %s"), *Result.BoneName.ToString());
 
 					}
-					else if (HitActorListCurrentAttack.Contains(HitActor))
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Already Hit Actor"));
-					}
+				}
+				else if (HitActorListCurrentAttack.Contains(HitActor))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Already Hit Actor"));
 				}
 			}
 		}

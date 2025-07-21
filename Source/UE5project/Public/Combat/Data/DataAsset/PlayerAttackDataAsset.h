@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "Combat/Data/AttackData.h"
-#include "Utils/AnimBoneTransformDataAsset.h"
 #include "Items/Weapons/Data/WeaponData.h"
 #include "PlayerAttackDataAsset.generated.h"
 
@@ -21,24 +20,25 @@ struct FPlayerAttackDetail
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FName SectionName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TSoftObjectPtr<UAnimBoneTransformDataAsset> TargetBoneTransformDataAsset;
+		FBaseAttackData BaseAttackData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float DamageMultiplier;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float PoiseMultiplier;
+		float PoiseDamageMultiplier;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float StanceDamageMultiplier;
+	/*
 	inline bool operator==(const FPlayerAttackDetail& Other) const
 	{
 		return SectionName == Other.SectionName;
 	}
+	*/
 };
 
-uint32 GetTypeHash(const FPlayerAttackDetail& AttackData);
+//uint32 GetTypeHash(const FPlayerAttackDetail& AttackData);
 
 USTRUCT(Atomic, BlueprintType)
 struct FPlayerAttackInfo

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Combat/Data/CombatData.h"
 #include "Items/Weapons/Data/WeaponData.h"
+#include "Utils/AnimBoneTransformDataAsset.h"
 #include "Engine/DataTable.h"
 #include "Engine/DataAsset.h"
 #include "GameFramework/Actor.h"
@@ -17,6 +18,34 @@ enum class TraceType : uint8
 	Sphere UMETA(DisplayName = "Sphere"),
 	Capsule UMETA(DisplayName = "Capsule"),
 	Box UMETA(DisplayName = "Box"),
+};
+
+USTRUCT(BlueprintType)
+struct FBaseAttackData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FName SectionName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSoftObjectPtr<UAnimBoneTransformDataAsset> TargetBoneTransformDataAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		HitResponse Response;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool CanBlocked;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool CanParried;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool CanAvoid;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FStatusEffect> StatusEffectList;
 };
 
 USTRUCT(BlueprintType)
@@ -42,7 +71,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool CanAvoid;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<Debuff> DebuffList;
+		TArray<EStatusEffect> StatusEffectsList;
 
 	inline bool operator==(const FAttackFeature& Other) const
 	{

@@ -50,7 +50,7 @@ public:
 	virtual void AnalysisAttackData(FName RowName, FName StartSection = FName("None"));
 	virtual void ExecuteAttack(FName SectionName, float Playrate = 1.0f);
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, const FAttackInfo* CurAnimData);
-	virtual void DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponPartInfo WeaponInfo, float StartTime, float EndTime);
+	virtual void DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsSubWeaponAttack = false);
 
 	void Detect_LineTrace(FAttackFeature AttackFeature, FVector StartLoc, FVector EndLoc, bool IsDrawLine = false);
 	void Detect_Circular(FAttackFeature AttackFeature, FVector Center, FVector Direction, FVector VerticalVector, float StartAngle, float EndAngle, float Radius, int TraceNum = 1, bool IsDrawLine = false);

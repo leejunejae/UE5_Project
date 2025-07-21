@@ -26,7 +26,7 @@ enum class HitResponse : uint8
 * 공격 데이터 자료형
 */
 UENUM(BlueprintType)
-enum class Debuff : uint8
+enum class EStatusEffect : uint8
 {
 	Bleeding UMETA(DisplayName = "Bleeding"),
 	Darkness UMETA(DisplayName = "Darkness"),
@@ -41,6 +41,18 @@ enum class AttackType : uint8
 	Light UMETA(DisplayName = "Light"),
 	Heavy UMETA(DisplayName = "Heavy"),
 	AOE UMETA(DisplayName = "AOE"),
+};
+
+USTRUCT(BlueprintType)
+struct FStatusEffect
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EStatusEffect StatusEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Amount;
 };
 
 USTRUCT(BlueprintType)
@@ -60,13 +72,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector HitPoint;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FString HitPointName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool CanBlocked;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool CanParried;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool CanAvoid;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<Debuff> DebuffList;
+		TArray<FStatusEffect> StatusEffectList;
 
 public:
 	FAttackRequest() {}
@@ -76,19 +90,21 @@ public:
 		float InPoiseDamage,
 		HitResponse InResponse,
 		FVector InHitPoint,
+		FString InHitPointName,
 		bool InCanBlocked,
 		bool InCanParried,
 		bool InCanAvoid,
-		const TArray<Debuff>& InDebuffList
+		const TArray<FStatusEffect>& InStatusEffectList
 		)
 		: Damage(InDamage)
 		, StanceDamage(InStanceDamage)
 		, PoiseDamage(InPoiseDamage)
 		, Response(InResponse)
 		, HitPoint(InHitPoint)
+		, HitPointName(InHitPointName)
 		, CanBlocked(InCanBlocked)
 		, CanParried(InCanParried)
 		, CanAvoid(InCanAvoid)
-		, DebuffList(InDebuffList)
+		, StatusEffectList(InStatusEffectList)
 	{}
 };

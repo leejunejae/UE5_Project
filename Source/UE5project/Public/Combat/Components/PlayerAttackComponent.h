@@ -30,9 +30,12 @@ public:
 
 	void SetCurAttackType(EWeaponType WeaponType);
 
-	void DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponPartInfo WeaponInfo, float StartTime, float EndTime) override;
+	void DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsSubWeaponAttack = false) override;
 
 private:
+	TWeakObjectPtr<ACharacter> CachedCharacter;
+	//TScriptInterface<IStatDataInterface> CachedStat;
+
 	UPROPERTY(VisibleAnywhere, Category = Attack)
 		FPlayerAttackInfoList CurAttackType;
 

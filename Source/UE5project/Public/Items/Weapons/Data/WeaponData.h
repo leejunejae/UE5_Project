@@ -3,8 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/NoExportTypes.h"
 #include "Engine/DataTable.h"
 #include "Items/Weapons/Data/WeaponDataAsset.h"
+#include "Characters/Data/CharacterStatData.h"
 #include "WeaponData.generated.h"
 
 UENUM(BlueprintType)
@@ -45,33 +47,16 @@ public:
 		int32 Intelligence = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 Willpower = 0;
+		int32 Vigor = 0;
 
-	// 유틸: 현재 능력치가 요구치를 충족하는지 비교
-	bool WeaponStatIsSatisfied(const FWeaponStatRequirement& PlayerStat) const
+	FCharacterStats ToCharacterStats() const
 	{
-		return PlayerStat.Strength >= Strength &&
-			PlayerStat.Dexterity >= Dexterity &&
-			PlayerStat.Intelligence >= Intelligence &&
-			PlayerStat.Willpower >= Willpower;
-	}
-
-	float WeaponStatSatisfactionRate(const FWeaponStatRequirement& PlayerStats) const
-	{
-		auto RatioFor = [](int32 Required, int32 Actual)
-		{
-			if (Required <= 0) return 1.f;
-			return FMath::Clamp((float)Actual / (float)Required, 0.f, 1.f);
-		};
-
-		float StrengthRatio = RatioFor(Strength, PlayerStats.Strength);
-		float DexterityRatio = RatioFor(Dexterity, PlayerStats.Dexterity);
-		float IntelligenceRatio = RatioFor(Intelligence, PlayerStats.Intelligence);
-		float WillpowerRatio = RatioFor(Willpower, PlayerStats.Willpower);
-
-		float AvgRatio = (StrengthRatio + DexterityRatio + IntelligenceRatio + WillpowerRatio) / 4.0f;
-
-		return FMath::Lerp(0.5f, 1.0f, AvgRatio);
+		FCharacterStats Stats;
+		Stats.Strength = Strength;
+		Stats.Dexterity = Dexterity;
+		Stats.Intelligence = Intelligence;
+		Stats.Vigor = Vigor;
+		return Stats;
 	}
 };
 
@@ -123,6 +108,9 @@ public:
 		float StancePower; // 스탠스 데미지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float StaminaCost; // 스태미나 소모값
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float PoiseBonus; // 공격 시 추가되는 경직 보너스
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -136,4 +124,11 @@ public:
 
 public:
 	FWeaponSetsInfo(){}
+};
+
+UCLASS()
+class UE5PROJECT_API UWeaponData : public UObject
+{
+	GENERATED_BODY()
+
 };

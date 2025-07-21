@@ -197,7 +197,7 @@ void UAttackComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
 			{
 				IsDetectAttackTarget = true;
 				UStaticMeshComponent* WeaponMeshComponent = IEquipmentDataInterface::Execute_GetMainWeaponMeshComponent(CachedEquipment.GetObject());
-				FWeaponPartInfo WeaponInfo = IEquipmentDataInterface::Execute_GetMainWeaponData(CachedEquipment.GetObject());
+				FWeaponSetsInfo WeaponInfo = IEquipmentDataInterface::Execute_GetWeaponSetsData(CachedEquipment.GetObject());
 
 				if (WeaponMeshComponent != nullptr)
 				{
@@ -210,7 +210,7 @@ void UAttackComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
 						EndTime);
 
 					FTimerDelegate AttackTimerDelegate;
-					AttackTimerDelegate.BindUObject(this, &UAttackComponent::DetectAttackTarget, WeaponMeshComponent, WeaponInfo, StartTime, EndTime);
+					AttackTimerDelegate.BindUObject(this, &UAttackComponent::DetectAttackTarget, WeaponMeshComponent, WeaponInfo, StartTime, EndTime, false);
 					GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, AttackTimerDelegate, 0.01f, true);
 				}
 			}
@@ -230,8 +230,9 @@ void UAttackComponent::OnMontageNotifyEnd(FName NotifyName, const FBranchingPoin
 	}
 }
 
-void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponPartInfo WeaponInfo, float StartTime, float EndTime)
+void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsSubWeaponAttack)
 {
+	/*
 	FVector StartLoc = WeaponMesh->GetSocketLocation("Start");
 	FVector EndLoc = WeaponMesh->GetSocketLocation("End");
 	float Radius = WeaponInfo.HitBoxRadius;
@@ -246,7 +247,7 @@ void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWea
 	//DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Green, false, 3.0f);
 
 	UE_LOG(LogTemp, Warning, TEXT("DetectTarget"));
-	/*
+	
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams CollisionParams;
 	CollisionParams.AddIgnoredActor(GetOwner());

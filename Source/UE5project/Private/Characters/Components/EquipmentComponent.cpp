@@ -48,29 +48,38 @@ void UEquipmentComponent::BeginPlay()
 	// ...
 	CachedCharacter = Cast<ACharacter>(GetOwner());
 
-	if (CheckOwnerExist())
+	if (!CheckOwnerExist())
+		return;
+
+	for (UActorComponent* Comp : CachedCharacter->GetComponents())
 	{
-		WeaponMesh = NewObject<UStaticMeshComponent>(GetOwner(), UStaticMeshComponent::StaticClass(), TEXT("WeaponMesh"));
-		SubEquipMesh = NewObject<UStaticMeshComponent>(GetOwner(), UStaticMeshComponent::StaticClass(), TEXT("SubEquipMesh"));
-
-		if (WeaponMesh && SubEquipMesh)
+		if (Comp->GetClass()->ImplementsInterface(UStatInterface::StaticClass()))
 		{
-			GetOwner()->AddInstanceComponent(WeaponMesh);
-			WeaponMesh->RegisterComponent();
-			WeaponMesh->AttachToComponent(CachedCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			WeaponMesh->SetGenerateOverlapEvents(false);
-			WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
-
-			GetOwner()->AddInstanceComponent(SubEquipMesh);
-			SubEquipMesh->RegisterComponent();
-			SubEquipMesh->AttachToComponent(CachedCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, SubEquipSocket);
-			SubEquipMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			SubEquipMesh->SetGenerateOverlapEvents(false);
-			SubEquipMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
-
-			EquipWeapon_Implementation(DefaultWeaponKey);
+			CachedStat = TScriptInterface<IStatInterface>(Comp);
+			break;
 		}
+	}
+
+	WeaponMesh = NewObject<UStaticMeshComponent>(GetOwner(), UStaticMeshComponent::StaticClass(), TEXT("WeaponMesh"));
+	SubEquipMesh = NewObject<UStaticMeshComponent>(GetOwner(), UStaticMeshComponent::StaticClass(), TEXT("SubEquipMesh"));
+
+	if (WeaponMesh && SubEquipMesh)
+	{
+		GetOwner()->AddInstanceComponent(WeaponMesh);
+		WeaponMesh->RegisterComponent();
+		WeaponMesh->AttachToComponent(CachedCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetGenerateOverlapEvents(false);
+		WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+
+		GetOwner()->AddInstanceComponent(SubEquipMesh);
+		SubEquipMesh->RegisterComponent();
+		SubEquipMesh->AttachToComponent(CachedCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, SubEquipSocket);
+		SubEquipMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SubEquipMesh->SetGenerateOverlapEvents(false);
+		SubEquipMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+
+		EquipWeapon_Implementation(DefaultWeaponKey);
 	}
 }
 
@@ -111,7 +120,7 @@ UStaticMeshComponent* UEquipmentComponent::GetSubEquipMeshComponent_Implementati
 void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 {
 	UWorld* World = GetWorld();
-	if (CheckOwnerExist() && WeaponMesh && World)
+	if (WeaponMesh && World )
 	{
 		UWeaponDataSubsystem* WeaponSubsystem = World->GetGameInstance()->GetSubsystem<UWeaponDataSubsystem>();
 		if (!WeaponSubsystem) return;
@@ -122,6 +131,18 @@ void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 			EquipedWeapon = *FindWeapon;
 			WeaponMesh->SetStaticMesh(EquipedWeapon.MainWeapon.WeaponInstance.LoadSynchronous()->WeaponMesh);
 			WeaponMesh->SetRelativeTransform(EquipedWeapon.MainWeapon.WeaponTransform);
+			if (CachedStat.GetInterface() && CachedStat.GetObject())
+			{
+				float PerformanceRatio = IStatInterface::Execute_GetWeaponPerformanceRatio(CachedStat.GetObject(), EquipedWeapon.RequiredStats.ToCharacterStats());
+				EquipedWeapon.AttackPower *= PerformanceRatio;
+				EquipedWeapon.PoisePower *= PerformanceRatio;
+				EquipedWeapon.StancePower *= PerformanceRatio;
+				if (PerformanceRatio < 1.0f)
+				{
+					EquipedWeapon.GuardBoost *= 0.8f;
+					EquipedWeapon.GuardNegation *= 0.8f;
+				}
+			}
 			if (EquipedWeapon.HasSubWeapon)
 			{
 				SubEquipMesh->SetStaticMesh(EquipedWeapon.SubWeapon.WeaponInstance.LoadSynchronous()->WeaponMesh);
