@@ -12,7 +12,9 @@
 				"Engine",
 				"AIModule",
 				"UMG",
-				"CurveEditor"
+				"CurveEditor",
+				"Blutility",
+				"CoreUObject"
 			]
 		}
 	],
