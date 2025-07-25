@@ -48,9 +48,9 @@ void UEquipmentComponent::BeginPlay()
 	// ...
 	CachedCharacter = Cast<ACharacter>(GetOwner());
 
-	if (!CheckOwnerExist())
+	if (!CachedCharacter.IsValid())
 		return;
-
+	
 	for (UActorComponent* Comp : CachedCharacter->GetComponents())
 	{
 		if (Comp->GetClass()->ImplementsInterface(UStatInterface::StaticClass()))
@@ -92,31 +92,6 @@ void UEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
-FWeaponSetsInfo UEquipmentComponent::GetWeaponSetsData_Implementation() const
-{
-	return EquipedWeapon;
-}
-
-FWeaponPartInfo UEquipmentComponent::GetMainWeaponData_Implementation() const
-{
-	return EquipedWeapon.MainWeapon;
-}
-
-FWeaponPartInfo UEquipmentComponent::GetSubEquipData_Implementation() const
-{
-	return EquipedWeapon.SubWeapon;
-}
-
-UStaticMeshComponent* UEquipmentComponent::GetMainWeaponMeshComponent_Implementation() const
-{
-	return WeaponMesh;
-}
-
-UStaticMeshComponent* UEquipmentComponent::GetSubEquipMeshComponent_Implementation() const
-{
-	return SubEquipMesh;
-}
-
 void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 {
 	UWorld* World = GetWorld();
@@ -131,7 +106,7 @@ void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 			EquipedWeapon = *FindWeapon;
 			WeaponMesh->SetStaticMesh(EquipedWeapon.MainWeapon.WeaponInstance.LoadSynchronous()->WeaponMesh);
 			WeaponMesh->SetRelativeTransform(EquipedWeapon.MainWeapon.WeaponTransform);
-			if (CachedStat.GetInterface() && CachedStat.GetObject())
+			if (CachedStat)
 			{
 				float PerformanceRatio = IStatInterface::Execute_GetWeaponPerformanceRatio(CachedStat.GetObject(), EquipedWeapon.RequiredStats.ToCharacterStats());
 				EquipedWeapon.AttackPower *= PerformanceRatio;

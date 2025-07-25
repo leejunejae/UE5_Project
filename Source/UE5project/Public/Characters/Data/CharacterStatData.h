@@ -10,8 +10,20 @@
 /**
  * 
  */
+UENUM(BlueprintType)
+enum class EAttributeType : uint8
+{
+	Vitality,
+	Endurance,
+	Mentality,
+	Strength,
+	Dexterity,
+	Intelligence,
+	Vigor
+};
+
 USTRUCT(BlueprintType)
-struct FStat_Vitality : public FTableRowBase
+struct FAttribute_Vitality : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -23,7 +35,7 @@ struct FStat_Vitality : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FStat_Endurance : public FTableRowBase
+struct FAttribute_Endurance : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -35,7 +47,7 @@ struct FStat_Endurance : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FStat_Mentality : public FTableRowBase
+struct FAttribute_Mentality : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -47,7 +59,7 @@ struct FStat_Mentality : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FStat_Strength : public FTableRowBase
+struct FAttribute_Strength : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -59,7 +71,7 @@ struct FStat_Strength : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FStat_Dexterity : public FTableRowBase
+struct FAttribute_Dexterity : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -71,7 +83,7 @@ struct FStat_Dexterity : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FStat_Intelligence : public FTableRowBase
+struct FAttribute_Intelligence : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -83,7 +95,7 @@ struct FStat_Intelligence : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FStat_Vigor : public FTableRowBase
+struct FAttribute_Vigor : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -98,7 +110,7 @@ struct FStat_Vigor : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FCharacterStats
+struct FCharacterAttributes
 {
 	GENERATED_BODY()
 
@@ -124,7 +136,7 @@ struct FCharacterStats
 		int32 Vigor = 10;
 
 	// 스탯 합산, 비교, 증감 같은 유틸 함수도 여기 포함 가능
-	FCharacterStats operator+(const FCharacterStats& Other) const
+	FCharacterAttributes operator+(const FCharacterAttributes& Other) const
 	{
 		return {
 			Vitality + Other.Vitality,
@@ -137,7 +149,49 @@ struct FCharacterStats
 		};
 	}
 
-	float GetRequirementStatRate(const FCharacterStats& Requirement) const;
+	float GetRequirementAttributeRate(const FCharacterAttributes& Requirement) const;
+};
+
+USTRUCT(BlueprintType)
+struct FCharacterStats
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float MaxHealth = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Health = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float MaxStamina = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Stamina = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float MaxFocus = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Focus = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float MeleeDefense = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float RangedDefense = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float MagicDefense = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float MaxPoise = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Poise = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Resistance = 0;
 };
 
 UCLASS()

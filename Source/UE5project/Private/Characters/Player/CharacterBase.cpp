@@ -39,12 +39,12 @@
 #include "Characters/Rideable/Interfaces/RideInterface.h"
 
 // 유저 컴포넌트
-#include "Characters/Components/CharacterStatusComponent.h"
+#include "Characters/Player/Components/PlayerStatusComponent.h"
 #include "Characters/Components/StatComponent.h"
 #include "Characters/Components/EquipmentComponent.h"
 #include "Combat/Components/CombatComponent.h"
 #include "Combat/Components/PlayerAttackComponent.h"
-#include "Combat/Components/HitReactionComponent.h"
+#include "Combat/Components/PlayerHitReactionComponent.h"
 #include "Interaction/Climb/Components/ClimbComponent.h"
 #include "Interaction/Components/InteractComponent.h"
 
@@ -55,7 +55,7 @@ ACharacterBase::ACharacterBase()
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
 
-	CharacterStatusComponent = CreateDefaultSubobject<UCharacterStatusComponent>(TEXT("CharacterStatusComponent"));
+	CharacterStatusComponent = CreateDefaultSubobject<UPlayerStatusComponent>(TEXT("CharacterStatusComponent"));
 	CharacterStatusComponent->bAutoActivate = true;
 
 	StatComponent = CreateDefaultSubobject<UStatComponent>(TEXT("StatComponent"));
@@ -70,7 +70,7 @@ ACharacterBase::ACharacterBase()
 	AttackComponent = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("AttackComponent"));
 	AttackComponent->bAutoActivate = true;
 
-	HitReactionComponent = CreateDefaultSubobject<UHitReactionComponent>(TEXT("HitReactionComponent"));
+	HitReactionComponent = CreateDefaultSubobject<UPlayerHitReactionComponent>(TEXT("HitReactionComponent"));
 	HitReactionComponent->bAutoActivate = true;
 
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
@@ -189,6 +189,12 @@ ACharacterBase::ACharacterBase()
 	if (AttackDA_Asset.Succeeded())
 	{
 		AttackComponent->SetAttackDA(AttackDA_Asset.Object);
+	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> RollMontageAsset(TEXT("/Game/00_Character/C_Warrior/CW_Animation/Animation/Sequence/SSH/Roll/Roll_Montage.Roll_Montage"));
+	if (RollMontageAsset.Succeeded())
+	{
+		RollMontage = RollMontageAsset.Object;
 	}
 
 	GetMesh()->SetGenerateOverlapEvents(true);
@@ -411,19 +417,6 @@ void ACharacterBase::PostInitializeComponents()
 
 		CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &ACharacterBase::LeftLocomotion);
 
-		CharacterBaseAnim->OnDodgeEnd.AddLambda([this]()->void {
-			CanDodge = true;
-			//IsDodge = false;
-			GetCharacterMovement()->bOrientRotationToMovement = true;
-			//FallenKnightAnim->SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
-			});
-
-		CharacterBaseAnim->OnDodgeStart.AddLambda([this]()->void {
-			//IsDodge = true;
-			IsRoll = false;
-			});
-
-
 		CharacterBaseAnim->OnEnterWalkState.AddLambda([this]()->void {
 			CurrentState = ECharacterState::Ground;
 			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
@@ -618,7 +611,6 @@ void ACharacterBase::EnterLocomotion()
 	IsLocomotion = true;
 	//IsAttack = false;
 	//CurResponse = HitResponse::None;
-	CanDodge = true;
 	CanRide = true;
 	//UE_LOG(LogTemp, Warning, TEXT("EnterLocomotion"));
 }
@@ -633,6 +625,8 @@ void ACharacterBase::LeftLocomotion()
 
 void ACharacterBase::Dodge()
 {
+	if (CharacterBaseAnim->GetCurveValue(FName("EnableDodge")) > 0.0f) return;
+
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0, Rotation.Yaw, 0);
 
@@ -646,58 +640,68 @@ void ACharacterBase::Dodge()
 	DodgeVector = FVector(InputX, InputY, 0.0f);
 	
 	float DodgeDegree;
-	float OriginalLocX;
-	float OriginalLocY;
 
 	if (DodgeVector.X == 0.0f && DodgeVector.Y == 0.0f)
 		DodgeDegree = 180.0f;
 	else
 		DodgeDegree = UKismetMathLibrary::DegAtan2(DodgeVector.X, DodgeVector.Y);
 
-	if (DodgeDegree >= 0.0f && DodgeDegree <= 90.0f)
+	TArray<float> Angles = { -180.0f, -135.0f, -90.0f, -45.0f, 0.0f, 45.0f, 90.0f, 135.0f, 180.0f };
+
+	float Closest = Angles[0];
+	float MinDiff = FMath::Abs(FMath::FindDeltaAngleDegrees(DodgeDegree, Closest));
+
+	for (int32 i = 1; i < Angles.Num(); ++i)
 	{
-		OriginalLocX = 5.1111f * DodgeDegree;
-		OriginalLocY = 460.0f - OriginalLocX;
-	}
-	else if (DodgeDegree > 90.0f && DodgeDegree <= 180.0f)
-	{
-		OriginalLocY = -5.1111f * (DodgeDegree - 90.0f);
-		OriginalLocX = 460.0f + OriginalLocY;
-	}
-	else if (DodgeDegree < 0.0f && DodgeDegree >= -90.0f)
-	{
-		OriginalLocX = 5.1111f * DodgeDegree;
-		OriginalLocY = 460.0f + OriginalLocX;
-	}
-	else if (DodgeDegree < -90.0f && DodgeDegree >= -180.0f)
-	{
-		OriginalLocY = 5.1111f * (DodgeDegree + 90.0f);
-		OriginalLocX = -460.0f - OriginalLocY;
+		float Diff = FMath::Abs(FMath::FindDeltaAngleDegrees(DodgeDegree, Angles[i]));
+		if (Diff < MinDiff)
+		{
+			MinDiff = Diff;
+			Closest = Angles[i];
+		}
 	}
 
-	float OriginalLength = FMath::Sqrt(OriginalLocX * OriginalLocX + OriginalLocY * OriginalLocY);
+	static const TMap<float, FName> AngleToDirection = {
+		{ 0.0f, FName("Roll_F")},
+		{ 45.0f, FName("Roll_FR")},
+		{ 90.0f, FName("Roll_R")},
+		{ 135.0f, FName("Roll_BR")},
+		{ 180.0f, FName("Roll_B")},
+		{ -45.0f, FName("Roll_FL")},
+		{ -90.0f, FName("Roll_L")},
+		{ -135.0f, FName("Roll_BL")},
+		{ -180.0f, FName("Roll_B")},
+	};
 
-	float AdjustFactorX = (OriginalLocX / OriginalLength) * 460.0f;
-	float AdjustFactorY = (OriginalLocY / OriginalLength) * 460.0f;
+	FName RollDirectionName = AngleToDirection[Closest];
 
-
-	float TargetLocX = AdjustFactorX - OriginalLocX;
-	float TargetLocY = AdjustFactorY - OriginalLocY;;
-
-	DodgeDirection = GetActorForwardVector() * TargetLocY + GetActorRightVector() * TargetLocX;
+	CharacterBaseAnim->Montage_Stop(0.1f);
+	CharacterBaseAnim->Montage_Play(RollMontage);
+	CharacterBaseAnim->Montage_JumpToSection(RollDirectionName, RollMontage);
 }
 
 void ACharacterBase::Jump()
 {
-	if (!IsLocomotion)
+	if (!IsLocomotion || CharacterBaseAnim->GetCurveValue(FName("EnableJump")) > 0.5f)
 		return;
-	Super::Jump();
+
+	if (CharacterBaseAnim->GetCurrentActiveMontage())
+	{
+		CharacterBaseAnim->Montage_Stop(0.1f);
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &Super::Jump);
+	}
+	else
+	{
+		CharacterStatusComponent->SetCombatState(ECharacterGroundState::Jump);
+		Super::Jump();
+	}
 	//GetCharacterMovement()->bOrientRotationToMovement = false;
 }
 
 void ACharacterBase::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
+	CharacterStatusComponent->SetCombatState(ECharacterGroundState::Normal);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
@@ -1231,27 +1235,62 @@ void ACharacterBase::HandleHitAir()
 
 void ACharacterBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnHit"));
 	float HitAngle = HitReactionComponent->CalculateHitAngle(AttackInfo.HitPoint);
+	
 	HitResponse Response = HitReactionComponent->EvaluateHitResponse(
 		AttackInfo
 	);
 
-	if (Response == HitResponse::HitAir)
+	switch (Response)
 	{
-		CharacterBaseAnim->SetHitAir(true);
+	case HitResponse::Flinch:
+	case HitResponse::KnockBack:
+	case HitResponse::KnockDown:
+	{
+		StatComponent->ChangeHealth(AttackInfo.Damage, EHPChangeType::DirectDamage);
+		bool IsPoiseEnough = StatComponent->ChangePoise(AttackInfo.PoiseDamage);
+		UE_LOG(LogTemp, Warning, TEXT("Hit"));
+		if (StatComponent->GetBaseStats_Native().Poise <= 0.0f && !CharacterStatusComponent->IsDead())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Hit Response"));
+			FHitReactionRequest InputReaction = { Response,HitAngle };
+			HitReactionComponent->ExecuteHitResponse(InputReaction);
+		}
+		break;
 	}
-
-	if (!CharacterStatusComponent->IsDead())
+	case HitResponse::HitAir:
 	{
-		UE_LOG(LogTemp, Warning, TEXT("HitReaction"));
-		FHitReactionRequest InputReaction = {
-			Response,
-			AttackInfo.CanBlocked,
-			AttackInfo.CanParried,
-			AttackInfo.CanAvoid,
-			HitAngle
-		};
-		HitReactionComponent->ExecuteHitResponse(InputReaction);
+		StatComponent->ChangeHealth(AttackInfo.Damage, EHPChangeType::DirectDamage);
+		bool IsPoiseEnough = StatComponent->ChangePoise(AttackInfo.PoiseDamage);
+		if (StatComponent->GetBaseStats_Native().Poise <= 0.0f || CharacterStatusComponent->IsDead())
+		{
+			CharacterBaseAnim->SetHitAir(true);
+		}
+		break;
+	}
+	case HitResponse::Block:
+	case HitResponse::BlockLarge:
+	{
+		float ApplyGuardBoost = AttackInfo.StanceDamage * (1.0f - EquipmentComponent->GetWeaponSetsData_Native().GuardBoost / 100.0f);
+		bool IsStaminaEnough = StatComponent->ChangeStamina(ApplyGuardBoost, ESPChangeType::Blocked);
+		if (IsStaminaEnough)
+		{
+			float ApplyNegationDamage = AttackInfo.Damage * (1.0f - EquipmentComponent->GetWeaponSetsData_Native().GuardNegation / 100.0f);
+			StatComponent->ChangeHealth(ApplyNegationDamage, EHPChangeType::DirectDamage);
+			if (!CharacterStatusComponent->IsDead())
+			{
+				FHitReactionRequest InputReaction = { Response, HitAngle };
+				HitReactionComponent->ExecuteHitResponse(InputReaction);
+			}
+		}
+		else
+		{
+			StatComponent->ChangeHealth(AttackInfo.Damage, EHPChangeType::DirectDamage);
+			Response = Response == HitResponse::Block ? HitResponse::BlockBreak : HitResponse::BlockStun;
+		}
+		break;
+	}
 	}
 }
 

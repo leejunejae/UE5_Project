@@ -24,11 +24,14 @@ class UE5PROJECT_API IStatInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	FCharacterStats GetBaseStatLevel();
+		FCharacterAttributes GetBaseAttributesLevel() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	float GetStatRequirementRatio(const FCharacterStats& RequireStats) const;
+		FCharacterStats GetBaseStats() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	float GetWeaponPerformanceRatio(const FCharacterStats& RequireStats) const;
+	float GetAttributesRequirementRatio(const FCharacterAttributes& RequireStats) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	float GetWeaponPerformanceRatio(const FCharacterAttributes& RequireStats) const;
 };

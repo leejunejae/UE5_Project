@@ -44,9 +44,6 @@ struct FHitReactionRequest
 
 public:
 	HitResponse Response;
-	bool CanBlocked;
-	bool CanParried;
-	bool CanAvoid;
 	float HitAngle;
 };
 

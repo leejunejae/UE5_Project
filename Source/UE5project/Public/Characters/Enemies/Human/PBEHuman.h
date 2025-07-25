@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Enemies/PBEnemy.h"
+#include "Characters/Enemies/EnemyBase.h"
 
 // 구조체, 자료형
 #include "PEnumHeader.h"
@@ -30,7 +30,7 @@ class UAttackComponent;
 DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
 
 UCLASS()
-class UE5PROJECT_API APBEHuman : public APBEnemy, public IHitReactionInterface, public ICombatInterface
+class UE5PROJECT_API APBEHuman : public AEnemyBase, public ICombatInterface
 {
 	GENERATED_BODY()
 

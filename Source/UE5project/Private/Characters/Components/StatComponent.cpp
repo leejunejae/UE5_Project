@@ -11,6 +11,47 @@ UStatComponent::UStatComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
+	static ConstructorHelpers::FObjectFinder<UDataTable> VitalityDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Vitality_DT.Attribute_Vitality_DT'"));
+	if (VitalityDT_Asset.Succeeded())
+	{
+		AttributeTables.Add(EAttributeType::Vitality, VitalityDT_Asset.Object);
+	}
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> EnduranceDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Endurance_DT.Attribute_Endurance_DT'"));
+	if (EnduranceDT_Asset.Succeeded())
+	{
+		AttributeTables.Add(EAttributeType::Endurance, EnduranceDT_Asset.Object);
+	}
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> MentalityDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Mentality_DT.Attribute_Mentality_DT'"));
+	if (MentalityDT_Asset.Succeeded())
+	{
+		AttributeTables.Add(EAttributeType::Mentality, MentalityDT_Asset.Object);
+	}
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> StrengthDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Strength_DT.Attribute_Strength_DT'"));
+	if (StrengthDT_Asset.Succeeded())
+	{
+		AttributeTables.Add(EAttributeType::Strength, StrengthDT_Asset.Object);
+	}
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> DexterityDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Dexterity_DT.Attribute_Dexterity_DT'"));
+	if (DexterityDT_Asset.Succeeded())
+	{
+		AttributeTables.Add(EAttributeType::Dexterity, DexterityDT_Asset.Object);
+	}
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> IntelligenceDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Intelligence_DT.Attribute_Intelligence_DT'"));
+	if (IntelligenceDT_Asset.Succeeded())
+	{
+		AttributeTables.Add(EAttributeType::Intelligence, IntelligenceDT_Asset.Object);
+	}
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> VigorDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Vigor_DT.Attribute_Vigor_DT'"));
+	if (VigorDT_Asset.Succeeded())
+	{
+		AttributeTables.Add(EAttributeType::Vigor, VigorDT_Asset.Object);
+	}
 	// ...
 }
 
@@ -28,15 +69,15 @@ void UStatComponent::BeginPlay()
 
 void UStatComponent::InitializeStats()
 {
-	if (VitalityTable)
+	if (AttributeTables.Contains(EAttributeType::Vitality))
 	{
-		FString RowName = FString::Printf(TEXT("Vitality_%d"), BaseStats.Vitality);
-		const FStat_Vitality* VitalityDTRow = VitalityTable->FindRow<FStat_Vitality>(FName(*RowName), TEXT(""));
+		FString RowName = FString::Printf(TEXT("Vitality_%d"), BaseAttributes.Vitality);
+		const FAttribute_Vitality* VitalityDTRow = AttributeTables[EAttributeType::Vitality]->FindRow<FAttribute_Vitality>(FName(*RowName), TEXT(""));
 		
 		if (VitalityDTRow)
 		{
-			MaxHealth = VitalityDTRow->HP;
-			Health = MaxHealth;
+			BaseStats.MaxHealth = VitalityDTRow->HP;
+			BaseStats.Health = BaseStats.MaxHealth;
 		}
 		else 
 		{
@@ -44,15 +85,15 @@ void UStatComponent::InitializeStats()
 		}
 	}
 
-	if (EnduranceTable)
+	if (AttributeTables.Contains(EAttributeType::Endurance))
 	{
-		FString RowName = FString::Printf(TEXT("Endurance_%d"), BaseStats.Endurance);
-		const FStat_Endurance* EnduranceDTRow = EnduranceTable->FindRow<FStat_Endurance>(FName(*RowName), TEXT(""));
+		FString RowName = FString::Printf(TEXT("Endurance_%d"), BaseAttributes.Endurance);
+		const FAttribute_Endurance* EnduranceDTRow = AttributeTables[EAttributeType::Endurance]->FindRow<FAttribute_Endurance>(FName(*RowName), TEXT(""));
 
 		if (EnduranceDTRow)
 		{
-			MaxStamina = EnduranceDTRow->Stamina;
-			Stamina = MaxStamina;
+			BaseStats.MaxStamina = EnduranceDTRow->Stamina;
+			BaseStats.Stamina = BaseStats.MaxStamina;
 		}
 		else
 		{
@@ -60,14 +101,15 @@ void UStatComponent::InitializeStats()
 		}
 	}
 
-	if (MentalityTable)
+	if (AttributeTables.Contains(EAttributeType::Mentality))
 	{
-		FString RowName = FString::Printf(TEXT("Mentality_%d"), BaseStats.Mentality);
-		const FStat_Mentality* MentalityDTRow = MentalityTable->FindRow<FStat_Mentality>(FName(*RowName), TEXT(""));
+		FString RowName = FString::Printf(TEXT("Mentality_%d"), BaseAttributes.Mentality);
+		const FAttribute_Mentality* MentalityDTRow = AttributeTables[EAttributeType::Mentality]->FindRow<FAttribute_Mentality>(FName(*RowName), TEXT(""));
 
 		if (MentalityDTRow)
 		{
-			MaxFocus = MentalityDTRow->FP;
+			BaseStats.MaxFocus = MentalityDTRow->FP;
+			BaseStats.Focus = BaseStats.MaxFocus;
 		}
 		else
 		{
@@ -75,14 +117,14 @@ void UStatComponent::InitializeStats()
 		}
 	}
 
-	if (StrengthTable)
+	if (AttributeTables.Contains(EAttributeType::Strength))
 	{
-		FString RowName = FString::Printf(TEXT("Strength_%d"), BaseStats.Strength);
-		const FStat_Strength* StrengthDTRow = StrengthTable->FindRow<FStat_Strength>(FName(*RowName), TEXT(""));
+		FString RowName = FString::Printf(TEXT("Strength_%d"), BaseAttributes.Strength);
+		const FAttribute_Strength* StrengthDTRow = AttributeTables[EAttributeType::Strength]->FindRow<FAttribute_Strength>(FName(*RowName), TEXT(""));
 
 		if (StrengthDTRow)
 		{
-			MeleeDefense = StrengthDTRow->MeleeDefense;
+			BaseStats.MeleeDefense = StrengthDTRow->MeleeDefense;
 		}
 		else
 		{
@@ -90,14 +132,14 @@ void UStatComponent::InitializeStats()
 		}
 	}
 
-	if (DexterityTable)
+	if (AttributeTables.Contains(EAttributeType::Dexterity))
 	{
-		FString RowName = FString::Printf(TEXT("Dexterity_%d"), BaseStats.Dexterity);
-		const FStat_Dexterity* DexterityDTRow = DexterityTable->FindRow<FStat_Dexterity>(FName(*RowName), TEXT(""));
+		FString RowName = FString::Printf(TEXT("Dexterity_%d"), BaseAttributes.Dexterity);
+		const FAttribute_Dexterity* DexterityDTRow = AttributeTables[EAttributeType::Dexterity]->FindRow<FAttribute_Dexterity>(FName(*RowName), TEXT(""));
 
 		if (DexterityDTRow)
 		{
-			RangedDefense = DexterityDTRow->RangedDefense;
+			BaseStats.RangedDefense = DexterityDTRow->RangedDefense;
 		}
 		else
 		{
@@ -105,14 +147,14 @@ void UStatComponent::InitializeStats()
 		}
 	}
 
-	if (IntelligenceTable)
+	if (AttributeTables.Contains(EAttributeType::Intelligence))
 	{
-		FString RowName = FString::Printf(TEXT("Intelligence_%d"), BaseStats.Intelligence);
-		const FStat_Intelligence* IntelligenceDTRow = IntelligenceTable->FindRow<FStat_Intelligence>(FName(*RowName), TEXT(""));
+		FString RowName = FString::Printf(TEXT("Intelligence_%d"), BaseAttributes.Intelligence);
+		const FAttribute_Intelligence* IntelligenceDTRow = AttributeTables[EAttributeType::Intelligence]->FindRow<FAttribute_Intelligence>(FName(*RowName), TEXT(""));
 
 		if (IntelligenceDTRow)
 		{
-			MagicDefense = IntelligenceDTRow->MagicDefense;
+			BaseStats.MagicDefense = IntelligenceDTRow->MagicDefense;
 		}
 		else
 		{
@@ -120,15 +162,16 @@ void UStatComponent::InitializeStats()
 		}
 	}
 
-	if (VigorTable)
+	if (AttributeTables.Contains(EAttributeType::Vigor))
 	{
-		FString RowName = FString::Printf(TEXT("Vigor_%d"), BaseStats.Vigor);
-		const FStat_Vigor* VigorDTRow = VigorTable->FindRow<FStat_Vigor>(FName(*RowName), TEXT(""));
+		FString RowName = FString::Printf(TEXT("Vigor_%d"), BaseAttributes.Vigor);
+		const FAttribute_Vigor* VigorDTRow = AttributeTables[EAttributeType::Vigor]->FindRow<FAttribute_Vigor>(FName(*RowName), TEXT(""));
 
 		if (VigorDTRow)
 		{
-			Poise = VigorDTRow->Poise;
-			Resistance = VigorDTRow->Resistance;
+			BaseStats.MaxPoise = VigorDTRow->Poise;
+			BaseStats.Poise = BaseStats.MaxPoise;
+			BaseStats.Resistance = VigorDTRow->Resistance;
 		}
 		else
 		{
@@ -139,12 +182,17 @@ void UStatComponent::InitializeStats()
 
 void UStatComponent::ChangeMaxHealth(const float Amount)
 {
-	MaxHealth += Amount;
+	BaseStats.MaxHealth += Amount;
 }
 
 void UStatComponent::ChangeMaxStamina(const float Amount)
 {
-	MaxStamina += Amount;
+	BaseStats.MaxStamina += Amount;
+}
+
+void UStatComponent::ChangeMaxPoise(const float Amount)
+{
+	BaseStats.MaxPoise += Amount;
 }
 
 bool UStatComponent::ChangeHealth(const float Amount, const EHPChangeType HPChangeType)
@@ -153,7 +201,7 @@ bool UStatComponent::ChangeHealth(const float Amount, const EHPChangeType HPChan
 	switch (HPChangeType)
 	{
 	case EHPChangeType::DirectDamage:
-		Delta *= (1.0f - (MeleeDefense / (MeleeDefense + 100.0f)));
+		Delta *= (1.0f - (BaseStats.MeleeDefense / (BaseStats.MeleeDefense + 100.0f)));
 		break;
 	case EHPChangeType::TrueDamage:
 		break;
@@ -162,21 +210,22 @@ bool UStatComponent::ChangeHealth(const float Amount, const EHPChangeType HPChan
 		break;
 	}
 
-	Health = FMath::Clamp(Health - Delta, 0.0f, MaxHealth);
+	BaseStats.Health = FMath::Clamp(BaseStats.Health - Delta, 0.0f, BaseStats.MaxHealth);
 	
-	if (Health <= 0.0f)
+	if (BaseStats.Health <= 0.0f)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Death Delegate"));
 		OnDeath.ExecuteIfBound();
 	}
 
-	return Health > 0.0f ? true : false;
+	return BaseStats.Health > 0.0f ? true : false;
 }
 
 bool UStatComponent::ChangeStamina(const float Amount, const ESPChangeType SPChangeType)
 {
 	float Delta = Amount;
 	
+	/*
 	switch (SPChangeType)
 	{
 	case ESPChangeType::Blocked:
@@ -188,25 +237,28 @@ bool UStatComponent::ChangeStamina(const float Amount, const ESPChangeType SPCha
 		Delta *= -1.0f;
 		break;
 	}
+	*/
 
-	Stamina = FMath::Clamp(Stamina - Delta, 0.0f, MaxStamina);
+	BaseStats.Stamina = FMath::Clamp(BaseStats.Stamina - Delta, 0.0f, BaseStats.MaxStamina);
 
-	return Stamina > 0.0f ? true : false;
+	return BaseStats.Stamina >= Delta;
 }
 
-FCharacterStats UStatComponent::GetBaseStatLevel_Implementation() const
+bool UStatComponent::ChangePoise(const float Amount)
 {
-	return BaseStats;
+	BaseStats.Poise = FMath::Clamp(BaseStats.Poise - Amount, 0.0f, BaseStats.MaxPoise);
+
+	return BaseStats.Poise >= Amount;
 }
 
-float UStatComponent::GetStatRequirementRatio_Implementation(const FCharacterStats& RequireStats) const
+float UStatComponent::GetAttributesRequirementRatio_Implementation(const FCharacterAttributes& RequireStats) const
 {
-	return BaseStats.GetRequirementStatRate(RequireStats);
+	return BaseAttributes.GetRequirementAttributeRate(RequireStats);
 }
 
-float UStatComponent::GetWeaponPerformanceRatio_Implementation(const FCharacterStats& RequireStats) const
+float UStatComponent::GetWeaponPerformanceRatio_Implementation(const FCharacterAttributes& RequireStats) const
 {
-	const float StatFulfillRatio = BaseStats.GetRequirementStatRate(RequireStats);
+	const float StatFulfillRatio = BaseAttributes.GetRequirementAttributeRate(RequireStats);
 
 	if (StatFulfillRatio >= 1.0f)
 		return 1.0f;

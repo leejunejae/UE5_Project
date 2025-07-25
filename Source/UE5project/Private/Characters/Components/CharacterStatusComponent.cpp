@@ -19,6 +19,8 @@ void UCharacterStatusComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	CachedCharacter = Cast<ACharacter>(GetOwner());
+
 	UStatComponent* StatComp = GetOwner()->FindComponentByClass<UStatComponent>();
 	if (StatComp)
 	{
@@ -42,37 +44,3 @@ void UCharacterStatusComponent::HandleDeath()
 	bIsDead = true;
 	OnDeath.Broadcast();
 }
-
-bool UCharacterStatusComponent::CanTransition(const ECharacterGroundState NewState) const
-{
-	switch (GroundState)
-	{
-	case ECharacterGroundState::Normal:
-		return true;
-	case ECharacterGroundState::Block:
-		return NewState != ECharacterGroundState::Block;
-	case ECharacterGroundState::Dodge:
-	{
-		return NewState == ECharacterGroundState::Invincible;
-	}
-	case ECharacterGroundState::Parry:
-	{
-		return NewState == ECharacterGroundState::Invincible;
-	}
-	case ECharacterGroundState::Invincible:
-	{
-		return false;
-	}
-	default:
-		return false;
-	}
-}
-
-void UCharacterStatusComponent::SetCombatState(ECharacterGroundState NewState)
-{
-	if (!CanTransition(NewState))
-		return;
-
-	GroundState = NewState;
-}
-

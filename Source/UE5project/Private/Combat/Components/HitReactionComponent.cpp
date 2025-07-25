@@ -23,27 +23,10 @@ void UHitReactionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//AnimInstance = GetOwner()->GetComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
+	CachedCharacter = Cast<ACharacter>(GetOwner());
 
-	USkeletalMeshComponent* Mesh = GetOwner()->GetComponentByClass<USkeletalMeshComponent>();
-	UE_LOG(LogTemp, Warning, TEXT("Found mesh: %s"), *Mesh->GetName());
-
-	if (!Mesh)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Mesh is nullptr"));
-	}
-	else if (!Mesh->SkeletalMesh)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Mesh->SkeletalMesh is nullptr"));
-	}
-	else if (!Mesh->AnimClass)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Mesh->AnimClass is nullptr"));
-	}
-	else if (!Mesh->IsRegistered())
-	{
-		UE_LOG(LogTemp, Error, TEXT("Mesh is not registered"));
-	}
+	if (!CachedCharacter.IsValid())
+		return;
 }
 
 
@@ -68,15 +51,6 @@ void UHitReactionComponent::SetHitReactionDT(const UDataTable* HitReactionDT)
 void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest ReactionData)
 {
 	if (!HitReactionListDT) return;
-
-	//float HitAngle = CalculateHitAngle(ReactionData.HitPoint);
-
-	//HitResponse Response = EvaluateHitResponse(ReactionData.Response, ReactionData.CanBlocked, ReactionData.CanParried, ReactionData.CanAvoid, HitAngle);
-	//if (ReactionData.Response == HitResponse::HitAir || ReactionData.Response == HitResponse::DeathLarge)
-	//{
-	//	if(OnHitAirReaction.IsBound()) OnHitAirReaction.Broadcast();
-	//	return;
-	//}
 
 	const UEnum* EnumPtr = StaticEnum<HitResponse>();
 	if (!EnumPtr) return;
@@ -187,6 +161,7 @@ float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)
 
 HitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& AttackRequest)
 {
+	/*
 	UCharacterStatusComponent* StatusComp = GetOwner()->FindComponentByClass<UCharacterStatusComponent>();
 
 	if (!StatusComp) return AttackRequest.Response;
@@ -222,7 +197,7 @@ HitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& Att
 	case ECharacterGroundState::Block:
 	{
 	float HitAngle = CalculateHitAngle(AttackRequest.HitPoint);
-		if (AttackRequest.CanBlocked && (HitAngle >= -60.0f || HitAngle <= 60.0f))
+		if (AttackRequest.CanBlocked && (FMath::Abs(HitAngle) <= 60.0f))
 		{
 			switch (AttackRequest.Response)
 			{
@@ -278,4 +253,6 @@ HitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& Att
 	}
 
 	return FinalResponse;
+	*/
+	return HitResponse();
 }

@@ -61,7 +61,6 @@ public:
 	FOnMultiDelegate OnResetHurt;
 	FOnMultiDelegate OnSetAttackDirection;
 	FOnMultiDelegate OnAttackStart;
-	FOnMultiDelegate OnCanDodge;
 
 	FOnMultiDelegate OnParryEnd;
 	FOnMultiDelegate OnNextAttackCheck;
@@ -69,8 +68,6 @@ public:
 	FOnMultiDelegate OnMountEnd;
 	FOnMultiDelegate OnDisMountEnd;
 
-	FOnMultiDelegate OnDodgeEnd;
-	FOnMultiDelegate OnDodgeStart;
 	FOnMultiDelegate OnEquipEnd;
 	FOnMultiDelegate OnHolsterEnd;
 
@@ -89,10 +86,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsMovementInput;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		float InputDirection;
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsRun;
@@ -204,19 +197,10 @@ private:
 		void AnimNotify_NOT_LeftLocomotion();
 
 	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_DodgeEnd();
-
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_DodgeStart();
-
-	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_SetAttackDirection();
 
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_AttackStart();
-
-	UFUNCTION()
-		void AnimNotify_NOT_CanDodge();
 
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EndAttack();
@@ -354,10 +338,6 @@ private:
 	// Turn In Place // 
 	void SetPitch();
 	void SetRootYawOffset();
-
-private:
-	float InputDirectionX;
-	float InputDirectionY;
 
 protected:
 	float YawLastTick = 0.0f;

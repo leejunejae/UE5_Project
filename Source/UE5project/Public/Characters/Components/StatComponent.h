@@ -50,70 +50,25 @@ public:
 
 	void ChangeMaxHealth(const float Amount);
 	void ChangeMaxStamina(const float Amount);
+	void ChangeMaxPoise(const float Amount);
 	bool ChangeHealth(const float Amount, const EHPChangeType HPChangeType);
 	bool ChangeStamina(const float Amount, const ESPChangeType SPChangeType);
+	bool ChangePoise(const float Amount);
 
-	FORCEINLINE float GetHealth() const { return Health; }
-	FORCEINLINE float GetStamina() const { return Stamina; }
-	FORCEINLINE float GetDefensePower() const { return MeleeDefense; }
+	FORCEINLINE FCharacterStats GetBaseStats_Native() const { return BaseStats; }
 
-	FCharacterStats GetBaseStatLevel_Implementation() const;
-	float GetStatRequirementRatio_Implementation(const FCharacterStats& RequireStats) const;
-	float GetWeaponPerformanceRatio_Implementation(const FCharacterStats& RequireStats) const;
+	FCharacterAttributes GetBaseAttributesLevel_Implementation() const { return BaseAttributes; }
+	FCharacterStats GetBaseStats_Implementation() const { return BaseStats; }
+	float GetAttributesRequirementRatio_Implementation(const FCharacterAttributes& RequireStats) const;
+	float GetWeaponPerformanceRatio_Implementation(const FCharacterAttributes& RequireStats) const;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Stat Tables")
-		UDataTable* VitalityTable;
+	UPROPERTY(VisibleAnywhere, Category = "Stats")
+		TMap<EAttributeType, UDataTable*> AttributeTables;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Stat Tables")
-		UDataTable* EnduranceTable;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats") // 기본 특성값(힘, 민첩, 의지 등)
+		FCharacterAttributes BaseAttributes; 
 
-	UPROPERTY(EditDefaultsOnly, Category = "Stat Tables")
-		UDataTable* MentalityTable;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Stat Tables")
-		UDataTable* StrengthTable;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Stat Tables")
-		UDataTable* DexterityTable;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Stat Tables")
-		UDataTable* IntelligenceTable;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Stat Tables")
-		UDataTable* VigorTable;
-
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats") // 특성값과 장비를 비롯한 요소로 결정되는 수치화된 캐릭터의 능력
 		FCharacterStats BaseStats;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-	float MaxHealth = 500.0f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-	float MaxStamina = 100.0f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-	float MaxFocus = 100.0f;
-
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-	float Health;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-	float Stamina;
-
-
-	//float StrikingPower;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
-	float MeleeDefense;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
-	float RangedDefense;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
-	float MagicDefense;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
-		float Poise;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
-		float Resistance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
-	float GuardRate;
 };

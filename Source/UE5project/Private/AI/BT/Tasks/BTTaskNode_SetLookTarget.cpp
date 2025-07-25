@@ -2,7 +2,7 @@
 
 
 #include "AI/BT/Tasks/BTTaskNode_SetLookTarget.h"
-#include "Characters/Enemies/PBEnemyAIController.h"
+#include "Characters/Enemies/EnemyBaseAIController.h"
 #include "Characters/Enemies/Human/PBEHuman.h"
 
 UBTTaskNode_SetLookTarget::UBTTaskNode_SetLookTarget()

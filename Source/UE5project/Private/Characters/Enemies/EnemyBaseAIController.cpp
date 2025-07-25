@@ -1,37 +1,37 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Characters/Enemies/PBEnemyAIController.h"
+#include "Characters/Enemies/EnemyBaseAIController.h"
 #include "NavigationSystem.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 
-const FName APBEnemyAIController::PrevPos(TEXT("PrevPos"));
-const FName APBEnemyAIController::NextPos(TEXT("NextPos"));
-const FName APBEnemyAIController::TargetKey(TEXT("Target"));
-const FName APBEnemyAIController::MeleeRadius(TEXT("MeleeRadius"));
-const FName APBEnemyAIController::RangedRadius(TEXT("RangedRadius"));
-const FName APBEnemyAIController::DefendRadius(TEXT("DefendRadius"));
+const FName AEnemyBaseAIController::PrevPos(TEXT("PrevPos"));
+const FName AEnemyBaseAIController::NextPos(TEXT("NextPos"));
+const FName AEnemyBaseAIController::TargetKey(TEXT("Target"));
+const FName AEnemyBaseAIController::MeleeRadius(TEXT("MeleeRadius"));
+const FName AEnemyBaseAIController::RangedRadius(TEXT("RangedRadius"));
+const FName AEnemyBaseAIController::DefendRadius(TEXT("DefendRadius"));
 
-APBEnemyAIController::APBEnemyAIController()
+AEnemyBaseAIController::AEnemyBaseAIController()
 {
 	//RepeatInterval = 3.0f;
 }
 
-void APBEnemyAIController::BeginPlay()
+void AEnemyBaseAIController::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-void APBEnemyAIController::OnPossess(APawn* InPawn)
+void AEnemyBaseAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	//GetWorld()->GetTimerManager().SetTimer(RepeatTimerHandle, this, &APBEnemyAIController::OnRepeatTimer, RepeatInterval, true);
+	//GetWorld()->GetTimerManager().SetTimer(RepeatTimerHandle, this, &AEnemyBaseAIController::OnRepeatTimer, RepeatInterval, true);
 }
 
 /*
-void APBEnemyAIController::OnUnPossess()
+void AEnemyBaseAIController::OnUnPossess()
 {
 	Super::OnUnPossess();
 	GetWorld()->GetTimerManager().ClearTimer(RepeatTimerHandle);
@@ -39,7 +39,7 @@ void APBEnemyAIController::OnUnPossess()
 */
 
 /*
-void APBEnemyAIController::OnRepeatTimer()
+void AEnemyBaseAIController::OnRepeatTimer()
 {
 	auto CurrentPawn = GetPawn();
 	if (nullptr == CurrentPawn)

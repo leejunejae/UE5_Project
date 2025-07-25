@@ -44,4 +44,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
 		int32 ComboIndex = 0;
+
+	bool bAttackMontageExecute = false;
 };

@@ -9,18 +9,18 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
-#include "PBEnemyAIController.generated.h"
+#include "EnemyBaseAIController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE5PROJECT_API APBEnemyAIController : public AAIController
+class UE5PROJECT_API AEnemyBaseAIController : public AAIController
 {
 	GENERATED_BODY()
 	
 public:
-	APBEnemyAIController();
+	AEnemyBaseAIController();
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	//virtual void OnUnPossess() override;

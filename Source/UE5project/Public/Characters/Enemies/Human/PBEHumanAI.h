@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Enemies/PBEnemyAIController.h"
+#include "Characters/Enemies/EnemyBaseAIController.h"
 #include "PEnumHeader.h"
 #include "PBEHumanAI.generated.h"
 
@@ -11,7 +11,7 @@
  * 
  */
 UCLASS()
-class UE5PROJECT_API APBEHumanAI : public APBEnemyAIController
+class UE5PROJECT_API APBEHumanAI : public AEnemyBaseAIController
 {
 	GENERATED_BODY()
 	

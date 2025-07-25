@@ -5,17 +5,25 @@
 #include "CoreMinimal.h"
 #include "NavigationSystem.h"
 #include "NavigationInvokerComponent.h"
+
+// 인터페이스
+#include "Combat/Interfaces/HitReactionInterface.h"
+
 #include "GameFramework/Character.h"
-#include "PBEnemy.generated.h"
+#include "EnemyBase.generated.h"
+
+class UAttackComponent;
+class UHitReactionComponent;
 
 UCLASS()
-class UE5PROJECT_API APBEnemy : public ACharacter
+class UE5PROJECT_API AEnemyBase : public ACharacter,
+	public IHitReactionInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	APBEnemy();
+	AEnemyBase();
 
 protected:
 	// Called when the game starts or when spawned
@@ -35,4 +43,16 @@ public:
 private:
 	UPROPERTY(EditAnywhere)
 		class UNavigationInvokerComponent* NavigationInvokerComponent;
+
+#pragma region HitReaction
+protected:
+	UPROPERTY(VisibleAnywhere, Category = HitReaction)
+		TObjectPtr<UHitReactionComponent> HitReactionComponent;
+
+public:
+	virtual void OnHit_Implementation(const FAttackRequest& AttackInfo) override;
+
+	FORCEINLINE UHitReactionComponent* GetHitReactionComponent() const { return HitReactionComponent; }
+	
+#pragma endregion HitReaction
 };

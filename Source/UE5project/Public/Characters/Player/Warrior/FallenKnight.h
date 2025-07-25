@@ -25,7 +25,6 @@ public:
 	virtual void BeginPlay() override;
 	bool IsAttacking();
 	bool IsRolling();
-	bool GetNextDodge();
 	int32 CheckCombo();
 	WarriorStance GetStance();
 
@@ -68,20 +67,8 @@ private:
 
 	FTimerHandle MoveSpeedTimerHandle;
 
-	//Dodge TImeline
-	UPROPERTY(EditAnywhere, Category = Timeline)
-		UCurveFloat* DodgeCurve;
-
 	FVector InitPosition;
-	FTimeline DodgeTimeline;
-	float DodgeTimelineLength;
 	float PreviousCurveValue;
-
-	UFUNCTION()
-		void DodgeUpdate(float Value);
-
-	UFUNCTION()
-		void DodgeUpdateFin();
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		bool CanNextCombo;
@@ -91,7 +78,6 @@ private:
 
 	bool IsInvincible;
 	bool CanAttack;
-	bool NextDodge;
 	bool CanInputBuffer;
 
 	bool SetCharDirection;
@@ -103,8 +89,6 @@ private:
 	void MoveSpeedTimer();
 
 	virtual void Sprint() override;
-
-	void Dodge() override;
 
 	void SwitchStance() override;
 	void ResetAttackState();

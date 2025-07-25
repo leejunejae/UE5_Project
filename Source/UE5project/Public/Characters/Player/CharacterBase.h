@@ -12,6 +12,7 @@
 #include "Interaction/Climb/Data/ClimbHeader.h"
 #include "PEnumHeader.h"
 #include "Characters/Data/StatusData.h"
+
 // 인터페이스
 #include "Characters/Player/Interfaces/PlayerInterface.h"
 #include "Combat/Interfaces/HitReactionInterface.h"
@@ -29,12 +30,12 @@ class UCameraComponent;
 class USpringArmComponent;
 class UCharacterMovementComponent;
 
-class UCharacterStatusComponent;
+class UPlayerStatusComponent;
 class UStatComponent;
 class UEquipmentComponent;
 class UCombatComponent;
 class UPlayerAttackComponent;
-class UHitReactionComponent;
+class UPlayerHitReactionComponent;
 class UClimbComponent;
 class UInteractComponent;
 
@@ -159,13 +160,11 @@ protected:
 
 	FVector InputVector;
 	FVector DodgeVector;
-	FVector DodgeDirection;
 
 	bool IsAction;
 	bool IsRun;
 	bool IsAttack;
 	bool IsRoll;
-	bool CanDodge;
 	bool IsInteraction;
 	bool CanInput=true;
 	float InputDirection;
@@ -228,13 +227,13 @@ private:
 		TObjectPtr<UStatComponent> StatComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Status)
-		TObjectPtr<UCharacterStatusComponent> CharacterStatusComponent;
+		TObjectPtr<UPlayerStatusComponent> CharacterStatusComponent;
 
 	bool IsBlockInput = false;
 
 public:
 	FORCEINLINE UStatComponent* GetStatComponent() const { return StatComponent; }
-	FORCEINLINE UCharacterStatusComponent* GetCharacterStatusComponent() const { return CharacterStatusComponent; }
+	FORCEINLINE UPlayerStatusComponent* GetCharacterStatusComponent() const { return CharacterStatusComponent; }
 
 
 #pragma endregion Status
@@ -306,6 +305,8 @@ private:
 	FRotator InputRotation;
 	bool bForcedRotatingInputDirection = false;
 	float ForcedRotationSpeed = 720.0f;
+
+	UAnimMontage* RollMontage;
 
 #pragma endregion Ground
 
@@ -385,7 +386,7 @@ protected:
 	void HandleArrivedInteractionPoint();
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-		UInteractComponent* InteractComponent;
+		TObjectPtr<UInteractComponent> InteractComponent;
 
 public:
 	virtual void RegisterInteractableActor_Implementation(AActor* Interactable);
@@ -398,10 +399,10 @@ public:
 #pragma region Combat
 private:
 	UPROPERTY(VisibleAnywhere, Category = Combat)
-		UCombatComponent* CombatComponent;
+		TObjectPtr<UCombatComponent> CombatComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
-		UPlayerAttackComponent* AttackComponent;
+		TObjectPtr<UPlayerAttackComponent> AttackComponent;
 
 	virtual void Attack(FName AttackName);
 	void AttackInput();
@@ -420,7 +421,7 @@ public:
 #pragma region HitReaction
 protected:
 	UPROPERTY(VisibleAnywhere, Category = HitReaction)
-		UHitReactionComponent* HitReactionComponent;
+		TObjectPtr<UPlayerHitReactionComponent> HitReactionComponent;
 
 	void OnBlock();
 	void OffBlock();
@@ -434,7 +435,7 @@ public:
 	virtual void OnDeathEnd_Implementation() override;
 	virtual void OnDeath();
 
-	FORCEINLINE UHitReactionComponent* GetHitReactionComponent() const { return HitReactionComponent; }
+	FORCEINLINE UPlayerHitReactionComponent* GetHitReactionComponent() const { return HitReactionComponent; }
 #pragma endregion HitReaction
 
 

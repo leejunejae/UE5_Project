@@ -53,11 +53,15 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	FWeaponSetsInfo GetWeaponSetsData_Implementation() const;
-	FWeaponPartInfo GetMainWeaponData_Implementation() const;
-	FWeaponPartInfo GetSubEquipData_Implementation() const;
-	UStaticMeshComponent* GetMainWeaponMeshComponent_Implementation() const;
-	UStaticMeshComponent* GetSubEquipMeshComponent_Implementation() const;
+	FORCEINLINE FWeaponSetsInfo GetWeaponSetsData_Native() const { return EquipedWeapon; }
+	FORCEINLINE FWeaponPartInfo GetMainWeaponData_Native() const { return EquipedWeapon.MainWeapon; }
+	FORCEINLINE FWeaponPartInfo GetSubEquipData_Native() const { return EquipedWeapon.SubWeapon; }
+
+	FWeaponSetsInfo GetWeaponSetsData_Implementation() const { return EquipedWeapon; }
+	FWeaponPartInfo GetMainWeaponData_Implementation() const { return EquipedWeapon.MainWeapon;}
+	FWeaponPartInfo GetSubEquipData_Implementation() const { return EquipedWeapon.SubWeapon; }
+	UStaticMeshComponent* GetMainWeaponMeshComponent_Implementation() const { return WeaponMesh; }
+	UStaticMeshComponent* GetSubEquipMeshComponent_Implementation() const { return SubEquipMesh; }
 	void EquipWeapon_Implementation(FName WeaponKey) override;
 
 	void SetWeaponSocketName(FName SocketName) { WeaponSocket = SocketName; }

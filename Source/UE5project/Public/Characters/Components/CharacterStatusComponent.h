@@ -25,29 +25,17 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-#pragma region Ground
 public:
-	FORCEINLINE bool IsDodging() const { return GroundState == ECharacterGroundState::Dodge; }
-	FORCEINLINE bool IsBlocking() const { return GroundState == ECharacterGroundState::Block; }
-	FORCEINLINE bool IsParrying() const { return GroundState == ECharacterGroundState::Parry; }
-	FORCEINLINE bool IsInvincible() const { return GroundState == ECharacterGroundState::Invincible; }
 	FORCEINLINE bool IsDead() const { return bIsDead; }
+
 	bool IsInAir() const;
 
 	void HandleDeath();
-	
-	bool CanTransition(const ECharacterGroundState NewState) const;
 
-	FORCEINLINE ECharacterGroundState GetGroundState() const { return GroundState; }
-
-	void SetCombatState(ECharacterGroundState NewState);
-
-public:
 	FOnMultiDelegate OnDeath;
 
-private:
-	ECharacterGroundState GroundState;
+protected:
+	TWeakObjectPtr<ACharacter> CachedCharacter;
 
 	bool bIsDead = false;
-#pragma endregion Ground
 };

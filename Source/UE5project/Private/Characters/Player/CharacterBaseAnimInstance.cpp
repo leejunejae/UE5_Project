@@ -4,7 +4,7 @@
 #include "Characters/Player/CharacterBaseAnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Characters/Components/CharacterStatusComponent.h"
+#include "Characters/Player/Components/PlayerStatusComponent.h"
 
 // 참조할 액터
 #include "Characters/Player/Warrior/FallenKnight.h" // CharacterBase로 변경예정
@@ -50,7 +50,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		IsAttack = Character->IsAttacking();
 		IsRoll = Character->IsRolling();
 		ComboCount = Character->CheckCombo();
-		CharacterGroundState = Character->GetCharacterStatusComponent()->GetGroundState();
+		CharacterGroundState = Character->GetCharacterStatusComponent()->GetGroundState_Native();
 
 		switch (CurrentState)
 		{
@@ -93,17 +93,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				LastDirection = Direction;
 				LastSpeed = Speed;
 			}
-			else
-			{
-
-			}
-			InputDirectionX = Character->GetInputDirection().X;
-			InputDirectionY = Character->GetInputDirection().Y;
-
-			if (InputDirectionX == 0.0f && InputDirectionY == 0.0f)
-				InputDirection = 180.0f;
-			else
-				InputDirection = UKismetMathLibrary::DegAtan2(InputDirectionX, InputDirectionY);
 
 			float BlendAlpha = CharacterGroundState == ECharacterGroundState::Block ? 0.99f : 0.01f;
 			BlockBlend = FMath::FInterpTo(BlockBlend, BlendAlpha, DeltaSeconds, 10.0f);
@@ -717,37 +706,10 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_LeftLocomotion()
 	OnLeftLocomotion.ExecuteIfBound();
 }
 
-void UCharacterBaseAnimInstance::AnimNotify_NOT_DodgeEnd()
-{
-	OnDodgeEnd.Broadcast();
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_DodgeStart()
-{
-	OnDodgeStart.Broadcast();
-}
-
 void UCharacterBaseAnimInstance::AnimNotify_NOT_AttackStart()
 {
 	OnAttackStart.Broadcast();
 }
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_CanDodge()
-{
-	OnCanDodge.Broadcast();
-}
-
-/*
-void UCharacterBaseAnimInstance::AnimNotify_NOT_EquipEnd()
-{
-	OnEquipEnd.Broadcast();
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_HolsterEnd()
-{
-	OnHolsterEnd.Broadcast();
-}
-*/
 
 FName UCharacterBaseAnimInstance::GetAttackMontageSectionName(int32 Section)
 {

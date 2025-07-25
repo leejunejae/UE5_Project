@@ -2,7 +2,7 @@
 
 
 #include "AI/BT/Tasks/PBEnemy_ChaseTarget_Task.h"
-#include "Characters/Enemies/PBEnemyAIController.h"
+#include "Characters/Enemies/EnemyBaseAIController.h"
 #include "NavigationSystem.h"
 #include "BehaviorTree/BlackboardComponent.h"
 

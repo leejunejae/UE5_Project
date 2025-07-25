@@ -12,6 +12,9 @@ void UPlayerAttackComponent::ExecuteAttack(FName AttackName, float Playrate)
 {
 	bool CanPlayAttack = false;
 
+	//if(CurAttackInfo.IsValid())
+		//AnimInstance->OnMontageEnded.RemoveDynamic(this, &UPlayerAttackComponent::OnMontageEnded);
+
 	// 실행중인 공격이 있으면 실행중인 공격과 입력이 같은지 확인	
 	if (CurAttackInfo.AttackName == AttackName)
 	{
@@ -44,9 +47,9 @@ void UPlayerAttackComponent::ExecuteAttack(FName AttackName, float Playrate)
 void UPlayerAttackComponent::PlayAnimation(FPlayerAttackInfo AttackInfo, int32 index, float Playrate)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Playrate = %f"), Playrate);
+	bAttackMontageExecute = true;
 	AnimInstance->Montage_Play(AttackInfo.Anim, Playrate);
-	AnimInstance->Montage_JumpToSection(AttackInfo.AttackDetail[index].BaseAttackData.SectionName);
-	//AnimInstance->Montage_SetPlayRate(AttackInfo.Anim, Playrate);
+	AnimInstance->Montage_JumpToSection(AttackInfo.AttackDetail[index].BaseAttackData.SectionName, AttackInfo.Anim);
 
 	FOnMontageEnded MontageEndDelegate;
 	MontageEndDelegate.BindUObject(this, &UPlayerAttackComponent::OnMontageEnded);
@@ -55,13 +58,13 @@ void UPlayerAttackComponent::PlayAnimation(FPlayerAttackInfo AttackInfo, int32 i
 
 void UPlayerAttackComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	UE_LOG(LogTemp, Warning, TEXT("공격상태 초기화"));
-	if (!bInterrupted)
+	if (!bAttackMontageExecute || !bInterrupted)
 	{
 		ComboIndex = 0;
 		CurAttackInfo = FPlayerAttackInfo();
 	}
 
+	bAttackMontageExecute = false;
 	AnimInstance->OnMontageEnded.RemoveDynamic(this, &UPlayerAttackComponent::OnMontageEnded);
 }
 
@@ -81,6 +84,8 @@ void UPlayerAttackComponent::SetCurAttackType(EWeaponType WeaponType)
 
 void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsSubWeaponAttack)
 {
+	UE_LOG(LogTemp, Warning, TEXT("DetectTarget"));
+
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 
 	UAnimBoneTransformDataAsset* TraceTargetBoneTransformData = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.TargetBoneTransformDataAsset.LoadSynchronous();
@@ -154,10 +159,6 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 	FQuat CurCapsuleRotation = FRotationMatrix::MakeFromZ(CurCapsuleAxis).ToQuat();
 
 	DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Green, false, 1.0f);
-
-	//FVector HandLocation = Character->GetMesh()->GetSocketLocation(FName("Hand_R"));
-	//FVector WeaponLocation = Character->GetMesh()->GetSocketLocation(FName("S_Sword"));
-	//FVector TestLocation = Character->GetMesh()->GetSocketLocation(FName("WeaponEnd"));
 
 	for (int32 i = 1; i <= TraceCorrectionCount; ++i)
 	{

@@ -55,6 +55,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FPlayerAttackDetail> AttackDetail;
 
+	bool IsValid() const
+	{
+		return Anim != nullptr && !AttackDetail.IsEmpty();
+	}
+
 	inline bool operator==(const FPlayerAttackInfo& Other) const
 	{
 		return AttackName == Other.AttackName;
