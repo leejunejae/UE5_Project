@@ -3,8 +3,45 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "UObject/NoExportTypes.h"
 #include "ClimbHeader.generated.h"
+
+
+USTRUCT(BlueprintType)
+struct FGrabData
+{
+	GENERATED_BODY()
+
+public:
+	FName MainBone;
+	FName SubBone;
+	FName BoneCurveName;
+	float AdjustMultiplier;
+	FVector TargetLocation;
+
+public:
+	FGrabData() {}
+	FGrabData(
+	FName InMainBone,
+	FName InSubBone,
+	FName InBoneCurveName,
+	float InAdjustMultiplier,
+	FVector InTargetLocation
+	)
+	: MainBone(InMainBone)
+	, SubBone(InSubBone)
+	, BoneCurveName(InBoneCurveName)
+	, AdjustMultiplier(InAdjustMultiplier)
+	, TargetLocation(InTargetLocation)
+	{}
+
+	inline bool operator==(const FGrabData& Other) const
+	{
+		return MainBone == Other.MainBone;
+	}
+};
+
+uint32 GetTypeHash(const FGrabData& GrabData);
 
 USTRUCT(Atomic, BlueprintType)
 struct FNeighborInfo
@@ -53,16 +90,8 @@ struct FGripNode1D
 };
 
 UCLASS()
-class UE5PROJECT_API AClimbHeader : public AActor
+class UE5PROJECT_API UClimbHeader : public UObject
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	AClimbHeader();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 };

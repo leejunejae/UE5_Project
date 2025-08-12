@@ -3,21 +3,12 @@
 
 #include "Combat/Data/HitReactionData.h"
 
-// Sets default values
-AHitReactionData::AHitReactionData()
+uint32 GetTypeHash(const FHitReactionDetail& HitReactionDetail)
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-
+	return GetTypeHash(HitReactionDetail.SectionName);
 }
 
-// Called when the game starts or when spawned
-void AHitReactionData::BeginPlay()
+uint32 GetTypeHash(const FHitReactionInfo& Info)
 {
-	Super::BeginPlay();
-	
-}
-
-uint32 GetTypeHash(const FHitReactionAnimData& HitReactionAnimData)
-{
-	return GetTypeHash(HitReactionAnimData.SectionName);
+	return GetTypeHash(Info.HitReactionName);
 }

@@ -23,6 +23,7 @@ public:
 	AEnemyBaseAIController();
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
+	void SetControllerData(UBehaviorTree* BehaviorTree, UBlackboardData* Blackboard);
 	//virtual void OnUnPossess() override;
 
 
@@ -34,12 +35,25 @@ public:
 	static const FName RangedRadius;
 	static const FName DefendRadius;
 
-protected:
-	UPROPERTY()
-		class UBehaviorTree* BTAsset;
+	AActor* AttackTarget;
 
-	UPROPERTY()
-		class UBlackboardData* BBAsset;
+protected:
+	UPROPERTY(VisibleAnywhere, Category = AI)
+		class UBehaviorTree* CachedBT;
+
+	UPROPERTY(VisibleAnywhere, Category = AI)
+		class UBlackboardData* CachedBB;
+
+	UFUNCTION()
+		void OnTargetPerceptionUpdated_Delegate(AActor* Actor, FAIStimulus Stimulus);
+
+	UPROPERTY(VisibleAnywhere, Category = AI)
+		TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere, Category = AI)
+		TObjectPtr<class UAISenseConfig_Sight> AISenseConfigSight = nullptr;
+
+
 	//void OnRepeatTimer();
 
 	//FTimerHandle RepeatTimerHandle;

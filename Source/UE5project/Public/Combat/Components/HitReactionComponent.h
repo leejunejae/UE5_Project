@@ -5,8 +5,10 @@
 // 엔진 헤더
 #include "CoreMinimal.h"
 #include "Combat/Data/HitReactionData.h"
+#include "Combat/Data/DataAsset/HitReactionDataAsset.h"
+#include "Characters/Interfaces/CharacterStatusInterface.h"
 #include "Components/ActorComponent.h"
-#include "Engine/DataTable.h"
+#include "Engine/DataAsset.h"
 
 #include "HitReactionComponent.generated.h"
 
@@ -28,31 +30,29 @@ protected:
 
 public:	
 	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 	void InitializeComponentLogic();
 
-	void SetHitReactionDT(const UDataTable* HitReactionDT);
+	void SetHitReactionDA(UHitReactionDataAsset* HitReactionDA);
 	void ExecuteHitResponse(const FHitReactionRequest ReactionData);
-	void PlayReaction(const FHitReactionInfo* HitReaction, const FName SectionName = NAME_None);
+	void PlayReaction(const FHitReactionInfo HitReaction, const FName SectionName = NAME_None);
 
-	virtual HitResponse EvaluateHitResponse(const FAttackRequest& AttackRequest);
+	virtual EHitResponse EvaluateHitResponse(const FAttackRequest& AttackRequest);
 	float CalculateHitAngle(const FVector HitPoint);
 
-	void OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo* HitReaction, const FName SectionName);
+	void OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo HitReaction, const FName SectionName);
 
 	FOnMultiDelegate OnHitAirReaction;
 	
 private:
-	UPROPERTY(EditAnywhere, Meta = (AllowPrivateAccess = true))
-		const class UDataTable* HitReactionListDT;
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
+		UHitReactionDataAsset* HitReactionDataAsset;
 
-	FHitReactionInfoList* CurHitReactionDTRow;
-	FHitReactionInfo* CurHitReaction;
+	FHitReactionInfo CurHitReaction = FHitReactionInfo();
 	//UAnimInstance* AnimInstance;
 
 	FOnMontageEnded OnHitReactionDelegate;
 
 protected:
 	TWeakObjectPtr<ACharacter> CachedCharacter;
+	TScriptInterface<ICharacterStatusInterface> CachedPlayerStatus;
 };

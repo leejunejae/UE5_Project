@@ -258,7 +258,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, 0.0f, DeltaSeconds);
 					SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandLadderOffset, 0.0f, DeltaSeconds, 1.0f);
-					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, 0.0f, DeltaSeconds, 0.5f);
+					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, 0.0f, DeltaSeconds, 0.5f, true);
 					break;
 				}
 				case ELadderStance::Exit_From_Bottom:
@@ -321,10 +321,10 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				}
 				default:
 				{
-					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, Hand_L_Y_Distance, DeltaSeconds, 1.0f, true);
+					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, Hand_L_Y_Distance, DeltaSeconds, 1.0f);
 					SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandLadderOffset, Hand_R_Y_Distance, DeltaSeconds);
 					SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveNameSet, LeftFootLadderOffset, Foot_L_Y_Distance, DeltaSeconds, 0.5f);
-					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, Foot_R_Y_Distance, DeltaSeconds, 0.5f);
+					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, Foot_R_Y_Distance, DeltaSeconds, 0.5f, true);
 					break;
 				}
 				}

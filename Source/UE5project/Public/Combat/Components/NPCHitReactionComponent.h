@@ -17,5 +17,5 @@ class UE5PROJECT_API UNPCHitReactionComponent : public UHitReactionComponent
 public:
 	UNPCHitReactionComponent();
 
-	HitResponse EvaluateHitResponse(const FAttackRequest& AttackRequest) override;
+	EHitResponse EvaluateHitResponse(const FAttackRequest& AttackRequest) override;
 };

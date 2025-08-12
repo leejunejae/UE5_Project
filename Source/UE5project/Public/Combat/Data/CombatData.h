@@ -3,16 +3,36 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/NoExportTypes.h"
 #include "CombatData.generated.h"
+
+// 
+UENUM(BlueprintType)
+enum class EAttackType : uint8
+{
+	PhysicalDamage UMETA(DisplayName = "PhysicalDamage"),
+	MagicalDamage UMETA(DisplayName = "MagicalDamage"),
+	TrueDamage UMETA(DisplayName = "TrueDamage"),
+};
+
+UENUM(BlueprintType)
+enum class EStatChangeType : uint8
+{
+	Damage UMETA(DisplayName = "Damage"),
+	Restore UMETA(DisplayName = "Restore"),
+	Heal UMETA(DisplayName = "Heal"),
+};
 
 // 피격 유형 결정
 UENUM(BlueprintType)
-enum class HitResponse : uint8
+enum class EHitResponse : uint8
 {
 	None UMETA(DisplayName = "None"),
+	NoStagger UMETA(DisplayName = "NoStagger"),
 	Flinch UMETA(DisplayName = "Flinch"),
 	KnockBack UMETA(DisplayName = "KnockBack"),
 	KnockDown UMETA(DislplayName = "KnockDown"),
+	Stun UMETA(DislplayName = "Stun"),
 	HitAir UMETA(DislplayName = "HitAir"),
 	Block UMETA(DisplayName = "Block"),
 	BlockLarge UMETA(DisplayName = "BlockLarge"),
@@ -33,14 +53,6 @@ enum class EStatusEffect : uint8
 	SlowDown UMETA(DisplayName = "SlowDown"),
 	Weakness UMETA(DisplayName = "Weakness"),
 	Restraint UMETA(DisplayName = "Restraint"),
-};
-
-UENUM(BlueprintType)
-enum class AttackType : uint8
-{
-	Light UMETA(DisplayName = "Light"),
-	Heavy UMETA(DisplayName = "Heavy"),
-	AOE UMETA(DisplayName = "AOE"),
 };
 
 USTRUCT(BlueprintType)
@@ -68,7 +80,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float PoiseDamage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		HitResponse Response;
+		EHitResponse Response;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EAttackType AttackType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector HitPoint;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -88,7 +102,7 @@ public:
 		float InDamage,
 		float InStanceDamage,
 		float InPoiseDamage,
-		HitResponse InResponse,
+		EHitResponse InResponse,
 		FVector InHitPoint,
 		FString InHitPointName,
 		bool InCanBlocked,
@@ -107,4 +121,11 @@ public:
 		, CanAvoid(InCanAvoid)
 		, StatusEffectList(InStatusEffectList)
 	{}
+};
+
+UCLASS()
+class UE5PROJECT_API UCombatData : public UObject
+{
+	GENERATED_BODY()
+
 };

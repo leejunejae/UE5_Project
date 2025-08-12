@@ -22,8 +22,15 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+#pragma region Owner Data
+	ACharacter* CachedCharacter;
+	UAnimInstance* CachedAnim;
+#pragma endregion Owner Data
+
 #pragma region Climbable Object
 public:
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
 	void RegisterClimbObject(AActor* RegistObject);
 	void DeRegisterClimbObject();
 	AActor* GetClimbObject();
@@ -35,10 +42,20 @@ protected:
 	TArray<FGripNode1D> GripList1D;
 	TArray<FGripNode2D> GripList2D;
 
+	TMap<FName, FGripNode1D*> BoneToGripNode;
+	TMap<FName, FGrabData> GrabDataForIK;
+	TTuple<FVector, FVector> ClimbDistance;
+
+	ELadderStance LadderStance;
+
 public:
 	void SetGrip1DRelation(float MinInterval, float MaxInterval);
 	bool CheckGripListValid();
-
+	void SetLimbToGrip(FName BoneName, FGripNode1D* TargetGrip);
+	void StartLadderClimbForLimb(bool IsUpperEntrance);
+	FGripNode1D* GetLimbPlaceGrip(FName BoneName);
+	FVector GetLimbIKTarget(FName BoneName);
+	FORCEINLINE ELadderStance GetLadderStance() const { return LadderStance; }
 	/// <summary>
 	/// Getter Function For Find Grip about various rule
 	/// </summary>
@@ -85,11 +102,14 @@ public:
 #pragma region Ladder Climbing
 public:	
 	TOptional<FTransform> GetEnterTopPosition();
+	TOptional<FTransform> GetEnterBottomPosition();
 	TOptional<FTransform> GetInitTopPosition();
 	TOptional<FTransform> GetInitBottomPosition();
 	float GetLadderTopTransitionDistance();
 
 private:
 	AActor* ClimbObject;
+
+	FVector SetBoneIKTargetLadder(const FName BoneName, const FName MiddleBoneName, const FName CurveBaseName, const float Offset=1.0f, const float LimbYDistance = -15.0f, bool IsDebug = false);
 #pragma endregion
 };

@@ -7,7 +7,7 @@
 
 // 구조체, 자료형
 #include "PEnumHeader.h"
-#include "Characters/Enemies/Data/EnemyHeader.h"
+#include "Characters/Enemies/Data/EnemyData.h"
 
 // 인터페이스
 #include "Combat/Interfaces/HitReactionInterface.h"
@@ -97,8 +97,6 @@ public:
 	FOnMultiDelegate OnDashEnd;
 
 protected:
-	FEnemyInfo EnemyInfo;
-
 	UPROPERTY(VisibleAnywhere, Category = Combat)
 		UStatComponent* Statcomponent;
 

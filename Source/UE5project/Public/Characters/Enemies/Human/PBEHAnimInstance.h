@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "PEnumHeader.h"
-#include "Characters/Enemies/Data/EnemyHeader.h"
+#include "Characters/Enemies/Data/EnemyData.h"
 #include "PBEHAnimInstance.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnStartHitDelegate);

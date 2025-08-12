@@ -22,9 +22,5 @@ private:
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-
-	UPROPERTY(EditAnywhere)
-		TObjectPtr<UWeaponDataAsset> WeaponDataAsset;
-
 	const FWeaponSetsInfo* GetWeaponInfo(const FName& WeaponName) const;
 };

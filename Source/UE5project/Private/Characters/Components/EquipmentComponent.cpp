@@ -98,7 +98,11 @@ void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 	if (WeaponMesh && World )
 	{
 		UWeaponDataSubsystem* WeaponSubsystem = World->GetGameInstance()->GetSubsystem<UWeaponDataSubsystem>();
-		if (!WeaponSubsystem) return;
+		if (!WeaponSubsystem)
+		{
+			UE_LOG(LogTemp, Error, TEXT("WeaponSubSystem not found"));
+			return;
+		}
 		const FWeaponSetsInfo* FindWeapon = WeaponSubsystem->GetWeaponInfo(WeaponKey);
 
 		if (FindWeapon)

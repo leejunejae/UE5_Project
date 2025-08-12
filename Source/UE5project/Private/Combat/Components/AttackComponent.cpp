@@ -195,7 +195,6 @@ void UAttackComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
 		{
 			if (CachedEquipment.GetInterface() && CachedEquipment.GetObject())
 			{
-				IsDetectAttackTarget = true;
 				UStaticMeshComponent* WeaponMeshComponent = IEquipmentDataInterface::Execute_GetMainWeaponMeshComponent(CachedEquipment.GetObject());
 				FWeaponSetsInfo WeaponInfo = IEquipmentDataInterface::Execute_GetWeaponSetsData(CachedEquipment.GetObject());
 
@@ -210,7 +209,7 @@ void UAttackComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
 						EndTime);
 
 					FTimerDelegate AttackTimerDelegate;
-					AttackTimerDelegate.BindUObject(this, &UAttackComponent::DetectAttackTarget, WeaponMeshComponent, WeaponInfo, StartTime, EndTime, false);
+					AttackTimerDelegate.BindUObject(this, &UAttackComponent::DetectAttackTarget, WeaponMeshComponent, WeaponInfo, StartTime, EndTime, false, false);
 					GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, AttackTimerDelegate, 0.01f, true);
 				}
 			}
@@ -222,15 +221,23 @@ void UAttackComponent::OnMontageNotifyEnd(FName NotifyName, const FBranchingPoin
 {
 	if (NotifyName == FName("WeaponAttack"))
 	{
-		DetectTracePrevTime.Key = false;
-		UE_LOG(LogTemp, Warning, TEXT("Reset Detect"));
-		HitActorListCurrentAttack.Empty();
-		if(GetWorld()->GetTimerManager().IsTimerActive(AttackTimerHandle))
+		if (GetWorld()->GetTimerManager().IsTimerActive(AttackTimerHandle))
 			GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+
+		UStaticMeshComponent* WeaponMeshComponent = IEquipmentDataInterface::Execute_GetMainWeaponMeshComponent(CachedEquipment.GetObject());
+		FWeaponSetsInfo WeaponInfo = IEquipmentDataInterface::Execute_GetWeaponSetsData(CachedEquipment.GetObject());
+		float AnimSectionTime = AnimInstance->GetCurveValue(FName("AnimSectionTime"));
+		float StartTime = BranchingPointPayload.NotifyEvent->GetTriggerTime() - AnimSectionTime;
+		float EndTime = BranchingPointPayload.NotifyEvent->GetEndTriggerTime() - AnimSectionTime;
+		DetectAttackTarget(WeaponMeshComponent, WeaponInfo, StartTime, EndTime, true, false);
+
+		UE_LOG(LogTemp, Warning, TEXT("Reset Detect"));
+		DetectTracePrevTime.Key = false;
+		HitActorListCurrentAttack.Empty();
 	}
 }
 
-void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsSubWeaponAttack)
+void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime,bool IsDetectEnd, bool IsSubWeaponAttack)
 {
 	/*
 	FVector StartLoc = WeaponMesh->GetSocketLocation("Start");

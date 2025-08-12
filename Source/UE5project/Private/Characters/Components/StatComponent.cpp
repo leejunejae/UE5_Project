@@ -2,7 +2,7 @@
 
 
 #include "Characters/Components/StatComponent.h"
-#include "..\..\..\Public\Characters\Components\StatComponent.h"
+#include "Characters/Components/CharacterStatusComponent.h"
 
 // Sets default values for this component's properties
 UStatComponent::UStatComponent()
@@ -11,43 +11,43 @@ UStatComponent::UStatComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> VitalityDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Vitality_DT.Attribute_Vitality_DT'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> VitalityDT_Asset(TEXT("DataTable'/Game/00_Character/Data/Stat/Attribute_Vitality_DT.Attribute_Vitality_DT'"));
 	if (VitalityDT_Asset.Succeeded())
 	{
 		AttributeTables.Add(EAttributeType::Vitality, VitalityDT_Asset.Object);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> EnduranceDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Endurance_DT.Attribute_Endurance_DT'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> EnduranceDT_Asset(TEXT("DataTable'/Game/00_Character/Data/Stat/Attribute_Endurance_DT.Attribute_Endurance_DT'"));
 	if (EnduranceDT_Asset.Succeeded())
 	{
 		AttributeTables.Add(EAttributeType::Endurance, EnduranceDT_Asset.Object);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> MentalityDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Mentality_DT.Attribute_Mentality_DT'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> MentalityDT_Asset(TEXT("DataTable'/Game/00_Character/Data/Stat/Attribute_Mentality_DT.Attribute_Mentality_DT'"));
 	if (MentalityDT_Asset.Succeeded())
 	{
 		AttributeTables.Add(EAttributeType::Mentality, MentalityDT_Asset.Object);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> StrengthDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Strength_DT.Attribute_Strength_DT'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> StrengthDT_Asset(TEXT("DataTable'/Game/00_Character/Data/Stat/Attribute_Strength_DT.Attribute_Strength_DT'"));
 	if (StrengthDT_Asset.Succeeded())
 	{
 		AttributeTables.Add(EAttributeType::Strength, StrengthDT_Asset.Object);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> DexterityDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Dexterity_DT.Attribute_Dexterity_DT'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> DexterityDT_Asset(TEXT("DataTable'/Game/00_Character/Data/Stat/Attribute_Dexterity_DT.Attribute_Dexterity_DT'"));
 	if (DexterityDT_Asset.Succeeded())
 	{
 		AttributeTables.Add(EAttributeType::Dexterity, DexterityDT_Asset.Object);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> IntelligenceDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Intelligence_DT.Attribute_Intelligence_DT'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> IntelligenceDT_Asset(TEXT("DataTable'/Game/00_Character/Data/Stat/Attribute_Intelligence_DT.Attribute_Intelligence_DT'"));
 	if (IntelligenceDT_Asset.Succeeded())
 	{
 		AttributeTables.Add(EAttributeType::Intelligence, IntelligenceDT_Asset.Object);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> VigorDT_Asset(TEXT("DataTable'/Game/00_Character/C_Source/Stat/Attribute_Vigor_DT.Attribute_Vigor_DT'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> VigorDT_Asset(TEXT("DataTable'/Game/00_Character/Data/Stat/Attribute_Vigor_DT.Attribute_Vigor_DT'"));
 	if (VigorDT_Asset.Succeeded())
 	{
 		AttributeTables.Add(EAttributeType::Vigor, VigorDT_Asset.Object);
@@ -195,18 +195,18 @@ void UStatComponent::ChangeMaxPoise(const float Amount)
 	BaseStats.MaxPoise += Amount;
 }
 
-bool UStatComponent::ChangeHealth(const float Amount, const EHPChangeType HPChangeType)
+bool UStatComponent::ApplyDamage(const float Amount, const EAttackType AttackType)
 {
 	float Delta = Amount;
-	switch (HPChangeType)
+	switch (AttackType)
 	{
-	case EHPChangeType::DirectDamage:
+	case EAttackType::PhysicalDamage:
 		Delta *= (1.0f - (BaseStats.MeleeDefense / (BaseStats.MeleeDefense + 100.0f)));
 		break;
-	case EHPChangeType::TrueDamage:
+	case EAttackType::MagicalDamage:
+		Delta *= (1.0f - (BaseStats.MagicDefense / (BaseStats.MagicDefense + 100.0f)));
 		break;
-	case EHPChangeType::Heal:
-		Delta *= -1.0f;
+	case EAttackType::TrueDamage:
 		break;
 	}
 
@@ -214,41 +214,65 @@ bool UStatComponent::ChangeHealth(const float Amount, const EHPChangeType HPChan
 	
 	if (BaseStats.Health <= 0.0f)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Death Delegate"));
-		OnDeath.ExecuteIfBound();
+		if (UCharacterStatusComponent* StatusComp = GetOwner()->FindComponentByClass<UCharacterStatusComponent>())
+		{
+			StatusComp->ExecuteDeath();
+		}
+		return false;
 	}
 
-	return BaseStats.Health > 0.0f ? true : false;
+	return true;
 }
 
-bool UStatComponent::ChangeStamina(const float Amount, const ESPChangeType SPChangeType)
+bool UStatComponent::Heal(const float Amount)
+{
+	BaseStats.Health = FMath::Clamp(BaseStats.Health + Amount, 0.0f, BaseStats.MaxHealth);
+
+	return true;
+}
+
+bool UStatComponent::ChangeStamina(const float Amount, const EStatChangeType SPChangeType)
 {
 	float Delta = Amount;
-	
-	/*
+	bool bChangeSuccess;
+
 	switch (SPChangeType)
 	{
-	case ESPChangeType::Blocked:
-		Delta *= (1.0f - (GuardRate / 100.0f));
+	case EStatChangeType::Damage:
+		bChangeSuccess = BaseStats.Stamina >= Delta;
 		break;
-	case ESPChangeType::Dodge:
-		break;
-	case ESPChangeType::Heal:
+	case EStatChangeType::Heal:
+		bChangeSuccess = (BaseStats.Stamina + Delta) <= BaseStats.MaxStamina;
 		Delta *= -1.0f;
 		break;
 	}
-	*/
 
 	BaseStats.Stamina = FMath::Clamp(BaseStats.Stamina - Delta, 0.0f, BaseStats.MaxStamina);
 
-	return BaseStats.Stamina >= Delta;
+	return bChangeSuccess;
 }
 
-bool UStatComponent::ChangePoise(const float Amount)
+bool UStatComponent::ChangePoise(const float Amount, const EStatChangeType PoiseChangeType)
 {
-	BaseStats.Poise = FMath::Clamp(BaseStats.Poise - Amount, 0.0f, BaseStats.MaxPoise);
+	float Delta = Amount;
 
-	return BaseStats.Poise >= Amount;
+	switch (PoiseChangeType)
+	{
+	case EStatChangeType::Damage:
+		break;
+	case EStatChangeType::Heal:
+		Delta *= -1.0f;
+		break;
+	}
+
+	BaseStats.Poise = FMath::Clamp(BaseStats.Poise - Delta, 0.0f, BaseStats.MaxPoise);
+
+	if (BaseStats.Poise <= 0.0f || BaseStats.Poise <= BaseStats.MaxPoise)
+	{
+		BaseStats.Poise = BaseStats.MaxPoise;
+		return false;
+	}
+	else return true;
 }
 
 float UStatComponent::GetAttributesRequirementRatio_Implementation(const FCharacterAttributes& RequireStats) const

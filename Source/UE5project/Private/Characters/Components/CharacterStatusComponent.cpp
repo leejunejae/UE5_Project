@@ -4,7 +4,6 @@
 #include "Characters/Components/CharacterStatusComponent.h"
 #include "GameFramework/Character.h" 
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Characters/Components/StatComponent.h"
 
 // Sets default values for this component's properties
 UCharacterStatusComponent::UCharacterStatusComponent()
@@ -20,13 +19,6 @@ void UCharacterStatusComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CachedCharacter = Cast<ACharacter>(GetOwner());
-
-	UStatComponent* StatComp = GetOwner()->FindComponentByClass<UStatComponent>();
-	if (StatComp)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Death DELEGATE"));
-		StatComp->OnDeath.BindUObject(this, &UCharacterStatusComponent::HandleDeath);
-	}
 	// ...
 }
 
@@ -39,7 +31,7 @@ bool UCharacterStatusComponent::IsInAir() const
 	return false;
 }
 
-void UCharacterStatusComponent::HandleDeath()
+void UCharacterStatusComponent::ExecuteDeath()
 {
 	bIsDead = true;
 	OnDeath.Broadcast();

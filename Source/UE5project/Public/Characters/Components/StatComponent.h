@@ -6,31 +6,15 @@
 #include "Components/ActorComponent.h"
 #include "Characters/Data/CharacterStatData.h"
 #include "Characters/Interfaces/StatInterface.h"
+#include "Characters/Interfaces/DeathInterface.h"
+#include "Combat/Data/CombatData.h"
 #include "PEnumHeader.h"
 #include "StatComponent.generated.h"
 
-DECLARE_DELEGATE(FOnSingleDelegate);
-
-
-UENUM()
-enum class EHPChangeType : uint8
-{
-	DirectDamage UMETA(DisplayName = "DirectDamage"),
-	TrueDamage UMETA(DisplayName = "TrueDamage"),
-	Heal UMETA(DisplayName = "Heal"),
-};
-
-UENUM()
-enum class ESPChangeType : uint8
-{
-	Blocked UMETA(DisplayName = "Blocked"),
-	Dodge UMETA(DisplayName = "Dodge"),
-	Heal UMETA(DisplayName = "Heal"),
-};
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UStatComponent : public UActorComponent,
-	public IStatInterface
+	public IStatInterface,
+	public IDeathInterface
 {
 	GENERATED_BODY()
 
@@ -43,7 +27,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	FOnSingleDelegate OnDeath;
+	FOnDeathDelegate OnDeath;
+	virtual FOnDeathDelegate& GetOnDeathDelegate() override { return OnDeath; }
 
 public:
 	void InitializeStats();
@@ -51,9 +36,10 @@ public:
 	void ChangeMaxHealth(const float Amount);
 	void ChangeMaxStamina(const float Amount);
 	void ChangeMaxPoise(const float Amount);
-	bool ChangeHealth(const float Amount, const EHPChangeType HPChangeType);
-	bool ChangeStamina(const float Amount, const ESPChangeType SPChangeType);
-	bool ChangePoise(const float Amount);
+	bool ApplyDamage(const float Amount, const EAttackType AttackType);
+	bool Heal(const float Amount);
+	bool ChangeStamina(const float Amount, const EStatChangeType SPChangeType);
+	bool ChangePoise(const float Amount, const EStatChangeType PoiseChangeType);
 
 	FORCEINLINE FCharacterStats GetBaseStats_Native() const { return BaseStats; }
 

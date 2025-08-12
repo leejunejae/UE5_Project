@@ -108,11 +108,6 @@ APBEHHereticSoldier::APBEHHereticSoldier()
 
 	Tags.Add("HereticSoldier");
 	ResetCombo();
-	
-	EnemyInfo.SetName("HereticKnight");
-	EnemyInfo.SetMaxHP(1000);
-	EnemyInfo.SetOffensePower(10);
-	EnemyInfo.SetDefenseCap(10);
 
 	static ConstructorHelpers::FObjectFinder<UDataTable> AttackDT_Asset(TEXT("DataTable'/Game/Enemy/E_Human/EH_HereticSoldier/HSoldierAttackDT.HSoldierAttackDT'"));
 	if (AttackDT_Asset.Succeeded())
@@ -292,7 +287,6 @@ void APBEHHereticSoldier::ResetCombo()
 {
 	CanAttack = true;
 	CurrentCombo = 0;
-	IsAttack = false;
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	CurSkill = HSoldierSkill::None;
 }
@@ -445,7 +439,7 @@ bool APBEHHereticSoldier::CheckBool(HSoldierVar CheckVar)
 	switch (CheckVar)
 	{
 	case HSoldierVar::IsAttack:
-		return IsAttack;
+		return false;
 	case HSoldierVar::IsHit:
 		return IsHit;
 	case HSoldierVar::IsHitLarge:

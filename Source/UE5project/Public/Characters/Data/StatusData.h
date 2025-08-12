@@ -17,6 +17,7 @@ enum class ECharacterGroundState : uint8
 	Hit UMETA(DisplayName = "Hit"),
 	Invincible UMETA(DisplayName = "Invincible"),
 	Parry UMETA(DislplayName = "Parry"),
+	SuperArmor UMETA(DisplayName = "SuperArmor"),
 };
 
 UCLASS()

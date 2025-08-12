@@ -4,14 +4,15 @@
 #include "Interaction/Climb/Components/ClimbComponent.h"
 #include "Environment/Climbable/Interfaces/ClimbObjectInterface.h"
 #include "Interaction/Climb/Interfaces/LadderInterface.h"
+#include "GameFramework/Character.h"
 
 // Sets default values for this component's properties
 UClimbComponent::UClimbComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	//PrimaryComponentTick.bCanEverTick = true;
-
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.TickGroup = TG_PrePhysics;
 	// ...
 }
 
@@ -22,7 +23,14 @@ void UClimbComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
+	CachedCharacter = Cast<ACharacter>(GetOwner());
+	CachedAnim = CachedCharacter->GetMesh()->GetAnimInstance();
+}
+
+void UClimbComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
 }
 
 void UClimbComponent::RegisterClimbObject(AActor* RegistObject)
@@ -68,6 +76,66 @@ void UClimbComponent::SetMaxGripInterval(float MaxInterval)
 	MaxGripInterval = MaxInterval;
 }
 
+void UClimbComponent::SetLimbToGrip(FName BoneName, FGripNode1D* TargetGrip)
+{
+	if (BoneToGripNode.Contains(BoneName))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Bone is already registered [Bone Name : %s]"), *BoneName.ToString());
+	}
+
+	BoneToGripNode.Add(BoneName, TargetGrip);
+}
+
+void UClimbComponent::StartLadderClimbForLimb(bool IsUpperEntrance)
+{
+	if (!IsUpperEntrance)
+	{
+		BoneToGripNode.Add(FName("Foot_L"), GetLowestGrip1D());
+		BoneToGripNode.Add(FName("Foot_R"), BoneToGripNode[FName("Foot_L")]->NeighborUp.Neighbor);
+		BoneToGripNode.Add(FName("Hand_R"), BoneToGripNode[FName("Foot_R")]->NeighborUp.Neighbor);
+		BoneToGripNode.Add(FName("Hand_L"), BoneToGripNode[FName("Hand_R")]->NeighborUp.Neighbor);
+
+		//ClimbDistance = TTuple<CachedCharacter->GetActorLocation(),BoneToGripNode[FName("Foot_L")]->Position + BoneToGripNode[FName("Hand_L")]->Position>;
+
+		LadderStance = ELadderStance::Enter_From_Bottom;
+	}
+	else
+	{
+		BoneToGripNode.Add(FName("hand_l"), GetHighestGrip1D());
+		BoneToGripNode.Add(FName("hand_r"), BoneToGripNode[FName("hand_l")]->NeighborDown.Neighbor);
+		BoneToGripNode.Add(FName("foot_r"), BoneToGripNode[FName("hand_r")]->NeighborDown.Neighbor);
+		BoneToGripNode.Add(FName("foot_l"), BoneToGripNode[FName("foot_r")]->NeighborDown.Neighbor);
+
+		LadderStance = ELadderStance::Enter_From_Top;
+	}
+
+	GrabDataForIK.Add(FName("Foot_L"), FGrabData(FName("Foot_L"), FName("ball_l"), FName("Foot_L_Translation"), 0.5f, FVector::ZeroVector));
+	GrabDataForIK.Add(FName("Foot_R"), FGrabData(FName("Foot_R"), FName("ball_r"), FName("Foot_R_Translation"), 0.5f, FVector::ZeroVector));
+	GrabDataForIK.Add(FName("Hand_L"), FGrabData(FName("Hand_L"), FName("Palm_L"), FName("Hand_L_Translation"), 1.0f, FVector::ZeroVector));
+	GrabDataForIK.Add(FName("Hand_R"), FGrabData(FName("Hand_R"), FName("Palm_R"), FName("Hand_R_Translation"), 1.0f, FVector::ZeroVector));
+}
+
+FGripNode1D* UClimbComponent::GetLimbPlaceGrip(FName BoneName)
+{
+	if (!BoneToGripNode.Contains(BoneName))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Bone is not Located on the Ladder [Bone Name : %s]"), *BoneName.ToString());
+		return nullptr;
+	}
+
+	return BoneToGripNode[BoneName];
+}
+
+FVector UClimbComponent::GetLimbIKTarget(FName BoneName)
+{
+	if (!GrabDataForIK.Contains(BoneName))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Bone is not Located on the Ladder [Bone Name : %s]"), *BoneName.ToString());
+		return FVector::ZeroVector;
+	}
+	return GrabDataForIK[BoneName].TargetLocation;
+}
+
 TOptional<FTransform> UClimbComponent::GetEnterTopPosition()
 {
 	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
@@ -77,6 +145,11 @@ TOptional<FTransform> UClimbComponent::GetEnterTopPosition()
 		return InitTopPosition;
 	}
 
+	return TOptional<FTransform>();
+}
+
+TOptional<FTransform> UClimbComponent::GetEnterBottomPosition()
+{
 	return TOptional<FTransform>();
 }
 
@@ -112,6 +185,37 @@ float UClimbComponent::GetLadderTopTransitionDistance()
 	const FVector2D InitLocation = FVector2D(GetInitTopPosition().GetValue().GetLocation().X, GetInitTopPosition().GetValue().GetLocation().Y);
 	const FVector2D EnterLocation = FVector2D(GetEnterTopPosition().GetValue().GetLocation().X, GetEnterTopPosition().GetValue().GetLocation().Y);
 	return FVector2D::Distance(InitLocation, EnterLocation);
+}
+
+FVector UClimbComponent::SetBoneIKTargetLadder(const FName BoneName, const FName MiddleBoneName, const FName CurveBaseName, const float LimbYDistance, const float Offset, bool IsDebug)
+{
+	if (!BoneToGripNode.Contains(BoneName))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Bone is not Located on the Ladder [Bone Name : %s]"), *BoneName.ToString());
+		return FVector::ZeroVector;
+	}
+	ACharacter* Character = Cast<ACharacter>(GetOwner());
+
+	const FGripNode1D* TargetGrip = BoneToGripNode[BoneName];
+	const FGripNode1D* PrevGrip = TargetGrip->PrevGrip;
+
+	UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+	const FString CurveName = CurveBaseName.ToString();
+	float CurveValue_Z = AnimInstance->GetCurveValue(*FString::Printf(TEXT("%s_Z"), *CurveName));
+
+	FVector PrevLocation = PrevGrip != nullptr ? PrevGrip->Position : Character->GetMesh()->GetSocketLocation(BoneName);
+	FVector TargetLoc = FMath::Lerp(PrevLocation, TargetGrip->Position, CurveValue_Z);
+	
+	FVector BoneLoc = Character->GetMesh()->GetSocketLocation(BoneName);
+
+	if (Character->GetMesh()->DoesSocketExist(MiddleBoneName))
+	{
+		FVector MiddleBoneLoc = Character->GetMesh()->GetSocketLocation(MiddleBoneName);
+		FVector AdjustBoneLoc = (MiddleBoneLoc - BoneLoc) * Offset;
+		TargetLoc -= AdjustBoneLoc;
+	}
+
+	return TargetLoc;
 }
 
 void UClimbComponent::SetGrip1DRelation(float MinInterval, float MaxInterval)

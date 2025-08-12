@@ -105,7 +105,7 @@ ARide::ARide()
 	
 	InteractWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("INTERACTWIDGET"));
 	InteractWidget->SetupAttachment(GetMesh());
-	static ConstructorHelpers::FClassFinder<UUserWidget>INTERACT(TEXT("/Game/00_Character/C_Source/InteractWidget_BP.InteractWidget_BP_C"));
+	static ConstructorHelpers::FClassFinder<UUserWidget>INTERACT(TEXT("/Game/00_Character/Data/InteractWidget_BP.InteractWidget_BP_C"));
 	if (INTERACT.Succeeded())
 	{
 		InteractWidget->SetWidgetClass(INTERACT.Class);

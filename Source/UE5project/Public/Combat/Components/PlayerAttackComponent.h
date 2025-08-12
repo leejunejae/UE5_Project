@@ -7,8 +7,6 @@
 #include "Combat/Data/DataAsset/PlayerAttackDataAsset.h"
 #include "PlayerAttackComponent.generated.h"
 
-
-
 /**
  * 
 */
@@ -30,10 +28,9 @@ public:
 
 	void SetCurAttackType(EWeaponType WeaponType);
 
-	void DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsSubWeaponAttack = false) override;
+	void DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsDetectEnd = false, bool IsSubWeaponAttack = false) override;
 
 private:
-	TWeakObjectPtr<ACharacter> CachedCharacter;
 	//TScriptInterface<IStatDataInterface> CachedStat;
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
@@ -44,6 +41,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
 		int32 ComboIndex = 0;
-
-	bool bAttackMontageExecute = false;
 };

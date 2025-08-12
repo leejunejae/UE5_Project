@@ -30,15 +30,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float StanceDamageMultiplier;
-	/*
-	inline bool operator==(const FPlayerAttackDetail& Other) const
-	{
-		return SectionName == Other.SectionName;
-	}
-	*/
 };
-
-//uint32 GetTypeHash(const FPlayerAttackDetail& AttackData);
 
 USTRUCT(Atomic, BlueprintType)
 struct FPlayerAttackInfo

@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Combat/Components/HitReactionComponent.h"
-
-#include "Characters/Player/Interfaces/PlayerStatusInterface.h"
 #include "Characters/Interfaces/StatInterface.h"
 
 #include "PlayerHitReactionComponent.generated.h"
@@ -21,13 +19,9 @@ class UE5PROJECT_API UPlayerHitReactionComponent : public UHitReactionComponent
 public:
 	UPlayerHitReactionComponent();
 
-	HitResponse EvaluateHitResponse(const FAttackRequest& AttackRequest) override;
+	EHitResponse EvaluateHitResponse(const FAttackRequest& AttackRequest) override;
 	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
-protected:
-	TScriptInterface<IPlayerStatusInterface> CachedPlayerStatus;
-	TScriptInterface<IStatInterface> CachedStat;
 };

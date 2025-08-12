@@ -66,79 +66,12 @@ FTransform UAnimBoneTransformLibrary::GetBoneTransformAtTime(UAnimSequence* Anim
 
     FAnimationRuntime::FillUpComponentSpaceTransforms(RefSkeleton, LocalTransformsView, ComponentSpaceTransforms);
 
+    FTransform RootTransform = ComponentSpaceTransforms[0];
+    FTransform BoneTransform = ComponentSpaceTransforms[BoneIndex];
 
-    UE_LOG(LogTemp, Warning, TEXT("Time = %f"), Time);
-    UE_LOG(LogTemp, Warning, TEXT("Location : X = %f, Y = %f, Z = %f"), ComponentSpaceTransforms[BoneIndex].GetLocation().X, ComponentSpaceTransforms[BoneIndex].GetLocation().Y, ComponentSpaceTransforms[BoneIndex].GetLocation().Z);
-    UE_LOG(LogTemp, Warning, TEXT("Transform : Roll = %f, Pitch = %f, Yaw = %f"), ComponentSpaceTransforms[BoneIndex].GetRotation().Rotator().Roll, ComponentSpaceTransforms[BoneIndex].GetRotation().Rotator().Pitch, ComponentSpaceTransforms[BoneIndex].GetRotation().Rotator().Yaw);
-    UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+    FTransform RelativeTransform = BoneTransform.GetRelativeTransform(RootTransform);
 
-
-    return ComponentSpaceTransforms[BoneIndex];
-
-    /*
-    if (!AnimSequence)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("AnimSequence null"));
-        return FTransform::Identity;
-    }
-
-    FTransform TargetBoneTransform;
-    int32 TargetBoneIndex = AnimSequence->GetSkeleton()->GetReferenceSkeleton().FindBoneIndex(BoneName);
-    if (TargetBoneIndex == INDEX_NONE)
-    {
-        return FTransform::Identity;
-    }
-
-    FSkeletonPoseBoneIndex TargetBoneIndex(TargetBoneIndex);
-
-    AnimSequence->GetBoneTransform(TargetBoneTransform, TargetBoneIndex, Time, true);
-
-    UE_LOG(LogTemp, Warning, TEXT("Time = %f"), Time);
-    UE_LOG(LogTemp, Warning, TEXT("Location : X = %f, Y = %f, Z = %f"), OutTransform.GetLocation().X, OutTransform.GetLocation().Y, OutTransform.GetLocation().Z);
-    UE_LOG(LogTemp, Warning, TEXT("Transform : Roll = %f, Pitch = %f, Yaw = %f"), OutTransform.GetRotation().Rotator().Roll, OutTransform.GetRotation().Rotator().Pitch, OutTransform.GetRotation().Rotator().Yaw);
-    UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
-    
-    return TargetBoneTransform;
-    */
-
-    /*
-    if (!AnimSequence)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("AnimSequence null"));
-        return FTransform::Identity;
-    }
-
-    const IAnimationDataModel* DataModel = AnimSequence->GetDataModel();
-    if (!DataModel)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("AnimSequence has no DataModel"));
-        return FTransform::Identity;
-    }
-
-    const int32 TrackIndex = DataModel->GetBoneTrackIndexByName(BoneName);
-    if (TrackIndex == INDEX_NONE)
-    {
-        //UE_LOG(LogTemp, Warning, TEXT("Bone %s not found in AnimSequence"), *BoneName.ToString());
-        return FTransform::Identity;
-    }
-
-    const FRawAnimSequenceTrack& Track = AnimSequence->GetDataModel()->GetBoneTrackByIndex(TrackIndex).InternalTrackData;
-    const int32 NumFrames = AnimSequence->GetNumberOfFrames();
-    const float SequenceLength = AnimSequence->GetPlayLength();
-    const float FrameDelta = SequenceLength / (float)(NumFrames - 1);
-
-    const int32 FrameIndex = FMath::Clamp(FMath::FloorToInt(Time / FrameDelta), 0, NumFrames - 1);
-
-    FVector3f Pos = Track.PosKeys.IsValidIndex(FrameIndex) ? Track.PosKeys[FrameIndex] : FVector3f::ZeroVector;
-    FQuat4f Rot = Track.RotKeys.IsValidIndex(FrameIndex) ? Track.RotKeys[FrameIndex] : FQuat4f::Identity;
-    FVector3f Scale = Track.ScaleKeys.IsValidIndex(FrameIndex) ? Track.ScaleKeys[FrameIndex] : FVector3f(1.0f);
-
-    return FTransform(
-        FQuat(Rot),      
-        FVector(Pos),    
-        FVector(Scale)   
-    );
-    */
+    return RelativeTransform;
 }
 
 void UAnimBoneTransformLibrary::ExtractAnimBoneTransformToAsset(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate, const FString& SavePath, const FString& AssetName)

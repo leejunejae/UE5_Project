@@ -18,7 +18,7 @@ AFallenKnight::AFallenKnight()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MAIN_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/SK_DC_Knight_UE4_full_Silver.SK_DC_Knight_UE4_full_Silver"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MAIN_MESH(TEXT("/Game/04_Animations/Player/SK_DC_Knight_UE4_full_Silver.SK_DC_Knight_UE4_full_Silver"));
 	if (MAIN_MESH.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(MAIN_MESH.Object);
@@ -54,7 +54,8 @@ AFallenKnight::AFallenKnight()
 	}
 	
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/00_Character/C_Warrior/CW_Animation/CWA_BP/ABP_FallenKnight.ABP_FallenKnight_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/00_Character/C_Warrior/CW_Animation/CWA_BP/Player_AnimBP.Player_AnimBP_C"));
+	
 	if (FallenKnight_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(FallenKnight_ANIM.Class);

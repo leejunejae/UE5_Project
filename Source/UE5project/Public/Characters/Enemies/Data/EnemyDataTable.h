@@ -8,7 +8,7 @@
 #include "EnemyDataTable.generated.h"
 
 USTRUCT(BlueprintType)
-struct FEnemyData : public FTableRowBase
+struct FEnemyStat : public FTableRowBase
 {
 	GENERATED_BODY()
 

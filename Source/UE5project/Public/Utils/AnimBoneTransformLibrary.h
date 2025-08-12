@@ -9,6 +9,15 @@
 /**
  * 
  */
+UENUM(BlueprintType)
+enum class EExtractType : uint8
+{
+	Transform UMETA(DisplayName = "Transform"),
+	Vector UMETA(DisplayName = "Vector"),
+	Rotator UMETA(DisplayName = "Rotator"),
+	Scale UMETA(DisplayName = "Scale"),
+};
+
 UCLASS()
 class UE5PROJECT_API UAnimBoneTransformLibrary : public UBlueprintFunctionLibrary
 {
@@ -19,5 +28,5 @@ public:
 		static FTransform GetBoneTransformAtTime(UAnimSequence* AnimSequence, const FName& BoneName, float Time);
 
 	UFUNCTION(BlueprintCallable, Category = "Trajectory")
-		static void ExtractAnimBoneTransformToAsset(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate, const FString& SavePath, const FString& AssetName);
+		static void ExtractAnimBoneTransformToAsset(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate,const FString& SavePath, const FString& AssetName);
 };

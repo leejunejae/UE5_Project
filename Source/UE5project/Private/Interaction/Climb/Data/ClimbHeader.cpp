@@ -3,15 +3,7 @@
 
 #include "Interaction/Climb/Data/ClimbHeader.h"
 
-// Sets default values
-AClimbHeader::AClimbHeader()
+uint32 GetTypeHash(const FGrabData& GrabData)
 {
-
-}
-
-// Called when the game starts or when spawned
-void AClimbHeader::BeginPlay()
-{
-	Super::BeginPlay();
-	
+	return GetTypeHash(GrabData.MainBone);
 }
