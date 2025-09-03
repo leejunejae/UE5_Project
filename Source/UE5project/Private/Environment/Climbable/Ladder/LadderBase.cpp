@@ -13,10 +13,15 @@ ALadderBase::ALadderBase()
 
 	ClimbObjectTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Climbable.Ladder")));
 
-	EnterTopPosition = CreateDefaultSubobject<USceneComponent>(TEXT("EnterTopPosition"));
-	EnterTopPosition->SetupAttachment(ObjectRoot);
-	EnterTopPosition->ComponentTags.Add(FName("Top"));
-	EnterTopPosition->ComponentTags.Add(FName("Enter"));
+	EnterPosition = CreateDefaultSubobject<USceneComponent>(TEXT("EnterTopPosition"));
+	EnterPosition->SetupAttachment(ObjectRoot);
+	EnterPosition->ComponentTags.Add(FName("Enter"));
+
+	TopEnterLeftHandTarget = CreateDefaultSubobject<USceneComponent>(TEXT("TopEnterLeftHandTarget"));
+	TopEnterLeftHandTarget->SetupAttachment(ObjectRoot);
+
+	TopEnterRightHandTarget = CreateDefaultSubobject<USceneComponent>(TEXT("TopEnterRightHandTarget"));
+	TopEnterRightHandTarget->SetupAttachment(ObjectRoot);
 }
 
 void ALadderBase::OnConstruction(const FTransform& Transform)
@@ -52,6 +57,7 @@ void ALadderBase::OnConstruction(const FTransform& Transform)
 		// 사다리 위치 설정
 		NewClimbMesh->SetRelativeScale3D(LadderScale);
 		NewClimbMesh->SetRelativeLocation(FVector(0.0f, 0.0f, AdditionalHeight + CumulativeHeight));
+		NewClimbMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 		NewClimbMesh->RegisterComponent();
 		CumulativeHeight += NewClimbMesh->Bounds.BoxExtent.Z * 2.0f;
 
@@ -59,8 +65,8 @@ void ALadderBase::OnConstruction(const FTransform& Transform)
 		ClimbMeshes.Add(NewClimbMesh);
 	}
 
-	ClimbTopTrigger->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + ClimbTopTrigger->Bounds.BoxExtent.Z));
-	ClimbTopLocation->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + 92.0f));
+	ClimbTopTrigger->SetRelativeLocation(FVector(-80.0f, 0.0f, AdditionalHeight + CumulativeHeight + ClimbTopTrigger->Bounds.BoxExtent.Z));
+	ClimbTopLocation->SetRelativeLocation(FVector(-80.0f, 0.0f, AdditionalHeight + CumulativeHeight + 92.0f));
 }
 
 void ALadderBase::SetInitTopPosition()
@@ -193,6 +199,7 @@ void ALadderBase::BeginPlay()
 		// 사다리 위치 설정
 		NewClimbMesh->SetRelativeScale3D(LadderScale);
 		NewClimbMesh->SetRelativeLocation(FVector(0.0f, 0.0f, AdditionalHeight + CumulativeHeight));
+		NewClimbMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 		NewClimbMesh->RegisterComponent();
 		CumulativeHeight += NewClimbMesh->Bounds.BoxExtent.Z * 2.0f;
 
@@ -221,8 +228,14 @@ void ALadderBase::BeginPlay()
 		}
 	}
 
-	ClimbTopTrigger->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + ClimbTopTrigger->Bounds.BoxExtent.Z));
-	ClimbTopLocation->SetRelativeLocation(FVector(0.0f, -70.0f, AdditionalHeight + CumulativeHeight + 92.0f));
+	if(ClimbMeshes.Last()->DoesSocketExist(FName("EnterTopLeftSocket")))
+		TopEnterLeftHandTarget->SetWorldLocation(ClimbMeshes.Last()->GetSocketLocation(FName("EnterTopLeftSocket")));
+
+	if (ClimbMeshes.Last()->DoesSocketExist(FName("EnterTopLeftSocket")))
+		TopEnterRightHandTarget->SetWorldLocation(ClimbMeshes.Last()->GetSocketLocation(FName("EnterTopRightSocket")));
+
+	ClimbTopTrigger->SetRelativeLocation(FVector(-80.0f, 0.0f, AdditionalHeight + CumulativeHeight + ClimbTopTrigger->Bounds.BoxExtent.Z));
+	ClimbTopLocation->SetRelativeLocation(FVector(-80.0f, 0.0f, AdditionalHeight + CumulativeHeight + 92.0f));
 	SetInitTopPosition();
 	SetInitBottomPosition();
 
@@ -236,19 +249,4 @@ void ALadderBase::BeginPlay()
 		GripList1D[GripIndex].GripIndex = GripIndex;
 		//UE_LOG(LogTemp, Warning, TEXT("After Sort GripList[%d] = %f"), GripIndex, GripList1D[GripIndex].Position.Z);
 	}
-}
-
-USceneComponent* ALadderBase::GetEnterTopTarget_Implementation()
-{
-	return EnterTopPosition;
-}
-
-USceneComponent* ALadderBase::GetInitTopTarget_Implementation()
-{
-	return ClimbTopLocation;
-}
-
-USceneComponent* ALadderBase::GetInitBottomTarget_Implementation()
-{
-	return ClimbBottomLocation;
 }

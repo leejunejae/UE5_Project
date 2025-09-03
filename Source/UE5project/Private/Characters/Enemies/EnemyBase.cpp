@@ -80,6 +80,9 @@ void AEnemyBase::InitializeEnemyData()
 	}
 
 	const FEnemyStats* LoadedStats = EnemyData->Stats;
+	if (!LoadedStats)
+		return;
+
 	Stats.InitFromDataTable(*LoadedStats);
 
 	const FEnemyInfo* LoadedInfo = EnemyData->Info;

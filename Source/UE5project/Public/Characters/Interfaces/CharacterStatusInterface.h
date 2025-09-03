@@ -23,9 +23,15 @@ class UE5PROJECT_API ICharacterStatusInterface
 		
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		ECharacterGroundState GetGroundState() const;
+		ECharacterState GetCharacterState() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		void SetGroundState(ECharacterGroundState NewState);
+		void SetCharacterState(ECharacterState NewState);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		EGroundStance GetGroundStance() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void SetGroundState(EGroundStance NewStance);
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 };

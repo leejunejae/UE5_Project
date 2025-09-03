@@ -4,6 +4,7 @@
 #include "Combat/Components/HitReactionComponent.h"
 #include "GameFramework/Character.h"
 #include "Characters/Components/CharacterStatusComponent.h"
+#include "Characters/Interfaces/CharacterStatusInterface.h"
 #include "Characters/Data/StatusData.h"
 #include "Characters/Components/StatComponent.h"
 
@@ -29,7 +30,7 @@ void UHitReactionComponent::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("Owner Character Not Valid"));
 		return;
 	}
-
+	
 	for (UActorComponent* Comp : CachedCharacter->GetComponents())
 	{
 		if (Comp->GetClass()->ImplementsInterface(UCharacterStatusInterface::StaticClass()))
@@ -148,30 +149,30 @@ float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)
 
 EHitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& AttackRequest)
 {
-	const ECharacterGroundState CombatState = ICharacterStatusInterface::Execute_GetGroundState(CachedPlayerStatus.GetObject());
+	const EGroundStance CombatState = ICharacterStatusInterface::Execute_GetGroundStance(CachedPlayerStatus.GetObject());
 
-	if (CombatState == ECharacterGroundState::Invincible) return EHitResponse::None;
+	if (CombatState == EGroundStance::Invincible) return EHitResponse::None;
 
 	EHitResponse FinalResponse = AttackRequest.Response;
 
 	switch (CombatState)
 	{
-	case ECharacterGroundState::Hit:
+	case EGroundStance::Hit:
 	{
 		FinalResponse = EHitResponse::NoStagger;
 		break;
 	}
-	case ECharacterGroundState::Invincible:
+	case EGroundStance::Invincible:
 	{
 		FinalResponse = EHitResponse::None;
 		break;
 	}
-	case ECharacterGroundState::Jump:
+	case EGroundStance::Jump:
 	{
 		FinalResponse = EHitResponse::HitAir;
 		break;
 	}
-	case ECharacterGroundState::Dodge:
+	case EGroundStance::Dodge:
 	{
 		if (AttackRequest.CanAvoid)
 		{
@@ -179,7 +180,7 @@ EHitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& At
 		}
 		break;
 	}
-	case ECharacterGroundState::Block:
+	case EGroundStance::Block:
 	{
 		float HitAngle = CalculateHitAngle(AttackRequest.HitPoint);
 		if (AttackRequest.CanBlocked && (FMath::Abs(HitAngle) <= 60.0f))
@@ -197,7 +198,7 @@ EHitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& At
 		}
 		break;
 	}
-	case ECharacterGroundState::Parry:
+	case EGroundStance::Parry:
 	{
 		float HitAngle = CalculateHitAngle(AttackRequest.HitPoint);
 		if (AttackRequest.CanParried && (HitAngle >= -60.0f || HitAngle <= 60.0f))

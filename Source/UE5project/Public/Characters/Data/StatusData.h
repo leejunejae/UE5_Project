@@ -7,7 +7,15 @@
 #include "StatusData.generated.h"
 
 UENUM(BlueprintType)
-enum class ECharacterGroundState : uint8
+enum class ECharacterState : uint8
+{
+	Ground UMETA(DisplayName = "Ground"),
+	Ladder UMETA(DisplayName = "Ladder"),
+	Ride UMETA(DisplayName = "Ride"),
+};
+
+UENUM(BlueprintType)
+enum class EGroundStance : uint8
 {
 	Normal UMETA(DisplayName = "Normal"),
 	Attack UMETA(DisplayName = "Attack"),
@@ -18,6 +26,23 @@ enum class ECharacterGroundState : uint8
 	Invincible UMETA(DisplayName = "Invincible"),
 	Parry UMETA(DislplayName = "Parry"),
 	SuperArmor UMETA(DisplayName = "SuperArmor"),
+};
+
+UENUM(BlueprintType)
+enum class ERideStance : uint8
+{
+	Mount UMETA(DisplayName = "Mount"),
+	DisMount UMETA(DisplayName = "DisMount"),
+	Riding UMETA(DisplayName = "Riding"),
+};
+
+UENUM(BlueprintType)
+enum class ELocomotionState : uint8
+{
+	Idle UMETA(DisplayName = "Idle"),
+	Walk UMETA(DisplayName = "Walk"),
+	Jog UMETA(DisplayName = "Jog"),
+	Sprint UMETA(DisplayName = "Sprint"),
 };
 
 UCLASS()

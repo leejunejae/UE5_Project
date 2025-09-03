@@ -16,7 +16,6 @@
 // 인터페이스
 #include "Characters/Player/Interfaces/PlayerInterface.h"
 #include "Combat/Interfaces/HitReactionInterface.h"
-#include "Interaction/Climb/Interfaces/ClimbInterface.h"
 #include "Characters/Player/Interfaces/ViewDataInterface.h"
 #include "Characters/Interfaces/CharacterTransformInterface.h"
 
@@ -51,7 +50,6 @@ UCLASS()
 class UE5PROJECT_API ACharacterBase : public ACharacter, 
 	public IHitReactionInterface, 
 	public IPlayerInterface, 
-	public IClimbInterface, 
 	public IViewDataInterface,
 	public ICharacterTransformInterface
 {
@@ -268,9 +266,8 @@ protected:
 // Variables For State & Stance
 ////////////////////////////////////	
 protected:
-	ECharacterState CurrentState = ECharacterState::Ground;
-	ELadderStance CurLadderStance = ELadderStance::Idle;
-	EGroundStance CurGroundStance = EGroundStance::Walk;
+	//EClimbPhase CurLadderStance = EClimbPhase::Idle;
+	ELocomotionState CurGroundStance = ELocomotionState::Walk;
 	ERideStance CurRideStance = ERideStance::Riding;
 
 
@@ -278,9 +275,8 @@ protected:
 // Methods For State & Stance
 ////////////////////////////////////
 public:
-	ECharacterState GetCurrentState();
-	ELadderStance GetCurLadderStance();
-	EGroundStance GetCurGroundStance();
+	EClimbPhase GetCurLadderStance();
+	ELocomotionState GetCurGroundStance();
 	ERideStance GetCurRideStance();
 	float GetClimbDistance();
 #pragma endregion State & Stance
@@ -320,7 +316,7 @@ private:
 	bool CanMovementInput;
 
 protected:
-	void DecideLadderStance();
+	void DecidEClimbPhase();
 
 	UPROPERTY(VisibleAnywhere, Category = Climb)
 		UClimbComponent* ClimbComponent;
@@ -328,14 +324,13 @@ protected:
 	UPROPERTY(EditAnywhere)
 		float MinGripInterval = 15.0f;
 	UPROPERTY(EditAnywhere)
-		float MaxGripInterval = 50.0f;
+		float MaxGripInterval = 60.0f;
 	UPROPERTY(EditAnywhere)
-		float MinFirstGripHeight = 40.0f;
+		float MinFirstGripHeight = 0.0f;
 
 public:
 	FORCEINLINE UClimbComponent* GetClimbComponent() const { return ClimbComponent; }
 	void SetCanMovementInput(bool CanMove);
-	virtual void SetNextGripDown_Implementation(FName BoneName, int32 Count) override;
 
 #pragma endregion
 

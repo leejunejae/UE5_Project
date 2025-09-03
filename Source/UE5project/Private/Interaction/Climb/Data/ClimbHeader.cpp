@@ -2,8 +2,3 @@
 
 
 #include "Interaction/Climb/Data/ClimbHeader.h"
-
-uint32 GetTypeHash(const FGrabData& GrabData)
-{
-	return GetTypeHash(GrabData.MainBone);
-}

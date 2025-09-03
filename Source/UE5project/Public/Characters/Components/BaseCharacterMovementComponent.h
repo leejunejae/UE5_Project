@@ -14,6 +14,6 @@ class UE5PROJECT_API UBaseCharacterMovementComponent : public UCharacterMovement
 {
 	GENERATED_BODY()
 	
-protected:
-	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
+//protected:
+	//virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
 };

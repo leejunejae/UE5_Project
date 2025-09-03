@@ -200,7 +200,7 @@ ACharacterBase::ACharacterBase()
 	GetMesh()->SetGenerateOverlapEvents(true);
 
 	CanMovementInput = true;
-	CurGroundStance = EGroundStance::Jog;
+	CurGroundStance = ELocomotionState::Jog;
 
 	GetCharacterMovement()->MaxWalkSpeed = 450.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
@@ -253,11 +253,11 @@ void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//FString EnumName = UEnum::GetValueAsString(CharacterStatusComponent->GetGroundState_Native());
+	//FString EnumName = UEnum::GetValueAsString(CharacterStatusComponent->GetGroundStance_Native());
 	//UE_LOG(LogTemp, Warning, TEXT("GroundState = %s"), *EnumName);
 	//UE_LOG(LogTemp, Warning, TEXT("EnableDodge = %f"), CharacterBaseAnim->GetCurveValue(FName("EnableDodge")));
 	
-	if (CurGroundStance == EGroundStance::Sprint)
+	if (CurGroundStance == ELocomotionState::Sprint)
 	{
 		GetCharacterMovement()->BrakingDecelerationWalking = FMath::FInterpConstantTo(GetCharacterMovement()->BrakingDecelerationWalking, 1300.0f, DeltaTime, 1000.0f);
 	}
@@ -422,19 +422,13 @@ void ACharacterBase::PostInitializeComponents()
 		CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &ACharacterBase::LeftLocomotion);
 
 		CharacterBaseAnim->OnEnterWalkState.AddLambda([this]()->void {
-			CurrentState = ECharacterState::Ground;
+			CharacterStatusComponent->SetCharacterState_Native(ECharacterState::Ground);
 			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			CanRide = true;
 			});
 
-		CharacterBaseAnim->OnEnterLadderState.AddLambda([this]()->void {
-			CurrentState = ECharacterState::Ladder;
-			GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			});
-
-		CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecideLadderStance);
+		//CharacterBaseAnim->OnClimbEnd.AddUObject(this, &ACharacterBase::DecidEClimbPhase); 삭제
 		CharacterBaseAnim->OnMountEnd.AddUObject(this, &ACharacterBase::MountEnd);
 		CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &ACharacterBase::DisMountEnd);
 	}
@@ -460,7 +454,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 
 	const FVector2D DirectionValue = value.Get<FVector2D>();
 	
-	switch (CurrentState)
+	switch (GetCharacterStatusComponent()->GetCharacterState_Native())
 	{
 	case ECharacterState::Ground:
 	{
@@ -484,9 +478,15 @@ void ACharacterBase::Move(const FInputActionValue& value)
 		IsMovementInput = FMath::IsNearlyZero(DirectionValue.Y) ? false : true;
 		if (IsMovementInput)
 		{
+			DirectionValue.Y > 0.0f ? ClimbComponent->ClimbUpLadder() : ClimbComponent->ClimbDownLadder();
+		}
+		/*
+		IsMovementInput = FMath::IsNearlyZero(DirectionValue.Y) ? false : true;
+		if (IsMovementInput)
+		{
 			IsClimbUp = (DirectionValue.Y > 0.0f) ? true : false;
 			switch (CurLadderStance) {
-			case ELadderStance::Idle:
+			case EClimbPhase::Idle:
 			{
 				if (IsClimbUp)
 				{
@@ -512,7 +512,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 
 						//ClimbDistance -= 140.0f;
 						GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
-						CurLadderStance = ELadderStance::Exit_From_Top;
+						CurLadderStance = EClimbPhase::Exit_From_Top;
 						//CurrentState = ECharacterState::LadderToGround;
 						//OnExitTopLadder.ExecuteIfBound();
 							
@@ -524,7 +524,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 						ClimbComponent->SetGripNeighborUp(Grip1D_Hand_L, 2);
 						ClimbComponent->SetGripNeighborUp(Grip1D_Foot_R, 2);
 						ClimbComponent->SetGripNeighborUp(Grip1D_Foot_L, 2);
-						CurLadderStance = ELadderStance::ClimbUp;
+						CurLadderStance = EClimbPhase::ClimbUp;
 					}
 				}
 				else
@@ -534,7 +534,7 @@ void ACharacterBase::Move(const FInputActionValue& value)
 						// Idle -> Idle_OneStep
 						ClimbDistance = Grip1D_Hand_R->NeighborDown.Distance;
 						ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, 2);
-						CurLadderStance = ELadderStance::ClimbDown_OneStep;
+						CurLadderStance = EClimbPhase::ClimbDown_OneStep;
 					}
 					else
 					{
@@ -543,26 +543,26 @@ void ACharacterBase::Move(const FInputActionValue& value)
 						ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, 2);
 						ClimbComponent->SetGripNeighborDown(Grip1D_Foot_R, 2);
 						ClimbComponent->SetGripNeighborDown(Grip1D_Foot_L, 2);
-						CurLadderStance = ELadderStance::ClimbDown;
+						CurLadderStance = EClimbPhase::ClimbDown;
 					}
 					ClimbDistance *= -1.0f;
 				}
 				break;
 			}
-			case ELadderStance::Idle_OneStep:
+			case EClimbPhase::Idle_OneStep:
 			{
 				if (IsClimbUp)
 				{
 					ClimbDistance = ((Grip1D_Hand_R->NeighborUp.Distance + Grip1D_Foot_R->NeighborUp.Distance) / 2.0f);
 					ClimbComponent->SetGripNeighborUp(Grip1D_Hand_L, 2);
 					Grip1D_Foot_L = ClimbComponent->GetGripNeighborUp(Grip1D_Foot_R);
-					CurLadderStance = ELadderStance::ClimbUp_OneStep;
+					CurLadderStance = EClimbPhase::ClimbUp_OneStep;
 				}
 				else
 				{
 					// Exit from Bottom
 					GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-					CurLadderStance = ELadderStance::Exit_From_Bottom;
+					CurLadderStance = EClimbPhase::Exit_From_Bottom;
 				}
 				break;	
 			}
@@ -571,8 +571,11 @@ void ACharacterBase::Move(const FInputActionValue& value)
 
 			}
 			}
+			
 		}
+		*/
 		break;
+		
 	}
 	default:
 	{
@@ -682,7 +685,7 @@ void ACharacterBase::Dodge()
 	CharacterBaseAnim->Montage_Play(RollMontage);
 	CharacterBaseAnim->Montage_JumpToSection(RollDirectionName, RollMontage);
 
-	CharacterStatusComponent->SetGroundState_Native(ECharacterGroundState::Dodge);
+	CharacterStatusComponent->SetGroundStance_Native(EGroundStance::Dodge);
 }
 
 void ACharacterBase::Jump()
@@ -697,7 +700,7 @@ void ACharacterBase::Jump()
 	}
 	else
 	{
-		CharacterStatusComponent->SetGroundState_Native(ECharacterGroundState::Jump);
+		CharacterStatusComponent->SetGroundStance_Native(EGroundStance::Jump);
 		Super::Jump();
 	}
 	//GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -706,25 +709,25 @@ void ACharacterBase::Jump()
 void ACharacterBase::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
-	CharacterStatusComponent->SetGroundState_Native(ECharacterGroundState::Normal);
+	CharacterStatusComponent->SetGroundStance_Native(EGroundStance::Normal);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 void ACharacterBase::Walk()
 {
-	CurGroundStance = EGroundStance::Walk;
+	CurGroundStance = ELocomotionState::Walk;
 	GetCharacterMovement()->MaxWalkSpeed = 200.0f;
 }
 
 void ACharacterBase::WalkEnd()
 {
-	CurGroundStance = EGroundStance::Jog;
+	CurGroundStance = ELocomotionState::Jog;
 	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
 }
 
 void ACharacterBase::Sprint()
 {
-	CurGroundStance = EGroundStance::Sprint;
+	CurGroundStance = ELocomotionState::Sprint;
 	GetCharacterMovement()->MaxWalkSpeed = 800.0f;
 	//GetCharacterMovement()->BrakingDecelerationWalking = 1300.0f;
 	//UE_LOG(LogTemp, Error, TEXT("TOGGLING"));
@@ -734,15 +737,15 @@ void ACharacterBase::Sprint()
 	/*
 	switch (CurGroundStance)
 	{
-	case EGroundStance::Walk:
+	case ELocomotionState::Walk:
 	{
-		CurGroundStance = EGroundStance::Jog;
+		CurGroundStance = ELocomotionState::Jog;
 		GetCharacterMovement()->MaxWalkSpeed = 400.0f;
 		break;
 	}
-	case EGroundStance::Jog:
+	case ELocomotionState::Jog:
 	{
-		CurGroundStance = EGroundStance::Walk;
+		CurGroundStance = ELocomotionState::Walk;
 		GetCharacterMovement()->MaxWalkSpeed = 200.0f;
 		break;
 	}
@@ -752,7 +755,7 @@ void ACharacterBase::Sprint()
 
 void ACharacterBase::SprintEnd()
 {
-	CurGroundStance = EGroundStance::Jog;
+	CurGroundStance = ELocomotionState::Jog;
 	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
 	//GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
 }
@@ -799,18 +802,6 @@ void ACharacterBase::Interact()
 
 		GetController()->SetIgnoreMoveInput(true);
 		IsInteraction = InteractComponent->MovetoInteractPos();
-		
-		/*
-		if (InteractComponent->GetInteractActor()->ActorHasTag("Ride"))
-		{
-			UGameplayStatics::GetPlayerController(GetWorld(), 0)->Possess(Cast<APawn>(InteractComponent->GetInteractActor()));
-			IsInteraction = true;
-		}
-		else
-		{
-			IsInteraction = InteractComponent->MovetoInteractPos();
-		}
-		*/
 	}
 }
 
@@ -907,17 +898,15 @@ FVector ACharacterBase::GetInputDirection()
 	return DodgeVector;
 }
 
-ECharacterState ACharacterBase::GetCurrentState()
-{
-	return CurrentState;
-}
-
-ELadderStance ACharacterBase::GetCurLadderStance()
+//삭제
+/*
+EClimbPhase ACharacterBase::GetCurLadderStance()
 {
 	return CurLadderStance;
 }
+*/
 
-EGroundStance ACharacterBase::GetCurGroundStance()
+ELocomotionState ACharacterBase::GetCurGroundStance()
 {
 	return CurGroundStance;
 }
@@ -932,73 +921,55 @@ float ACharacterBase::GetClimbDistance()
 	return ClimbDistance;
 }
 
-void ACharacterBase::SetNextGripDown_Implementation(FName BoneName, int32 Count)
+//삭제
+/*
+void ACharacterBase::DecidEClimbPhase()
 {
-	if (BoneName == FName("Hand_L"))
-	{
-		ClimbComponent->SetGripNeighborDown(Grip1D_Hand_L, Count);
-	}
-	else if (BoneName == FName("Hand_R"))
-	{
-		ClimbComponent->SetGripNeighborDown(Grip1D_Hand_R, Count);
-	}
-	else if (BoneName == FName("Foot_L"))
-	{
-		ClimbComponent->SetGripNeighborDown(Grip1D_Foot_L, Count);
-	}
-	else if (BoneName == FName("Foot_R"))
-	{
-		ClimbComponent->SetGripNeighborDown(Grip1D_Foot_R, Count);
-	}
-}
-
-void ACharacterBase::DecideLadderStance()
-{
-	//UE_LOG(LogTemp, Warning, TEXT("DecideLadderStance"));
+	//UE_LOG(LogTemp, Warning, TEXT("DecidEClimbPhase"));
 	switch (CurLadderStance)
 	{
-	case ELadderStance::ClimbUp_OneStep:
+	case EClimbPhase::ClimbUp_OneStep:
 	{
-		CurLadderStance = ELadderStance::Idle;
+		CurLadderStance = EClimbPhase::Idle;
 		//UE_LOG(LogTemp, Warning, TEXT("ClimbUp_Onestep to Idle"));
 		break;
 	}
-	case ELadderStance::ClimbUp:
+	case EClimbPhase::ClimbUp:
 	{
-		CurLadderStance = ELadderStance::Idle;
+		CurLadderStance = EClimbPhase::Idle;
 		//UE_LOG(LogTemp, Warning, TEXT("ClimbUp to Idle"));
 		break;
 	}
-	case ELadderStance::ClimbDown_OneStep:
+	case EClimbPhase::ClimbDown_OneStep:
 	{
-		CurLadderStance = ELadderStance::Idle_OneStep;
+		CurLadderStance = EClimbPhase::Idle_OneStep;
 		break;
 	}
-	case ELadderStance::ClimbDown:
+	case EClimbPhase::ClimbDown:
 	{
-		CurLadderStance = ELadderStance::Idle;
+		CurLadderStance = EClimbPhase::Idle;
 		break;
 	}
-	case ELadderStance::Enter_From_Bottom:
+	case EClimbPhase::Enter_From_Bottom:
 	{
-		CurLadderStance = ELadderStance::Idle_OneStep;
+		CurLadderStance = EClimbPhase::Idle_OneStep;
 		break;
 	}
-	case ELadderStance::Enter_From_Top:
+	case EClimbPhase::Enter_From_Top:
 	{
-		CurLadderStance = ELadderStance::Idle;
+		CurLadderStance = EClimbPhase::Idle;
 		break;
 	}
-	case ELadderStance::Exit_From_Top:
+	case EClimbPhase::Exit_From_Top:
 	{
-		CurrentState = ECharacterState::Ground;
-		CurLadderStance = ELadderStance::Idle;
+		CharacterStatusComponent->SetCharacterState_Native(ECharacterState::Ground);
+		CurLadderStance = EClimbPhase::Idle;
 		break;
 	}
-	case ELadderStance::Exit_From_Bottom:
+	case EClimbPhase::Exit_From_Bottom:
 	{
-		CurrentState = ECharacterState::Ground;
-		CurLadderStance = ELadderStance::Idle;
+		CharacterStatusComponent->SetCharacterState_Native(ECharacterState::Ground);
+		CurLadderStance = EClimbPhase::Idle;
 		break;
 	}
 	default:
@@ -1066,6 +1037,7 @@ TOptional<TTuple<FVector, FVector>> ACharacterBase::GetLadderIKTargetLoc(EBodyTy
 		return TOptional<TTuple<FVector, FVector>>();
 	}
 }
+*/
 
 TOptional<FVector> ACharacterBase::GetRideIKTargetLoc(EBodyType BoneType)
 {
@@ -1178,10 +1150,12 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		Ride = Cast<ACharacter>(InteractActor);
 		CurRideStance = ERideStance::Mount;
-		CurrentState = ECharacterState::Ride;
+		CharacterStatusComponent->SetCharacterState_Native(ECharacterState::Ride);
 	}
 	else if (InteractActor->ActorHasTag("Ladder"))
 	{
+		bool IsRequestSuccess = ClimbComponent->RequestEnterLadder(InteractActor);
+		/*
 		CanMovementInput = false;
 		ClimbComponent->RegisterClimbObject(InteractActor);
 		float ComparisonHeight = ClimbComponent->GetInitBottomPosition().GetValue().GetLocation().Z;
@@ -1191,7 +1165,7 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 		{
 			if (InteractionPoint->ComponentHasTag("Bottom"))
 			{
-				CurLadderStance = ELadderStance::Enter_From_Bottom;
+				CurLadderStance = EClimbPhase::Enter_From_Bottom;
 
 				Grip1D_Foot_R = ClimbComponent->GetLowestGrip1D();
 				Grip1D_Hand_L = ClimbComponent->GetGripByHeightUpWard(130.0f, ComparisonHeight);
@@ -1199,7 +1173,7 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 			}
 			else
 			{
-				CurLadderStance = ELadderStance::Enter_From_Top;
+				CurLadderStance = EClimbPhase::Enter_From_Top;
 
 				Grip1D_Hand_L = ClimbComponent->GetHighestGrip1D();
 				Grip1D_Hand_R = ClimbComponent->GetHighestGrip1D();
@@ -1212,6 +1186,7 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::ProbeOnly);
 			IsClimb = true;
 		}
+		*/
 	}
 	else if (InteractActor->ActorHasTag("NPC"))
 	{
@@ -1224,13 +1199,13 @@ void ACharacterBase::HandleArrivedInteractionPoint()
 void ACharacterBase::OnBlock()
 {
 	IsBlockInput = true;
-	CharacterStatusComponent->SetGroundState_Native(ECharacterGroundState::Block);
+	CharacterStatusComponent->SetGroundStance_Native(EGroundStance::Block);
 }
 
 void ACharacterBase::OffBlock()
 {
 	IsBlockInput = false;
-	CharacterStatusComponent->SetGroundState_Native(ECharacterGroundState::Normal);
+	CharacterStatusComponent->SetGroundStance_Native(EGroundStance::Normal);
 }
 
 void ACharacterBase::Parry()
@@ -1266,7 +1241,7 @@ void ACharacterBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 		if (!IsPoiseEnough && !CharacterStatusComponent->IsDead())
 		{
 			FHitReactionRequest InputReaction = { Response,HitAngle };
-			CharacterStatusComponent->SetGroundState_Native(ECharacterGroundState::Hit);
+			CharacterStatusComponent->SetGroundStance_Native(EGroundStance::Hit);
 			HitReactionComponent->ExecuteHitResponse(InputReaction);
 		}
 		break;
@@ -1278,7 +1253,7 @@ void ACharacterBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 		if (StatComponent->GetBaseStats_Native().Poise <= 0.0f || CharacterStatusComponent->IsDead())
 		{
 			CharacterBaseAnim->SetHitAir(true);
-			CharacterStatusComponent->SetGroundState_Native(ECharacterGroundState::Hit);
+			CharacterStatusComponent->SetGroundStance_Native(EGroundStance::Hit);
 		}
 		break;
 	}
@@ -1346,7 +1321,7 @@ void ACharacterBase::SpawnRide()
 	//GetCharacterMovement()->DisableMovement();
 
 	CurRideStance = ERideStance::Mount;
-	CurrentState = ECharacterState::Ride;
+	CharacterStatusComponent->SetCharacterState_Native(ECharacterState::Ride);
 
 	CanMovementInput = false;
 	CanRide = false;
@@ -1487,7 +1462,7 @@ TOptional<FVector> ACharacterBase::GetCharBoneLocation(FName BoneName)
 void ACharacterBase::DisMountEnd()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Dismountend"));
-	CurrentState = ECharacterState::Ground;
+	CharacterStatusComponent->SetCharacterState_Native(ECharacterState::Ground);
 	/*
 	USceneComponent* GetDownLoc = IRideInterface::Execute_GetLeftInteractLocation(Ride);
 	SetActorLocation(GetDownLoc->GetComponentLocation());

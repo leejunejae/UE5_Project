@@ -6,7 +6,6 @@
 #include "CoreMinimal.h"
 #include "Combat/Data/HitReactionData.h"
 #include "Combat/Data/DataAsset/HitReactionDataAsset.h"
-#include "Characters/Interfaces/CharacterStatusInterface.h"
 #include "Components/ActorComponent.h"
 #include "Engine/DataAsset.h"
 
@@ -14,6 +13,7 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
 
+class ICharacterStatusInterface;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UHitReactionComponent : public UActorComponent

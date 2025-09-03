@@ -33,6 +33,7 @@ void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 
 	if (Character)
 	{
+		
 		Character->GetCharacterStatusComponent()->OnDeath.AddUObject(this, &UCharacterBaseAnimInstance::HandleDeath);
 	}
 }
@@ -42,26 +43,22 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	if (Character)
 	{
+		//IKWeights.
 		IsMovementInput = Character->GetIsMovementInput();
-		CurrentState = Character->GetCurrentState();
+		CurrentState = Character->GetCharacterStatusComponent()->GetCharacterState_Native();
 		CurStance = Character->GetStance();
 		IsAccelerating = Character->GetCharacterMovement()->GetCurrentAcceleration() != FVector::ZeroVector && Speed > 3.0f ? true : false;
 		IsInAir = Character->GetMovementComponent()->IsFalling();
 		IsAttack = Character->IsAttacking();
 		IsRoll = Character->IsRolling();
 		ComboCount = Character->CheckCombo();
-		CharacterGroundState = Character->GetCharacterStatusComponent()->GetGroundState_Native();
+		CharacterGroundState = Character->GetCharacterStatusComponent()->GetGroundStance_Native();
 
 		switch (CurrentState)
 		{
 		case ECharacterState::Ground:
 		{
 			CurGroundStance = Character->GetCurGroundStance();
-
-			RightHandIKTypeAlpha = FMath::FInterpTo(RightHandIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
-			LeftHandIKTypeAlpha = FMath::FInterpTo(LeftHandIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
-			RightFootIKTypeAlpha = FMath::FInterpTo(RightFootIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
-			LeftFootIKTypeAlpha = FMath::FInterpTo(LeftFootIKTypeAlpha, 0.0f, DeltaSeconds, 5.0f);
 
 			RightFootIKAlpha = GetCurveValue(FName("EnableRightLegIK"));
 			LeftFootIKAlpha = GetCurveValue(FName("EnableLeftLegIK"));
@@ -94,7 +91,7 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				LastSpeed = Speed;
 			}
 
-			float BlendAlpha = CharacterGroundState == ECharacterGroundState::Block ? 0.99f : 0.01f;
+			float BlendAlpha = CharacterGroundState == EGroundStance::Block ? 0.99f : 0.01f;
 			BlockBlend = FMath::FInterpTo(BlockBlend, BlendAlpha, DeltaSeconds, 10.0f);
 
 			TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
@@ -124,212 +121,43 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 		case ECharacterState::Ladder:
 		{			
-			CurLadderStance = Character->GetCurLadderStance();
+			CurLadderStance = Character->GetClimbComponent()->GetLadderStance_Native();
 
-			RightFootIKAlpha = GetCurveValue(FName("EnableRightLegIK"));
-			LeftFootIKAlpha = GetCurveValue(FName("EnableLeftLegIK"));
+			Character->SetActorLocation(Character->GetClimbComponent()->GetLimbIKTarget(ELimbList::Body));
 
-			if (GetCurveValue(LockIK) > 0.0f && bIsClimb)
-			{
-				const float Translation_CurveValue_Z = GetCurveValue(FName("Char_Translation_Z"));
+			LeftHandLadderOffset = Character->GetClimbComponent()->GetLimbIKTarget(ELimbList::HandL);
+			FVector Hand_L_Location = Character->GetMesh()->GetSocketLocation(FName("Hand_L_Offset"));
+			FVector Palm_L_Location = Character->GetMesh()->GetSocketLocation(FName("Palm_L"));
+			LeftHandLadderOffset -= Palm_L_Location - Hand_L_Location;
 
-				if (Translation_CurveValue_Z > 0.0f && !(CurLadderStance==ELadderStance::Enter_From_Top))
-				{
-					float Prev_Curve_Value = CurveValue_Root_Z;
-					CurveValue_Root_Z = Translation_CurveValue_Z;
-					float CurveDifference = CurveValue_Root_Z - Prev_Curve_Value;
-					RootCurveDifferenceSum += CurveDifference;
-					FVector NewCharLocation = Character->GetActorLocation();
-					NewCharLocation.Z += Character->GetClimbDistance() * CurveDifference;
-					Character->SetActorLocation(NewCharLocation);
-				}
+			RightFootLadderOffset = Character->GetClimbComponent()->GetLimbIKTarget(ELimbList::FootR);
+			FVector Foot_R_Location = Character->GetMesh()->GetSocketLocation(FName("Foot_R_Offset"));
+			FVector Sole_R_Location = Character->GetMesh()->GetSocketLocation(FName("Sole_R"));
+			RightFootLadderOffset -= Sole_R_Location - Foot_R_Location;
 
-				switch (CurLadderStance)
-				{
-				case ELadderStance::Enter_From_Top:
-				{
-					CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
+			RightHandLadderOffset = Character->GetClimbComponent()->GetLimbIKTarget(ELimbList::HandR);
+			FVector Hand_R_Location = Character->GetMesh()->GetSocketLocation(FName("Hand_R_Offset"));
+			FVector Palm_R_Location = Character->GetMesh()->GetSocketLocation(FName("Palm_R"));
+			RightHandLadderOffset -= Palm_R_Location - Hand_R_Location;
 
-					const FVector InitLocation = Character->GetClimbComponent()->GetInitTopPosition().GetValue().GetLocation() + FVector(0.0f, 0.0f, Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
-					const FVector TargetLocation = Character->GetClimbComponent()->GetEnterTopPosition().GetValue().GetLocation();
-					const float Translation_CurveValue_Y = GetCurveValue(FName("Char_Translation_Y"));
-					const float Translation_Value_Y = Character->GetClimbComponent()->GetLadderTopTransitionDistance();
-					const float Rotation_CurveValue = GetCurveValue(FName("Char_Rotation_Z"));
+			LeftFootLadderOffset = Character->GetClimbComponent()->GetLimbIKTarget(ELimbList::FootL);
+			FVector Foot_L_Location = Character->GetMesh()->GetSocketLocation(FName("Foot_L_Offset"));
+			FVector Sole_L_Location = Character->GetMesh()->GetSocketLocation(FName("Sole_L"));
+			LeftFootLadderOffset -= Sole_L_Location - Foot_L_Location;
 
-					FVector NewCharLocation = InitLocation;
+			UE_LOG(LogTemp, Warning, TEXT("HandLOffset = [X : %f, Y : %f, Z : %f]"),
+				LeftHandLadderOffset.X,
+				LeftHandLadderOffset.Y,
+				LeftHandLadderOffset.Z
+			);
 
-					const FVector EnterDirection = FVector(TargetLocation.X - InitLocation.X, TargetLocation.Y - InitLocation.Y, 0.0f);
+			UE_LOG(LogTemp, Warning, TEXT("HandLLocation = [X : %f, Y : %f, Z : %f]"),
+				Character->GetMesh()->GetSocketLocation("Hand_L").X,
+				Character->GetMesh()->GetSocketLocation("Hand_L").Y,
+				Character->GetMesh()->GetSocketLocation("Hand_L").Z
+			);
 
-					if (Translation_CurveValue_Y > 0.0f)
-					{
-						NewCharLocation = FMath::Lerp(InitLocation, TargetLocation, Translation_CurveValue_Y);
-					}
-
-					if (Translation_CurveValue_Z > 0.0f)
-					{
-						NewCharLocation.Z = FMath::Lerp(InitLocation.Z, TargetLocation.Z, Translation_CurveValue_Z);
-						Character->SetActorLocation(NewCharLocation);
-					}
-
-					if (Rotation_CurveValue > 0.0f)
-					{
-						const FRotator InitRotator = Character->GetClimbComponent()->GetInitTopPosition().GetValue().GetRotation().Rotator();
-						const FRotator TargetRotator = Character->GetClimbComponent()->GetEnterTopPosition().GetValue().GetRotation().Rotator();
-						const float InitYaw = InitRotator.Yaw > 0.0f ? FMath::Fmod(InitRotator.Yaw, 360.0f) : FMath::Fmod(InitRotator.Yaw, 360.0f) + 360.0f;
-						const float TargetYaw = TargetRotator.Yaw > 0.0f ? FMath::Fmod(TargetRotator.Yaw, 360.0f) : FMath::Fmod(TargetRotator.Yaw, 360.0f) + 360.0f;
-
-						const float NewRotatorYaw = FMath::Lerp(InitYaw, TargetYaw, Rotation_CurveValue);
-						const FRotator NewRotator = FRotator(Character->GetActorRotation().Pitch, NewRotatorYaw, Character->GetActorRotation().Roll);
-						Character->SetActorRotation(NewRotator);
-					}
-
-
-
-					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, 0.0f, DeltaSeconds);
-
-					if (GetCurveValue(Hand_R_CurveNameSet.CurveNameZ) > -1.0f)
-					{
-						SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandLadderOffset, Hand_R_Y_Distance, DeltaSeconds, 1.0f);
-					}
-
-					if (GetCurveValue(Foot_L_CurveNameSet.CurveNameZ) > -1.0f)
-					{
-						SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveNameSet, LeftFootLadderOffset, Foot_L_Y_Distance, DeltaSeconds, 0.5f);
-					}
-
-					if (GetCurveValue(Foot_R_CurveNameSet.CurveNameZ) > -1.0f)
-					{
-						SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, Foot_R_Y_Distance, DeltaSeconds, 0.5f);
-					}
-
-					break;
-				}
-				case ELadderStance::Exit_From_Top:
-				{
-					CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
-
-					const FVector InitLocation = Character->GetClimbComponent()->GetEnterTopPosition().GetValue().GetLocation();
-					const FVector TargetLocation = Character->GetClimbComponent()->GetInitTopPosition().GetValue().GetLocation();
-					const float Translation_CurveValue_Y = GetCurveValue(FName("Char_Translation_Y"));
-					const float Translation_Value_Y = Character->GetClimbComponent()->GetLadderTopTransitionDistance();
-
-					const FVector EnterDirection = FVector(TargetLocation.X - InitLocation.X, TargetLocation.Y - InitLocation.Y, 0.0f).GetSafeNormal();
-
-					if (Translation_CurveValue_Y > 0.0f)
-					{
-						float Prev_CurveValue_Root_Y = CurveValue_Root_Y;
-						CurveValue_Root_Y = Translation_CurveValue_Y;
-						float CurveValue_Root_Y_Difference = CurveValue_Root_Y - Prev_CurveValue_Root_Y;
-						FVector NewCharLocation = Character->GetActorLocation() + (EnterDirection * Translation_Value_Y * CurveValue_Root_Y_Difference);
-						Character->SetActorLocation(NewCharLocation);
-					}
-
-					if (GetCurveValue(Hand_R_CurveNameSet.CurveNameZ) > 1.0f)
-					{
-						SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, Hand_L_Y_Distance, DeltaSeconds);
-					}
-					SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandLadderOffset, Hand_R_Y_Distance, DeltaSeconds, 1.0f);
-					SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveNameSet, LeftFootLadderOffset, Foot_L_Y_Distance, DeltaSeconds, 0.5f, true);
-					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, Foot_R_Y_Distance, DeltaSeconds, 0.5f);
-					break;
-				}
-				case ELadderStance::Enter_From_Bottom:
-				{
-					CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
-
-					LeftFootIKTypeAlpha = 0.0f;
-
-					TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
-
-					TraceLeftFoot.Value *= LeftFootIKAlpha;
-
-					FootRotation(DeltaSeconds, TraceLeftFoot.Key, &LeftFootRotator, 20.0f);
-					
-					PelvisOffset = FMath::FInterpTo(PelvisOffset, TraceLeftFoot.Value, DeltaSeconds, 5.0f);
-					LeftFootGroundOffset.Z = FMath::FInterpTo(LeftFootGroundOffset.Z, TraceLeftFoot.Value - PelvisOffset, DeltaSeconds, 5.0f);
-
-					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, 0.0f, DeltaSeconds);
-					SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandLadderOffset, 0.0f, DeltaSeconds, 1.0f);
-					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, 0.0f, DeltaSeconds, 0.5f, true);
-					break;
-				}
-				case ELadderStance::Exit_From_Bottom:
-				{
-					CheckIKValid(FName("Disable_FootIK_R"), RightFootIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_L"), LeftHandIKTypeAlpha, DeltaSeconds);
-					CheckIKValid(FName("Disable_HandIK_R"), RightHandIKTypeAlpha, DeltaSeconds);
-
-					TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
-					TTuple<FVector, float> TraceRightFoot = FootTrace("Foot_R");
-
-					TraceLeftFoot.Value *= LeftFootIKAlpha;
-					TraceRightFoot.Value *= RightFootIKAlpha;
-
-					FootRotation(DeltaSeconds, TraceLeftFoot.Key, &LeftFootRotator, 20.0f);
-					FootRotation(DeltaSeconds, TraceRightFoot.Key, &RightFootRotator, 20.0f);
-
-					PelvisOffset = FMath::FInterpTo(PelvisOffset, UKismetMathLibrary::Min(TraceLeftFoot.Value, TraceRightFoot.Value), DeltaSeconds, 5.0f);
-					LeftFootGroundOffset.Z = FMath::FInterpTo(LeftFootGroundOffset.Z, TraceLeftFoot.Value - PelvisOffset, DeltaSeconds, 5.0f);
-					RightFootGroundOffset.Z = FMath::FInterpTo(RightFootGroundOffset.Z, TraceRightFoot.Value - PelvisOffset, DeltaSeconds, 5.0f);
-
-					break;
-				}
-				case ELadderStance::ClimbDown_OneStep:
-				{
-					CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
-
-					TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
-
-					TraceLeftFoot.Value *= LeftFootIKAlpha;
-
-					FootRotation(DeltaSeconds, TraceLeftFoot.Key, &LeftFootRotator, 20.0f);
-
-					PelvisOffset = FMath::FInterpTo(PelvisOffset, TraceLeftFoot.Value, DeltaSeconds, 5.0f);
-					LeftFootGroundOffset.Z = FMath::FInterpTo(LeftFootGroundOffset.Z, TraceLeftFoot.Value - PelvisOffset, DeltaSeconds, 5.0f);
-
-					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, Hand_L_Y_Distance, DeltaSeconds, 1.0f, true);
-					SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandLadderOffset, 0.0f, DeltaSeconds, 1.0f);
-					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, 0.0f, DeltaSeconds, 0.5f);
-					break;
-				}
-				case ELadderStance::ClimbUp_OneStep:
-				{
-					CheckIKValid(FName("Disable_FootIK_L"), LeftFootIKTypeAlpha, DeltaSeconds);
-
-					TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
-
-					TraceLeftFoot.Value *= LeftFootIKAlpha;
-
-					FootRotation(DeltaSeconds, TraceLeftFoot.Key, &LeftFootRotator, 20.0f);
-
-					PelvisOffset = FMath::FInterpTo(PelvisOffset, TraceLeftFoot.Value, DeltaSeconds, 5.0f);
-					LeftFootGroundOffset.Z = FMath::FInterpTo(LeftFootGroundOffset.Z, TraceLeftFoot.Value - PelvisOffset, DeltaSeconds, 5.0f);
-
-					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, Hand_L_Y_Distance, DeltaSeconds);
-					SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandLadderOffset, 0.0f, DeltaSeconds, 1.0f);
-					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, 0.0f, DeltaSeconds, 0.5f);
-					SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveNameSet, LeftFootLadderOffset, 0.0f, DeltaSeconds, 0.5f);
-					break;
-				}
-				default:
-				{
-					SetLadderIK(FName("Hand_L"), FName("Palm_L"), Hand_L_CurveNameSet, LeftHandLadderOffset, Hand_L_Y_Distance, DeltaSeconds, 1.0f);
-					SetLadderIK(FName("Hand_R"), FName("Palm_R"), Hand_R_CurveNameSet, RightHandLadderOffset, Hand_R_Y_Distance, DeltaSeconds);
-					SetLadderIK(FName("Foot_L"), FName("ball_l"), Foot_L_CurveNameSet, LeftFootLadderOffset, Foot_L_Y_Distance, DeltaSeconds, 0.5f);
-					SetLadderIK(FName("Foot_R"), FName("ball_r"), Foot_R_CurveNameSet, RightFootLadderOffset, Foot_R_Y_Distance, DeltaSeconds, 0.5f, true);
-					break;
-				}
-				}
-			}
-
+			UE_LOG(LogTemp, Warning, TEXT("/////////////////////////////////////////////////////////////////////"))
 			break;
 		}
 		case ECharacterState::Ride:
@@ -409,7 +237,7 @@ void UCharacterBaseAnimInstance::FootRotation(float DeltaTime, FVector TargetNor
 
 ///////// Ladder Placement /////////////
  
-
+/* 삭제
 void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FVectorCurveNameSet CurveNameList, FVector& BoneTarget, float LimbYDistance, float DeltaSeconds, float Offset, bool IsDebug)
 {
 	if (!BoneNameToBodyType.Contains(BoneName) || !Character->GetMesh()->DoesSocketExist(BoneName))
@@ -468,6 +296,7 @@ void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName&
 		UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
 	}
 }
+*/
 
 void UCharacterBaseAnimInstance::CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds)
 {
@@ -482,65 +311,6 @@ void UCharacterBaseAnimInstance::SetHitAir(bool HitState)
 void UCharacterBaseAnimInstance::ResetHitAir_Implementation()
 {
 	SetHitAir(false);
-}
-
-void UCharacterBaseAnimInstance::DebugLadderStance()
-{
-	switch (CurLadderStance)
-	{
-	case ELadderStance::ClimbUp_OneStep:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ClimbUp_OneStep"));
-		break;
-	}
-	case ELadderStance::ClimbUp:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ClimbUp"));
-		break;
-	}
-	case ELadderStance::ClimbDown_OneStep:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ClimbDown_OneStep"));
-		break;
-	}
-	case ELadderStance::ClimbDown:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ClimbDown"));
-		break;
-	}
-	case ELadderStance::Enter_From_Bottom:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Enter_From_Bottom"));
-		break;
-	}
-	case ELadderStance::Enter_From_Top:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Enter_From_Top"));
-		break;
-	}
-	case ELadderStance::Exit_From_Top:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Exit_From_Top"));
-		break;
-	}
-	case ELadderStance::Exit_From_Bottom:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Exit_From_Bottom"));
-		break;
-	}
-	case ELadderStance::Idle:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Idle"));
-		break;
-	}
-	case ELadderStance::Idle_OneStep:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Idle_OneStep"));
-		break;
-	}
-	default:
-		break;
-	}
 }
 
 void UCharacterBaseAnimInstance::SetPitch()
@@ -645,7 +415,7 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_TurnEnd()
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_CheckLadderStance()
 {
-	CurLadderStance = Character->GetCurLadderStance();
+	//CurLadderStance = Character->GetCurLadderStance();
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnableInputLock()
@@ -658,7 +428,7 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_ClimbEnd()
 {
 	OnClimbEnd.Broadcast();
 	bIsClimb = false;
-	CurLadderStance = Character->GetCurLadderStance();
+	//CurLadderStance = Character->GetCurLadderStance();
 	UE_LOG(LogTemp, Warning, TEXT("ClimbEnd"));
 }
 
@@ -674,9 +444,10 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_ClimbStart()
 	UE_LOG(LogTemp, Warning, TEXT("ClimbStart"));
 }
 
-void UCharacterBaseAnimInstance::AnimNotify_NOT_ResetLadder()
+void UCharacterBaseAnimInstance::AnimNotify_NOT_ResetClimbState()
 {
-
+	UE_LOG(LogTemp, Warning, TEXT("ResetClimbState"));
+	Character->GetClimbComponent()->ResetClimbState();
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_MountEnd()
@@ -716,17 +487,48 @@ FName UCharacterBaseAnimInstance::GetAttackMontageSectionName(int32 Section)
 	return FName(*FString::Printf(TEXT("Light%d"), Section));
 }
 
+void UCharacterBaseAnimInstance::SetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb, float Weight)
+{
+	switch (IKContext)
+	{
+	case EIKContext::Ground:
+	{
+		GroundIKWeights.Set(Limb, Weight);
+		break;
+	}
+	case EIKContext::Ladder:
+	{
+		LadderIKWeights.Set(Limb, Weight);
+		break;
+	}
+	default:
+		return;
+	}
+}
+
+float UCharacterBaseAnimInstance::GetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb)
+{
+	switch (IKContext)
+	{
+	case EIKContext::Ground:
+	{
+		return GroundIKWeights.Get(Limb);
+	}
+	case EIKContext::Ladder:
+	{
+		return LadderIKWeights.Get(Limb);
+	}
+	default:
+		return 0.0f;
+	}
+}
+
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterWalkState()
 {
 	OnEnterWalkState.Broadcast();
 	SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
 }
 
-void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterLadderState()
-{
-	OnEnterLadderState.Broadcast();
-	//SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
-}
 
 float UCharacterBaseAnimInstance::GetAnimDirection(float DeltaSeconds)
 {
@@ -749,7 +551,7 @@ float UCharacterBaseAnimInstance::GetAnimDirection(float DeltaSeconds)
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterIdleState()
 {
-	CurLadderStance = Character->GetCurLadderStance();
+	//CurLadderStance = Character->GetCurLadderStance();
 	CanMovementInput = true;
 	//UE_LOG(LogTemp, Warning, TEXT("EnterIdleState"));
 }

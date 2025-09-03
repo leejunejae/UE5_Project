@@ -6,11 +6,33 @@
 #include "Components/ActorComponent.h"
 #include "Characters/Data/BaseCharacterHeader.h"
 #include "Interaction/Climb/Data/ClimbHeader.h"
+#include "Characters/Data/IKData.h"
+#include "Interaction/Climb/Interfaces/ClimbInterface.h"
+#include "Interaction/Climb/Data/LadderClimbDataAsset.h"
 #include "ClimbComponent.generated.h"
 
+class ICharacterStatusInterface;
+
+USTRUCT(BlueprintType)
+struct FLimbData
+{
+	GENERATED_BODY()
+
+public:
+	FGripNode1D* LimbTargetGrip;
+	FVector LimbLocation;
+
+public:
+	FLimbData() {}
+	FLimbData(FGripNode1D* InLimbTargetGrip, FVector InLimbLocation)
+		: LimbTargetGrip(InLimbTargetGrip)
+		, LimbLocation(InLimbLocation)
+	{}
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class UE5PROJECT_API UClimbComponent : public UActorComponent
+class UE5PROJECT_API UClimbComponent : public UActorComponent,
+	public IClimbInterface
 {
 	GENERATED_BODY()
 
@@ -23,8 +45,26 @@ protected:
 	virtual void BeginPlay() override;
 
 #pragma region Owner Data
-	ACharacter* CachedCharacter;
-	UAnimInstance* CachedAnim;
+protected:
+	TWeakObjectPtr<ACharacter> CachedCharacter;
+	TWeakObjectPtr<UAnimInstance> CachedAnim;
+	TScriptInterface<ICharacterStatusInterface> CachedPlayerStatus;
+
+	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
+		const class ULadderClimbDataAsset* ClimbCurveDA;
+
+	UPROPERTY(EditAnywhere, Category = "Curve")
+		//FLadderClimbCurveSet ClimbCurveSet;
+		FLadderClimbCurveSet_Map ClimbCurveSet;
+
+	UPROPERTY(EditAnywhere, Category = "Curve")
+		TObjectPtr<UCurveFloat> EnterRotatorCurve;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Anim")
+		TObjectPtr<UAnimMontage> EnterLadderMontage;
+
+	UPROPERTY(EditAnywhere, Category = "Setting")
+		bool HasEnterPhase = true;
 #pragma endregion Owner Data
 
 #pragma region Climbable Object
@@ -42,27 +82,32 @@ protected:
 	TArray<FGripNode1D> GripList1D;
 	TArray<FGripNode2D> GripList2D;
 
-	TMap<FName, FGripNode1D*> BoneToGripNode;
-	TMap<FName, FGrabData> GrabDataForIK;
-	TTuple<FVector, FVector> ClimbDistance;
+	TMap<ELimbList, FLimbData> LimbToGripNode;
+	TTuple<FVector, FVector> ClimbLocation;
 
-	ELadderStance LadderStance;
+	bool bIsClimbing;
 
 public:
+	bool RequestEnterLadder(AActor* TargetLadder);
+	bool RequestExitLadder(bool bExitTop);
+
+	void EnterLadderFloat();
+	void ExitLadderFloat();
+
+	void CommitLadderState();
+
 	void SetGrip1DRelation(float MinInterval, float MaxInterval);
 	bool CheckGripListValid();
-	void SetLimbToGrip(FName BoneName, FGripNode1D* TargetGrip);
-	void StartLadderClimbForLimb(bool IsUpperEntrance);
-	FGripNode1D* GetLimbPlaceGrip(FName BoneName);
-	FVector GetLimbIKTarget(FName BoneName);
-	FORCEINLINE ELadderStance GetLadderStance() const { return LadderStance; }
+	FGripNode1D* GetLimbPlaceGrip(ELimbList LimbName);
+	FVector GetLimbIKTarget(ELimbList LimbName);
+	FORCEINLINE EClimbPhase GetLadderStance() const { return LadderStance; }
 	/// <summary>
 	/// Getter Function For Find Grip about various rule
 	/// </summary>
 
 	FGripNode1D* GetLowestGrip1D();
 	FGripNode1D* GetHighestGrip1D();
-
+	/*
 	FGripNode1D* GetGripByHeightUpWard(float MinHeight = 0.0f, float Comparison = 0.0f);
 	FGripNode1D* GetGripByHeightDownWard(float MinHeight = 0.0f, float Comparison = 0.0f);
 
@@ -77,6 +122,7 @@ public:
 
 	TOptional<int32> FindGripLevelDifference(const FGripNode1D* StartGrip, const FGripNode1D* DestGrip);
 	TOptional<float> FindGripDistance(const FGripNode1D* StartGrip, const FGripNode1D* DestGrip);
+	*/
 
 	void SetLowestGrip1D(float MinHeight = 0.0f, float Comparision = 0.0f);
 
@@ -88,6 +134,13 @@ private:
 	float MinFirstGripHeight = 0.0f;
 	float MinGripInterval = 0.0f;
 	float MaxGripInterval = TNumericLimits<float>::Max();
+
+	FTimerHandle LadderBlendCheckTimer;
+
+	FOnMontageEnded EnterClimbEndedDelegate;
+
+private:
+	void OnEnterClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 /// <summary>
 /// Setter Function For Setting Value
@@ -101,6 +154,12 @@ public:
 
 #pragma region Ladder Climbing
 public:	
+	FORCEINLINE EClimbPhase GetLadderStance_Native() const{ return LadderStance; }
+	virtual EClimbPhase GetLadderStance_Implementation() const { return LadderStance; }
+	void ClimbUpLadder();
+	void ClimbDownLadder();
+	void ResetClimbState();
+
 	TOptional<FTransform> GetEnterTopPosition();
 	TOptional<FTransform> GetEnterBottomPosition();
 	TOptional<FTransform> GetInitTopPosition();
@@ -108,8 +167,16 @@ public:
 	float GetLadderTopTransitionDistance();
 
 private:
+	UPROPERTY(VisibleAnyWhere, Category = "ClimbState")
+	EClimbPhase LadderStance;
+
+	UPROPERTY(VisibleAnyWhere, Category = "ClimbState")
 	AActor* ClimbObject;
 
-	FVector SetBoneIKTargetLadder(const FName BoneName, const FName MiddleBoneName, const FName CurveBaseName, const float Offset=1.0f, const float LimbYDistance = -15.0f, bool IsDebug = false);
+	UPROPERTY(VisibleAnyWhere, Category = "ClimbState")
+	float AnimTime;
+
+	FVector SetBoneIKTargetLadder(const FGripNode1D* TargetGrip, const FVector CurveValue, const float LimbXDistance = 0.0f, const FGripNode1D* StartGrip = nullptr, const float LimbYDistance = -15.0f, bool IsDebug = false);
+	FVector SetBoneIKTargetLadder(const FVector TargetLoc, const FVector CurveValue, const FVector StartLoc = FVector(), const float LimbXDistance = 0.0f, const float LimbYDistance = -15.0f, bool IsDebug = false);
 #pragma endregion
 };

@@ -58,19 +58,19 @@ protected:
 		void TriggerEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-		UBoxComponent* ClimbTopTrigger;
+		TObjectPtr<UBoxComponent> ClimbTopTrigger;
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-		UBoxComponent* ClimbBottomTrigger;
+		TObjectPtr<UBoxComponent> ClimbBottomTrigger;
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-		USceneComponent* ClimbTopLocation;
+		TObjectPtr<USceneComponent> ClimbTopLocation;
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-		USceneComponent* ClimbBottomLocation;
+		TObjectPtr<USceneComponent> ClimbBottomLocation;
 
 	UPROPERTY(EditAnywhere, Category = Mesh)
-		UStaticMesh* ClimbStaticMesh;
+		TObjectPtr<UStaticMesh> ClimbStaticMesh;
 
 	TArray<FGripNode1D> GripList1D;
 	TArray<FGripNode2D> GripList2D;

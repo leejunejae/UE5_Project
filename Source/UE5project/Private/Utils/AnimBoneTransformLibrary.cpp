@@ -5,6 +5,7 @@
 #include "Animation/AnimSequence.h"
 #include "Utils/AnimBoneTransformDataAsset.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Curves/CurveVector.h"
 #include "UObject/SavePackage.h"
 #include "BonePose.h"
 
@@ -76,7 +77,7 @@ FTransform UAnimBoneTransformLibrary::GetBoneTransformAtTime(UAnimSequence* Anim
 
 void UAnimBoneTransformLibrary::ExtractAnimBoneTransformToAsset(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate, const FString& SavePath, const FString& AssetName)
 {
-    if (!AnimSequence) return;
+    if (!AnimSequence || FrameRate <= 0.f) return;
 
     const float Duration = AnimSequence->GetPlayLength();
     TArray<FBoneFrameSample> Samples;
@@ -92,6 +93,40 @@ void UAnimBoneTransformLibrary::ExtractAnimBoneTransformToAsset(UAnimSequence* A
     UAnimBoneTransformDataAsset* NewAsset = NewObject<UAnimBoneTransformDataAsset>(Package, *AssetName, RF_Public | RF_Standalone);
 
     NewAsset->BoneTransformArray = Samples;
+
+    FAssetRegistryModule::AssetCreated(NewAsset);
+    NewAsset->MarkPackageDirty();
+
+    FSavePackageArgs SaveArgs;
+    UPackage::SavePackage(Package, NewAsset, *FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension()), SaveArgs);
+}
+
+void UAnimBoneTransformLibrary::ExtractAnimBoneLocationToCurve(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate, const FString& SavePath, const FString& AssetName)
+{
+    if (!AnimSequence || FrameRate <= 0.f) return;
+
+    const float Duration = AnimSequence->GetPlayLength();
+    TArray<TPair<float, FVector>> Samples;
+
+    for (float Time = 0.f; Time <= Duration; Time += FrameRate)
+    {
+        FTransform BoneTransform = GetBoneTransformAtTime(AnimSequence, BoneName, Time);
+        Samples.Add(TPair<float, FVector>(Time, BoneTransform.GetLocation()));
+    }
+
+    FString PackageName = SavePath + "/" + AssetName;
+    UPackage* Package = CreatePackage(*PackageName);
+    UCurveVector* NewAsset = NewObject<UCurveVector>(Package, *AssetName, RF_Public | RF_Standalone);
+
+    for (const TPair<float, FVector>& S : Samples)
+    {
+        const float   T = S.Key;
+        const FVector V = S.Value;
+
+        NewAsset->FloatCurves[0].AddKey(T, V.X);
+        NewAsset->FloatCurves[1].AddKey(T, V.Y);
+        NewAsset->FloatCurves[2].AddKey(T, V.Z);
+    }
 
     FAssetRegistryModule::AssetCreated(NewAsset);
     NewAsset->MarkPackageDirty();

@@ -29,4 +29,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Trajectory")
 		static void ExtractAnimBoneTransformToAsset(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate,const FString& SavePath, const FString& AssetName);
+
+	UFUNCTION(BlueprintCallable, Category = "Trajectory")
+		static void ExtractAnimBoneLocationToCurve(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate, const FString& SavePath, const FString& AssetName);
 };

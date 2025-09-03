@@ -19,5 +19,5 @@ public:
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Notify")
-		ECharacterGroundState NewState;
+		EGroundStance NewState;
 };

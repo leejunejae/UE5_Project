@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Characters/Data/IKData.h"
 #include "IAnimInstance.generated.h"
 
 // This class does not need to be modified.
@@ -27,4 +28,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void ResetHitAir();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "IK")
+		void SetIKWeight(EIKContext Context, ELimbList Limb, float Weight);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "IK")
+		float GetIKWeight(EIKContext Context, ELimbList Limb);
 };
