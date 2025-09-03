@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "DeathInterface.generated.h"
 
+DECLARE_DELEGATE(FOnDeathDelegate);
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UDeathInterface : public UInterface
@@ -20,4 +22,6 @@ class UE5PROJECT_API IDeathInterface
 {
 	GENERATED_BODY()
 
+public:
+	virtual FOnDeathDelegate& GetOnDeathDelegate() = 0;
 };

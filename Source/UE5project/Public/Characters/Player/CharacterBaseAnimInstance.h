@@ -10,6 +10,8 @@
 #include "Characters/Data/BaseCharacterHeader.h"
 #include "Combat/Data/CombatData.h"
 #include "Characters/Data/StatusData.h"
+#include "Interaction/Climb/Data/ClimbHeader.h"
+#include "Characters/Data/IKData.h"
 
 // 인터페이스
 #include "Animation/Interfaces/IAnimInstance.h"
@@ -37,13 +39,6 @@ struct FFootTraceStruct
 		float IK;
 };
 */
-struct FVectorCurveNameSet
-{
-	FName CurveNameX;
-	FName CurveNameY;
-	FName CurveNameZ;
-};
-
 UCLASS()
 class UE5PROJECT_API UCharacterBaseAnimInstance : public UAnimInstance, public IIAnimInstance
 {
@@ -61,7 +56,6 @@ public:
 	FOnMultiDelegate OnResetHurt;
 	FOnMultiDelegate OnSetAttackDirection;
 	FOnMultiDelegate OnAttackStart;
-	FOnMultiDelegate OnCanDodge;
 
 	FOnMultiDelegate OnParryEnd;
 	FOnMultiDelegate OnNextAttackCheck;
@@ -69,8 +63,6 @@ public:
 	FOnMultiDelegate OnMountEnd;
 	FOnMultiDelegate OnDisMountEnd;
 
-	FOnMultiDelegate OnDodgeEnd;
-	FOnMultiDelegate OnDodgeStart;
 	FOnMultiDelegate OnEquipEnd;
 	FOnMultiDelegate OnHolsterEnd;
 
@@ -89,10 +81,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsMovementInput;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		float InputDirection;
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsRun;
@@ -114,7 +102,7 @@ private:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		HitResponse Response;
+		EHitResponse Response;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		float BlockBlend;
@@ -204,19 +192,10 @@ private:
 		void AnimNotify_NOT_LeftLocomotion();
 
 	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_DodgeEnd();
-
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_DodgeStart();
-
-	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_SetAttackDirection();
 
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_AttackStart();
-
-	UFUNCTION()
-		void AnimNotify_NOT_CanDodge();
 
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EndAttack();
@@ -232,9 +211,13 @@ private:
 	FName GetAttackMontageSectionName(int32 Section);
 #pragma region State & Stance
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		ECharacterGroundState CharacterGroundState;
+		EGroundStance CharacterGroundState;
 
 #pragma region State & Stance_IK
+public:
+	virtual void SetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb, float Weight);
+	virtual float GetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb);
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
 		float RightFootIKAlpha;
@@ -262,20 +245,23 @@ private:
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EnterWalkState();
 
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_EnterLadderState();
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
 		ECharacterState CurrentState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
-		EGroundStance CurGroundStance;
+		ELocomotionState CurGroundStance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
-		ELadderStance CurLadderStance;
+		EClimbPhase CurLadderStance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
 		ERideStance CurRideStance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = IK, Meta = (AllowPrivateAccess = true))
+		FIKContextWeights GroundIKWeights;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = IK, Meta = (AllowPrivateAccess = true))
+		FIKContextWeights LadderIKWeights;
 
 public:
 	FOnMultiDelegate OnEnterWalkState;
@@ -355,10 +341,6 @@ private:
 	void SetPitch();
 	void SetRootYawOffset();
 
-private:
-	float InputDirectionX;
-	float InputDirectionY;
-
 protected:
 	float YawLastTick = 0.0f;
 	float YawChangeOverFrame = 0.0f;
@@ -388,11 +370,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
 		FVector RightHandLadderOffset;
 
-	FVectorCurveNameSet Hand_L_CurveNameSet = { TEXT("Hand_L_Translation_X"), TEXT("Hand_L_Translation_Y") , TEXT("Hand_L_Translation_Z") };
-	FVectorCurveNameSet Hand_R_CurveNameSet = { TEXT("Hand_R_Translation_X"), TEXT("Hand_R_Translation_Y") , TEXT("Hand_R_Translation_Z") };
-	FVectorCurveNameSet Foot_L_CurveNameSet = { TEXT("Foot_L_Translation_X"), TEXT("Foot_L_Translation_Y") , TEXT("Foot_L_Translation_Z") };
-	FVectorCurveNameSet Foot_R_CurveNameSet = { TEXT("Foot_R_Translation_X"), TEXT("Foot_R_Translation_Y") , TEXT("Foot_R_Translation_Z") };
-
 	float Hand_L_Y_Distance;
 	float Hand_R_Y_Distance;
 	float Foot_L_Y_Distance;
@@ -415,10 +392,7 @@ protected:
 	void AnimNotify_NOT_ClimbStart();
 
 	UFUNCTION(BlueprintCallable)
-	void AnimNotify_NOT_ResetLadder();
-
-
-	void SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FVectorCurveNameSet CurveNameList, FVector& BoneTarget, float LimbYDistance, float DeltaSeconds, float Offset = 1.0f, bool IsDebug = false);
+	void AnimNotify_NOT_ResetClimbState();
 	
 	void CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds);
 
@@ -453,9 +427,6 @@ private:
 
 
 #pragma region Debug Region
-private:
-	void DebugLadderStance();
-
 private:
 	float PelvisCurveSum = 0.0f;
 	float AdjustCurveSum = 0.0f;

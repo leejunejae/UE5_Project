@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Enemies/PBEnemyAIController.h"
+#include "Characters/Enemies/EnemyBaseAIController.h"
 #include "PEnumHeader.h"
 #include "PBEHumanAI.generated.h"
 
@@ -11,24 +11,13 @@
  * 
  */
 UCLASS()
-class UE5PROJECT_API APBEHumanAI : public APBEnemyAIController
+class UE5PROJECT_API APBEHumanAI : public AEnemyBaseAIController
 {
 	GENERATED_BODY()
 	
 public:
 	APBEHumanAI();
 	virtual void OnPossess(APawn* InPawn) override;
-
-	AActor* AttackTarget;
-
-	UFUNCTION()
-		void OnTargetPerceptionUpdated_Delegate(AActor* Actor, FAIStimulus Stimulus);
-
-	UPROPERTY(VisibleAnywhere, Category = AI)
-		TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent = nullptr;
-
-	UPROPERTY(VisibleAnywhere, Category = AI)
-		TObjectPtr<class UAISenseConfig_Sight> AISenseConfigSight = nullptr;
 
 	void SetMovementMode(float MovementSpeed);
 	virtual void StopAI();

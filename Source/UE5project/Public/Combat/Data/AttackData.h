@@ -8,17 +8,8 @@
 #include "Utils/AnimBoneTransformDataAsset.h"
 #include "Engine/DataTable.h"
 #include "Engine/DataAsset.h"
-#include "GameFramework/Actor.h"
+#include "UObject/NoExportTypes.h"
 #include "AttackData.generated.h"
-
-UENUM(BlueprintType)
-enum class TraceType : uint8
-{
-	Line UMETA(DisplayName = "Line"),
-	Sphere UMETA(DisplayName = "Sphere"),
-	Capsule UMETA(DisplayName = "Capsule"),
-	Box UMETA(DisplayName = "Box"),
-};
 
 USTRUCT(BlueprintType)
 struct FBaseAttackData
@@ -33,7 +24,10 @@ public:
 		TSoftObjectPtr<UAnimBoneTransformDataAsset> TargetBoneTransformDataAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		HitResponse Response;
+		EHitResponse Response;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EAttackType AttackType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool CanBlocked;
@@ -61,9 +55,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName SectionName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		HitResponse Response;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TraceType RangeType;
+		EHitResponse Response;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool CanBlocked;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -146,24 +138,9 @@ public:
 		TSet<FAttackInfo> AttackInfo;
 };
 
-UENUM(BlueprintType)
-enum class EAttackType : uint8
-{
-	Combo1 UMETA(DisplayName = "Combo1"),
-	Combo2 UMETA(DisplayName = "Combo2"),
-	Execution UMETA(DisplayName = "Execution"),
-	JumpAttack UMETA(DisplayName = "JumpAttack"),
-};
-
-
-
-
 UCLASS()
-class UE5PROJECT_API AAttackData : public AActor
+class UE5PROJECT_API UAttackData : public UObject
 {
 	GENERATED_BODY()
 	
-public:	
-	// Sets default values for this actor's properties
-	AAttackData();
 };

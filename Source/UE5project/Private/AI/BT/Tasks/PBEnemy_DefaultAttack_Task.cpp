@@ -2,7 +2,7 @@
 
 
 #include "AI/BT/Tasks/PBEnemy_DefaultAttack_Task.h"
-#include "Characters/Enemies/PBEnemyAIController.h"
+#include "Characters/Enemies/EnemyBaseAIController.h"
 #include "Characters/Enemies/Human/PBEHuman.h"
 
 UPBEnemy_DefaultAttack_Task::UPBEnemy_DefaultAttack_Task()

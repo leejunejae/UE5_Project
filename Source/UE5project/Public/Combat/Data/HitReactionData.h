@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "Combat/Data/CombatData.h"
-#include "GameFramework/Actor.h"
+#include "UObject/NoExportTypes.h"
 #include "HitReactionData.generated.h"
 
 UENUM(BlueprintType)
@@ -14,6 +14,17 @@ enum class EAnimLoopType : uint8
 	Time UMETA(DisplayName="Time"),
 	Condition UMETA(DisplayName="Condition")
 };
+
+USTRUCT(Atomic, BlueprintType)
+struct FHitReactionRequest
+{
+	GENERATED_BODY()
+
+public:
+	EHitResponse Response;
+	float HitAngle;
+};
+
 
 UENUM(BlueprintType)
 enum class EHitPointVertical : uint8
@@ -38,52 +49,27 @@ enum class EHitPointHorizontal : uint8
 };
 
 USTRUCT(Atomic, BlueprintType)
-struct FHitReactionRequest
+struct FHitReactionDetail
 {
 	GENERATED_BODY()
 
 public:
-	HitResponse Response;
-	bool CanBlocked;
-	bool CanParried;
-	bool CanAvoid;
-	float HitAngle;
-};
-
-USTRUCT(Atomic, BlueprintType)
-struct FHitReactionAnimData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName SectionName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
-		bool IsLoop;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EHitPointVertical HitPointVertical;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "IsLoop"))
-		EAnimLoopType AnimLoopType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EHitPointHorizontal HitPointHorizontal;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "IsLoop && AnimLoopType == EAnimLoopType::Time"))
-		float LoopTime;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
-		FText Discription;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Anim != nullptr"))
-		bool HasNextReaction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "HasNextReaction == true"))
-		FName NextSection;
-
-	inline bool operator==(const FHitReactionAnimData& Other) const
+	inline bool operator==(const FHitReactionDetail& Other) const
 	{
 		return SectionName == Other.SectionName;
 	}
 };
 
-uint32 GetTypeHash(const FHitReactionAnimData& HitReactionAnimData);
+uint32 GetTypeHash(const FHitReactionDetail& HitReactionDetail);
 
 USTRUCT(Atomic, BlueprintType)
 struct FHitReactionInfo
@@ -92,45 +78,40 @@ struct FHitReactionInfo
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FName HitReactionName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UAnimMontage* Anim;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TSet<FHitReactionAnimData> HitReactionAnimData;
+		TSet<FHitReactionDetail> HitReactionDetail;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "!HitReactionAnimData.IsEmpty()"))
-		EHitPointVertical HitPointVertical;
+	bool IsValid() const
+	{
+		return Anim != nullptr && !HitReactionDetail.IsEmpty();
+	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "!HitReactionAnimData.IsEmpty()"))
-		EHitPointHorizontal HitPointHorizontal;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "!HitReactionAnimData.IsEmpty()"))
-		FText Discription;
+	inline bool operator==(const FHitReactionInfo& Other) const
+	{
+		return HitReactionName == Other.HitReactionName;
+	}
 };
 
+uint32 GetTypeHash(const FHitReactionInfo& Info);
+
 USTRUCT(Atomic, BlueprintType)
-struct FHitReactionInfoList : public FTableRowBase
+struct FHitReactionInfoList
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		HitResponse HitReactionID;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FHitReactionInfo> HitReactionInfo;
+		TSet<FHitReactionInfo> HitReactionInfo;
 };
 
 UCLASS()
-class UE5PROJECT_API AHitReactionData : public AActor
+class UE5PROJECT_API UHitReactionData : public UObject
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	AHitReactionData();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 };

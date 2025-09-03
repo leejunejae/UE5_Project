@@ -2,7 +2,7 @@
 
 
 #include "AI/BT/Tasks/BTTaskNode_ClearFocus.h"
-#include "Characters/Enemies/PBEnemyAIController.h"
+#include "Characters/Enemies/EnemyBaseAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 UBTTaskNode_ClearFocus::UBTTaskNode_ClearFocus()

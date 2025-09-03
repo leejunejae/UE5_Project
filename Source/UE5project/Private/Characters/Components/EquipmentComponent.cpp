@@ -13,7 +13,7 @@ UEquipmentComponent::UEquipmentComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	//PrimaryComponentTick.bCanEverTick = true;
 
 	/*
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Weapon"));
@@ -48,9 +48,9 @@ void UEquipmentComponent::BeginPlay()
 	// ...
 	CachedCharacter = Cast<ACharacter>(GetOwner());
 
-	if (!CheckOwnerExist())
+	if (!CachedCharacter.IsValid())
 		return;
-
+	
 	for (UActorComponent* Comp : CachedCharacter->GetComponents())
 	{
 		if (Comp->GetClass()->ImplementsInterface(UStatInterface::StaticClass()))
@@ -79,7 +79,7 @@ void UEquipmentComponent::BeginPlay()
 		SubEquipMesh->SetGenerateOverlapEvents(false);
 		SubEquipMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 
-		EquipWeapon_Implementation(DefaultWeaponKey);
+		//EquipWeapon_Implementation(DefaultWeaponKey);
 	}
 }
 
@@ -92,38 +92,17 @@ void UEquipmentComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
-FWeaponSetsInfo UEquipmentComponent::GetWeaponSetsData_Implementation() const
-{
-	return EquipedWeapon;
-}
-
-FWeaponPartInfo UEquipmentComponent::GetMainWeaponData_Implementation() const
-{
-	return EquipedWeapon.MainWeapon;
-}
-
-FWeaponPartInfo UEquipmentComponent::GetSubEquipData_Implementation() const
-{
-	return EquipedWeapon.SubWeapon;
-}
-
-UStaticMeshComponent* UEquipmentComponent::GetMainWeaponMeshComponent_Implementation() const
-{
-	return WeaponMesh;
-}
-
-UStaticMeshComponent* UEquipmentComponent::GetSubEquipMeshComponent_Implementation() const
-{
-	return SubEquipMesh;
-}
-
 void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 {
 	UWorld* World = GetWorld();
 	if (WeaponMesh && World )
 	{
 		UWeaponDataSubsystem* WeaponSubsystem = World->GetGameInstance()->GetSubsystem<UWeaponDataSubsystem>();
-		if (!WeaponSubsystem) return;
+		if (!WeaponSubsystem)
+		{
+			UE_LOG(LogTemp, Error, TEXT("WeaponSubSystem not found"));
+			return;
+		}
 		const FWeaponSetsInfo* FindWeapon = WeaponSubsystem->GetWeaponInfo(WeaponKey);
 
 		if (FindWeapon)
@@ -131,7 +110,7 @@ void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 			EquipedWeapon = *FindWeapon;
 			WeaponMesh->SetStaticMesh(EquipedWeapon.MainWeapon.WeaponInstance.LoadSynchronous()->WeaponMesh);
 			WeaponMesh->SetRelativeTransform(EquipedWeapon.MainWeapon.WeaponTransform);
-			if (CachedStat.GetInterface() && CachedStat.GetObject())
+			if (CachedStat)
 			{
 				float PerformanceRatio = IStatInterface::Execute_GetWeaponPerformanceRatio(CachedStat.GetObject(), EquipedWeapon.RequiredStats.ToCharacterStats());
 				EquipedWeapon.AttackPower *= PerformanceRatio;

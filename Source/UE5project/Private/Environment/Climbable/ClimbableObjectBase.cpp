@@ -67,6 +67,9 @@ USceneComponent* AClimbableObjectBase::GetEnterInteractLocation_Implementation(A
 {
 	IInteractInterface::GetEnterInteractLocation_Implementation(Target);
 
+	if (ClimbTopTrigger->IsOverlappingActor(Target)) return ClimbTopLocation;
+	if (ClimbBottomTrigger->IsOverlappingActor(Target)) return ClimbBottomLocation;
+
 	FVector DistTopLoc = Target->GetActorLocation() - ClimbTopLocation->GetComponentLocation();
 	FVector DistBottomLoc = Target->GetActorLocation() - ClimbBottomLocation->GetComponentLocation();
 

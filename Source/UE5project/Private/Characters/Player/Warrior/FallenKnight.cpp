@@ -18,7 +18,7 @@ AFallenKnight::AFallenKnight()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MAIN_MESH(TEXT("/Game/Asset/Fallen_Knight/Mesh/SK_DC_Knight_UE4_full_Silver.SK_DC_Knight_UE4_full_Silver"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> MAIN_MESH(TEXT("/Game/04_Animations/Player/SK_DC_Knight_UE4_full_Silver.SK_DC_Knight_UE4_full_Silver"));
 	if (MAIN_MESH.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(MAIN_MESH.Object);
@@ -54,16 +54,11 @@ AFallenKnight::AFallenKnight()
 	}
 	
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/00_Character/C_Warrior/CW_Animation/CWA_BP/ABP_FallenKnight.ABP_FallenKnight_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/00_Character/C_Warrior/CW_Animation/CWA_BP/Player_AnimBP.Player_AnimBP_C"));
+	
 	if (FallenKnight_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(FallenKnight_ANIM.Class);
-	}
-
-	static ConstructorHelpers::FObjectFinder<UCurveFloat> DodgeCurveAsset(TEXT("/Game/00_Character/C_Source/DodgeCurve.DodgeCurve"));
-	if (DodgeCurveAsset.Succeeded())
-	{
-		DodgeCurve = DodgeCurveAsset.Object;
 	}
 
 	//GetCharacterMovement()->MaxWalkSpeed = 500.0f;
@@ -74,30 +69,16 @@ AFallenKnight::AFallenKnight()
 	IsAttack = false;
 
 	CanAttack = true;
-	CanDodge = true;
 }
 
 void AFallenKnight::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (DodgeCurve)
-	{
-		PreviousCurveValue = 0.0f;
-		FOnTimelineFloat DodgeUpdateCallback;
-		FOnTimelineEventStatic DodgeUpdateFinCallback;
-		DodgeUpdateCallback.BindUFunction(this, FName("DodgeUpdate"));
-		DodgeUpdateFinCallback.BindUFunction(this, FName("DodgeUpdateFin"));
-		DodgeTimeline.AddInterpFloat(DodgeCurve, DodgeUpdateCallback);
-		DodgeTimeline.SetTimelineFinishedFunc(DodgeUpdateFinCallback);
-		DodgeTimeline.SetLooping(false);
-	}
 }
 
 void AFallenKnight::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	DodgeTimeline.TickTimeline(DeltaTime);
 }
 
 void AFallenKnight::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -139,13 +120,11 @@ void AFallenKnight::PostInitializeComponents()
 			IsAction = false;
 			IsAttack = false;
 			CanAttack = true;
-			CanDodge = true;
 			//bUseControllerRotationYaw = true;
 			});
 
 		CharacterBaseAnim->OnParryEnd.AddLambda([this]()->void {
 			//IsParry = false;
-			CanDodge = true;
 			});
 
 		CharacterBaseAnim->OnResetHurt.AddLambda([this]()->void {
@@ -165,25 +144,7 @@ void AFallenKnight::PostInitializeComponents()
 				//UE_LOG(LogTemp, Warning, TEXT("SetRotation"));
 			}
 
-			CanDodge = false;
 			});
-
-		CharacterBaseAnim->OnCanDodge.AddLambda([this]()->void {
-			//IsDodge = false;
-			CanDodge = true;
-			});
-
-		/*
-		CharacterBaseAnim->OnEquipEnd.AddLambda([this]()->void {
-			CanAttack = true;
-			CanDodge = true;
-			});
-
-		CharacterBaseAnim->OnHolsterEnd.AddLambda([this]()->void {
-			CanAttack = true;
-			CanDodge = true;
-			});
-		*/
 	}
 }
 
@@ -198,17 +159,6 @@ void AFallenKnight::IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupte
 {
 	if (nullptr == CharacterBaseAnim)
 		return;
-/*	MontageType Type = CharacterBaseAnim->CheckMontage(Montage);
-
-	switch (Type)
-	{
-	case MontageType::Dodge:
-		IsDodge = false;
-		CanAttack = true;
-		break;
-	default:
-		break;
-	}*/
 }
 
 void AFallenKnight::Sprint()
@@ -278,7 +228,6 @@ void AFallenKnight::SwitchStance()
 {
 	CurStance = CurStance == WarriorStance::UA ? WarriorStance::SNS : WarriorStance::UA;
 	CanAttack = false;
-	CanDodge = false;
 }
 
 void AFallenKnight::ResetAttackState()
@@ -289,49 +238,6 @@ void AFallenKnight::ResetAttackState()
 	bUseControllerRotationYaw = true;
 }
 
-void AFallenKnight::Dodge()
-{
-	if (!CanDodge)
-		return;
-
-	Super::Dodge();
-
-	// 8-Way Dodge
-	/*
-	if (IsDodge)
-	{
-		NextDodge = true;
-	}
-
-	IsAction=true;
-	
-	CanDodge = false;
-	CanAttack = false;
-	*/
-	//CanDodge = false;
-	
-	CanDodge = false;
-	//IsDodge = true;
-	//GetCharacterMovement()->bOrientRotationToMovement = false;
-	IsRoll = true;
-	InitPosition = GetActorLocation();
-	DodgeTimeline.PlayFromStart();
-}
-
-void AFallenKnight::DodgeUpdate(float Value)
-{
-	//UE_LOG(LogTemp, Warning, TEXT("DodgeUpdateFunc"));
-
-	float AdaptCurveValue = Value - PreviousCurveValue;
-	AddActorWorldOffset(DodgeDirection * AdaptCurveValue);
-	PreviousCurveValue = Value;
-}
-
-void AFallenKnight::DodgeUpdateFin()
-{
-	PreviousCurveValue = 0.0f;
-}
-
 bool AFallenKnight::IsAttacking()
 {
 	return IsAttack;
@@ -340,11 +246,6 @@ bool AFallenKnight::IsAttacking()
 bool AFallenKnight::IsRolling()
 {
 	return IsRoll;
-}
-
-bool AFallenKnight::GetNextDodge()
-{
-	return NextDodge;
 }
 
 int32 AFallenKnight::CheckCombo()

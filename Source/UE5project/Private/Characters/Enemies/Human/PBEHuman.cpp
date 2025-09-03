@@ -126,31 +126,6 @@ void APBEHuman::SetIsLook(bool IsLook)
 	IsLookAt = IsLook;
 }
 
-FString APBEHuman::GetName()
-{
-	return EnemyInfo.EName;
-}
-
-int32 APBEHuman::GetMaxHP()
-{
-	return EnemyInfo.EMaxHP;
-}
-
-int32 APBEHuman::GetOffensePower()
-{
-	return EnemyInfo.EOffensePower;
-}
-
-int32 APBEHuman::GetDefenseCap()
-{
-	return EnemyInfo.EDefenseCap;
-}
-
-int32 APBEHuman::GetDownPercent()
-{
-	return EnemyInfo.EDownPercent;
-}
-
 void APBEHuman::Summon()
 {
 	

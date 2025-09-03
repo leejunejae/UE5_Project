@@ -49,9 +49,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		int32 Vigor = 0;
 
-	FCharacterStats ToCharacterStats() const
+	FCharacterAttributes ToCharacterStats() const
 	{
-		FCharacterStats Stats;
+		FCharacterAttributes Stats;
 		Stats.Strength = Strength;
 		Stats.Dexterity = Dexterity;
 		Stats.Intelligence = Intelligence;

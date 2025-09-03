@@ -3,6 +3,7 @@
 
 #include "Core/GameInstance/MainGameInstance.h"
 #include "Core/Subsystems/WeaponDataSubsystem.h"
+#include "Core/Subsystems/EnemyDataSubsystem.h"
 //#include "UObject/SoftObjectPath.h"
 
 void UMainGameInstance::Init()
@@ -13,12 +14,12 @@ void UMainGameInstance::Init()
     if (WeaponSubsystem)
     {
         UE_LOG(LogTemp, Log, TEXT("WeaponSubSystem Loaded Successful"));
-        /*
-        const FWeaponSetsInfo* WeaponSetInfo = WeaponSubsystem->GetWeaponInfo(FName("SwordShieldSet"));
-        if (WeaponSetInfo)
-        {
-            UE_LOG(LogTemp, Log, TEXT("GameInstance Init: Loaded Weapon Set: %s"), *WeaponSetInfo->WeaponName.ToString());
-        }
-        */
+    }
+
+
+    UEnemyDataSubsystem* EnemyDataSubsystem = GetSubsystem<UEnemyDataSubsystem>();
+    if (EnemyDataSubsystem)
+    {
+        UE_LOG(LogTemp, Log, TEXT("EnemyDataSubSystem Loaded Successful"));
     }
 }

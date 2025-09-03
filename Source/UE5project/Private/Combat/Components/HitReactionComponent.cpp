@@ -4,6 +4,7 @@
 #include "Combat/Components/HitReactionComponent.h"
 #include "GameFramework/Character.h"
 #include "Characters/Components/CharacterStatusComponent.h"
+#include "Characters/Interfaces/CharacterStatusInterface.h"
 #include "Characters/Data/StatusData.h"
 #include "Characters/Components/StatComponent.h"
 
@@ -12,7 +13,6 @@ UHitReactionComponent::UHitReactionComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
 }
@@ -23,36 +23,25 @@ void UHitReactionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//AnimInstance = GetOwner()->GetComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
+	CachedCharacter = Cast<ACharacter>(GetOwner());
 
-	USkeletalMeshComponent* Mesh = GetOwner()->GetComponentByClass<USkeletalMeshComponent>();
-	UE_LOG(LogTemp, Warning, TEXT("Found mesh: %s"), *Mesh->GetName());
-
-	if (!Mesh)
+	if (!CachedCharacter.IsValid())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Mesh is nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("Owner Character Not Valid"));
+		return;
 	}
-	else if (!Mesh->SkeletalMesh)
+	
+	for (UActorComponent* Comp : CachedCharacter->GetComponents())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Mesh->SkeletalMesh is nullptr"));
+		if (Comp->GetClass()->ImplementsInterface(UCharacterStatusInterface::StaticClass()))
+			CachedPlayerStatus = TScriptInterface<ICharacterStatusInterface>(Comp);;
 	}
-	else if (!Mesh->AnimClass)
+
+	if (!CachedPlayerStatus.GetObject() || !CachedPlayerStatus.GetInterface())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Mesh->AnimClass is nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("Character Status Component Not Valid"));
+		return;
 	}
-	else if (!Mesh->IsRegistered())
-	{
-		UE_LOG(LogTemp, Error, TEXT("Mesh is not registered"));
-	}
-}
-
-
-// Called every frame
-void UHitReactionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 void UHitReactionComponent::InitializeComponentLogic()
@@ -60,32 +49,22 @@ void UHitReactionComponent::InitializeComponentLogic()
 	
 }
 
-void UHitReactionComponent::SetHitReactionDT(const UDataTable* HitReactionDT)
+void UHitReactionComponent::SetHitReactionDA(UHitReactionDataAsset* HitReactionDA)
 {
-	HitReactionListDT = HitReactionDT;
+	UE_LOG(LogTemp, Warning, TEXT("Set HitReactionDataAsset"));
+	HitReactionDataAsset = HitReactionDA;
 }
 
 void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest ReactionData)
 {
-	if (!HitReactionListDT) return;
+	if (!HitReactionDataAsset) return;
 
-	//float HitAngle = CalculateHitAngle(ReactionData.HitPoint);
-
-	//HitResponse Response = EvaluateHitResponse(ReactionData.Response, ReactionData.CanBlocked, ReactionData.CanParried, ReactionData.CanAvoid, HitAngle);
-	//if (ReactionData.Response == HitResponse::HitAir || ReactionData.Response == HitResponse::DeathLarge)
-	//{
-	//	if(OnHitAirReaction.IsBound()) OnHitAirReaction.Broadcast();
-	//	return;
-	//}
-
-	const UEnum* EnumPtr = StaticEnum<HitResponse>();
+	const UEnum* EnumPtr = StaticEnum<EHitResponse>();
 	if (!EnumPtr) return;
 
 	FName ResponseRowName = FName(EnumPtr->GetNameStringByValue(static_cast<int64>(ReactionData.Response)));
 
-	CurHitReactionDTRow = HitReactionListDT->FindRow<FHitReactionInfoList>(ResponseRowName, "");
-
-	if (!CurHitReactionDTRow) return;
+	CurHitReaction = HitReactionDataAsset->FindHitReactionInfo(ReactionData.Response);
 
 	static const TMap<EHitPointHorizontal, float> DirectionToYaw = {
 		{ EHitPointHorizontal::Front, 0.0f },
@@ -100,9 +79,9 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 
 	float MatchScore = 180.0f;
 
-	FHitReactionInfo* MatchInfo = nullptr;
+	FHitReactionDetail MatchInfo;
 
-	for (FHitReactionInfo& Info : CurHitReactionDTRow->HitReactionInfo)
+	for (FHitReactionDetail Info : CurHitReaction.HitReactionDetail)
 	{
 		EHitPointHorizontal CurrentPoint = Info.HitPointHorizontal;
 
@@ -112,30 +91,27 @@ void UHitReactionComponent::ExecuteHitResponse(const FHitReactionRequest Reactio
 		if (AngleDiff < MatchScore)
 		{
 			MatchScore = AngleDiff;
-			MatchInfo = &Info;
+			MatchInfo = Info;
 		}
 	}
 
-	if (MatchInfo)
-	{
-		PlayReaction(MatchInfo, MatchInfo->HitReactionAnimData.begin()->SectionName);
-	}
+	PlayReaction(CurHitReaction, MatchInfo.SectionName);
 }
 
-void UHitReactionComponent::PlayReaction(const FHitReactionInfo* HitReaction, const FName SectionName)
+void UHitReactionComponent::PlayReaction(const FHitReactionInfo HitReaction, const FName SectionName)
 {
 	UAnimInstance* AnimInstance = Cast<ACharacter>(GetOwner())->GetMesh()->GetAnimInstance();
 		//GetOwner()->GetComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
 
 	if (!AnimInstance) return;
 
-	AnimInstance->Montage_Play(HitReaction->Anim, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, false);
+	AnimInstance->Montage_Play(HitReaction.Anim, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, false);
 
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *SectionName.ToString());
 
-	FHitReactionAnimData DataForFind;
+	FHitReactionDetail DataForFind;
 	DataForFind.SectionName = SectionName;
-	const FHitReactionAnimData* FoundData = HitReaction->HitReactionAnimData.Find(DataForFind);
+	const FHitReactionDetail* FoundData = HitReaction.HitReactionDetail.Find(DataForFind);
 
 	if (!FoundData)
 	{
@@ -152,24 +128,10 @@ void UHitReactionComponent::PlayReaction(const FHitReactionInfo* HitReaction, co
 	AnimInstance->Montage_SetBlendingOutDelegate(OnHitReactionDelegate);
 }
 
-void UHitReactionComponent::OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo* HitReaction, const FName SectionName)
+void UHitReactionComponent::OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo HitReaction, const FName SectionName)
 {
-	if (Montage != HitReaction->Anim) return;
+	if (Montage != HitReaction.Anim) return;
 
-	FHitReactionAnimData DataForFind;
-	DataForFind.SectionName = SectionName;
-	const FHitReactionAnimData* FoundData = HitReaction->HitReactionAnimData.Find(DataForFind);
-
-	if (!FoundData) return;
-
-	if (FoundData->IsLoop)
-	{
-		PlayReaction(HitReaction, SectionName);
-	}
-	else if (FoundData->HasNextReaction)
-	{
-		PlayReaction(HitReaction, FoundData->NextSection);
-	}
 }
 
 float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)
@@ -185,96 +147,67 @@ float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)
 	return HitAngle;
 }
 
-HitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& AttackRequest)
+EHitResponse UHitReactionComponent::EvaluateHitResponse(const FAttackRequest& AttackRequest)
 {
-	UCharacterStatusComponent* StatusComp = GetOwner()->FindComponentByClass<UCharacterStatusComponent>();
+	const EGroundStance CombatState = ICharacterStatusInterface::Execute_GetGroundStance(CachedPlayerStatus.GetObject());
 
-	if (!StatusComp) return AttackRequest.Response;
+	if (CombatState == EGroundStance::Invincible) return EHitResponse::None;
 
-	const ECharacterGroundState CombatState = StatusComp->GetGroundState();
-
-	if (CombatState == ECharacterGroundState::Invincible) return HitResponse::None;
-
-	HitResponse FinalResponse = AttackRequest.Response;
+	EHitResponse FinalResponse = AttackRequest.Response;
 
 	switch (CombatState)
 	{
-	case ECharacterGroundState::Normal:
-	case ECharacterGroundState::Jump:
+	case EGroundStance::Hit:
 	{
-		if (StatusComp->IsInAir())
-			FinalResponse = HitResponse::HitAir;
+		FinalResponse = EHitResponse::NoStagger;
 		break;
 	}
-	case ECharacterGroundState::Dodge:
+	case EGroundStance::Invincible:
+	{
+		FinalResponse = EHitResponse::None;
+		break;
+	}
+	case EGroundStance::Jump:
+	{
+		FinalResponse = EHitResponse::HitAir;
+		break;
+	}
+	case EGroundStance::Dodge:
 	{
 		if (AttackRequest.CanAvoid)
 		{
-			FinalResponse = HitResponse::None;
+			FinalResponse = EHitResponse::None;
 		}
 		break;
 	}
-	case ECharacterGroundState::Invincible:
+	case EGroundStance::Block:
 	{
-		FinalResponse = HitResponse::None;
-		break;
-	}
-	case ECharacterGroundState::Block:
-	{
-	float HitAngle = CalculateHitAngle(AttackRequest.HitPoint);
-		if (AttackRequest.CanBlocked && (HitAngle >= -60.0f || HitAngle <= 60.0f))
+		float HitAngle = CalculateHitAngle(AttackRequest.HitPoint);
+		if (AttackRequest.CanBlocked && (FMath::Abs(HitAngle) <= 60.0f))
 		{
 			switch (AttackRequest.Response)
 			{
-			case HitResponse::Flinch:
-			case HitResponse::KnockBack:
-				FinalResponse = HitResponse::Block;
+			case EHitResponse::Flinch:
+			case EHitResponse::KnockBack:
+				FinalResponse = EHitResponse::Block;
 				break;
-			case HitResponse::KnockDown:
-				FinalResponse = HitResponse::BlockLarge;
+			case EHitResponse::KnockDown:
+				FinalResponse = EHitResponse::BlockLarge;
 				break;
 			}
 		}
 		break;
 	}
-	case ECharacterGroundState::Parry:
+	case EGroundStance::Parry:
 	{
 		float HitAngle = CalculateHitAngle(AttackRequest.HitPoint);
 		if (AttackRequest.CanParried && (HitAngle >= -60.0f || HitAngle <= 60.0f))
 		{
-			FinalResponse = HitResponse::None;
+			FinalResponse = EHitResponse::None;
 			// 패링시 발동될 델리게이트 추가
 		}
 		break;
 	}
-	}
-
-	UStatComponent* StatComp = GetOwner()->FindComponentByClass<UStatComponent>();
-	if (StatComp)
-	{
-		switch (FinalResponse)
-		{
-		case HitResponse::Flinch:
-		case HitResponse::KnockBack:
-		case HitResponse::KnockDown:
-		case HitResponse::HitAir:
-		{
-			float CurHealth = StatComp->GetHealth();
-			StatComp->ChangeHealth(AttackRequest.Damage, EHPChangeType::DirectDamage);
-			break;
-		}
-		case HitResponse::Block:
-		case HitResponse::BlockLarge:
-		{
-			float CurStamina = StatComp->GetStamina();
-			bool IsStaminaEnough = StatComp->ChangeStamina(AttackRequest.StanceDamage, ESPChangeType::Blocked);
-			if (IsStaminaEnough)
-			{
-				FinalResponse = FinalResponse == HitResponse::Block ? HitResponse::BlockBreak : HitResponse::BlockStun;
-			}
-			break;
-		}
-		}
 	}
 
 	return FinalResponse;

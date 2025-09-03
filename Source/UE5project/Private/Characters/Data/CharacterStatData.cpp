@@ -3,7 +3,7 @@
 
 #include "Characters/Data/CharacterStatData.h"
 
-float FCharacterStats::GetRequirementStatRate(const FCharacterStats& Requirement) const
+float FCharacterAttributes::GetRequirementAttributeRate(const FCharacterAttributes& Requirement) const
 {
 	float CorrectedStatSum = 0.0f;
 	float RequireStatSum = 0.0f;

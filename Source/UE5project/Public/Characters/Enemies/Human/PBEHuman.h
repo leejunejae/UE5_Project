@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Enemies/PBEnemy.h"
+#include "Characters/Enemies/EnemyBase.h"
 
 // 구조체, 자료형
 #include "PEnumHeader.h"
-#include "Characters/Enemies/Data/EnemyHeader.h"
+#include "Characters/Enemies/Data/EnemyData.h"
 
 // 인터페이스
 #include "Combat/Interfaces/HitReactionInterface.h"
@@ -30,7 +30,7 @@ class UAttackComponent;
 DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
 
 UCLASS()
-class UE5PROJECT_API APBEHuman : public APBEnemy, public IHitReactionInterface, public ICombatInterface
+class UE5PROJECT_API APBEHuman : public AEnemyBase, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -97,8 +97,6 @@ public:
 	FOnMultiDelegate OnDashEnd;
 
 protected:
-	FEnemyInfo EnemyInfo;
-
 	UPROPERTY(VisibleAnywhere, Category = Combat)
 		UStatComponent* Statcomponent;
 

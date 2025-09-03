@@ -12,6 +12,9 @@ void UPlayerAttackComponent::ExecuteAttack(FName AttackName, float Playrate)
 {
 	bool CanPlayAttack = false;
 
+	//if(CurAttackInfo.IsValid())
+		//AnimInstance->OnMontageEnded.RemoveDynamic(this, &UPlayerAttackComponent::OnMontageEnded);
+
 	// 실행중인 공격이 있으면 실행중인 공격과 입력이 같은지 확인	
 	if (CurAttackInfo.AttackName == AttackName)
 	{
@@ -40,13 +43,10 @@ void UPlayerAttackComponent::ExecuteAttack(FName AttackName, float Playrate)
 	}
 }
 
-
 void UPlayerAttackComponent::PlayAnimation(FPlayerAttackInfo AttackInfo, int32 index, float Playrate)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Playrate = %f"), Playrate);
 	AnimInstance->Montage_Play(AttackInfo.Anim, Playrate);
-	AnimInstance->Montage_JumpToSection(AttackInfo.AttackDetail[index].BaseAttackData.SectionName);
-	//AnimInstance->Montage_SetPlayRate(AttackInfo.Anim, Playrate);
+	AnimInstance->Montage_JumpToSection(AttackInfo.AttackDetail[index].BaseAttackData.SectionName, AttackInfo.Anim);
 
 	FOnMontageEnded MontageEndDelegate;
 	MontageEndDelegate.BindUObject(this, &UPlayerAttackComponent::OnMontageEnded);
@@ -55,8 +55,14 @@ void UPlayerAttackComponent::PlayAnimation(FPlayerAttackInfo AttackInfo, int32 i
 
 void UPlayerAttackComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	UE_LOG(LogTemp, Warning, TEXT("공격상태 초기화"));
-	if (!bInterrupted)
+	FString EndMontage = Montage ? Montage->GetName() : TEXT("None");
+	UAnimMontage* CurrentMontage = AnimInstance ? AnimInstance->GetCurrentActiveMontage() : nullptr;
+	FString CurMontage = CurrentMontage ? CurrentMontage->GetName() : TEXT("None");
+
+	//UE_LOG(LogTemp, Log, TEXT("Montage Ended : %s "), *EndMontage);
+	//UE_LOG(LogTemp, Log, TEXT("Montage Current : %s "), *CurMontage);
+
+	if (!(EndMontage.Equals(CurMontage)))
 	{
 		ComboIndex = 0;
 		CurAttackInfo = FPlayerAttackInfo();
@@ -79,8 +85,10 @@ void UPlayerAttackComponent::SetCurAttackType(EWeaponType WeaponType)
 	CurAttackType = TypedAsset->FindPlayerAttackInfo(WeaponType);
 }
 
-void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsSubWeaponAttack)
+void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsDetectEnd, bool IsSubWeaponAttack)
 {
+	UE_LOG(LogTemp, Warning, TEXT("DetectTarget"));
+
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 
 	UAnimBoneTransformDataAsset* TraceTargetBoneTransformData = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.TargetBoneTransformDataAsset.LoadSynchronous();
@@ -93,8 +101,10 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 		DetectTracePrevTime.Value = StartTime;
 	}
 
-	float CurTime = AnimInstance->GetCurveValue(FName("AnimTimeCheckCurve")) - AnimInstance->GetCurveValue(FName("AnimSectionTime"));;
-	float BaseTime = CurTime;
+	float CurTime = !IsDetectEnd
+		? AnimInstance->GetCurveValue(FName("AnimTimeCheckCurve")) - AnimInstance->GetCurveValue(FName("AnimSectionTime"))
+		: EndTime;
+
 	int32 TraceCorrectionCount = (CurTime - DetectTracePrevTime.Value) / 0.001f;
 	
 	FTransform CurrentRootWorldTransform = Character->GetMesh()->GetBoneTransform(0);
@@ -131,33 +141,24 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 	FVector CurrentStartSocketWorldLocation = CurrentTargetWeaponTransform.TransformPosition(StartSocketRelativeLocation);
 	FVector CurrentEndSocketWorldLocation = CurrentTargetWeaponTransform.TransformPosition(EndSocketRelativeLocation);
 
-
 	FName StartSocketName = FName("Start");
 	FName EndSocketName = FName("End");
 
-	FVector StartSocketLocation = WeaponMesh->GetSocketLocation(StartSocketName);
-	FVector EndSocketLocation = WeaponMesh->GetSocketLocation(EndSocketName);
+	FVector StartLoc = CurrentStartSocketWorldLocation;
+	FVector EndLoc = CurrentEndSocketWorldLocation;
 
-	//DrawDebugSphere(GetWorld(), StartSocketLocation, 3.0f, 12, FColor::Red, false, 3.0f);
-	//DrawDebugSphere(GetWorld(), EndSocketLocation, 3.0f, 12, FColor::Red, false, 3.0f);
-	//DrawDebugLine(GetWorld(), StartSocketLocation, EndSocketLocation, FColor::Black, false, 3.0f);
-
-	FVector StartLoc = StartSocketLocation;
-	FVector EndLoc = EndSocketLocation;
 	float Radius = CurrentWeaponPart.HitBoxRadius;
 
 	float CurWeaponLength = FVector::Distance(StartLoc, EndLoc);
+
 	float CurHalfHeight = (CurWeaponLength * 0.5f);
 
 	FVector CurCapsuleCenter = (StartLoc + EndLoc) * 0.5f;
 	FVector CurCapsuleAxis = (EndLoc - StartLoc).GetSafeNormal();
+
 	FQuat CurCapsuleRotation = FRotationMatrix::MakeFromZ(CurCapsuleAxis).ToQuat();
 
 	DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Green, false, 1.0f);
-
-	//FVector HandLocation = Character->GetMesh()->GetSocketLocation(FName("Hand_R"));
-	//FVector WeaponLocation = Character->GetMesh()->GetSocketLocation(FName("S_Sword"));
-	//FVector TestLocation = Character->GetMesh()->GetSocketLocation(FName("WeaponEnd"));
 
 	for (int32 i = 1; i <= TraceCorrectionCount; ++i)
 	{
@@ -180,18 +181,8 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 		FVector PrevStartSocketWorldLocation = PrevTargetWeaponTransform.TransformPosition(StartSocketRelativeLocation);
 		FVector PrevEndSocketWorldLocation = PrevTargetWeaponTransform.TransformPosition(EndSocketRelativeLocation);
 
-		FVector StartSocketLocationDifference = CurrentStartSocketWorldLocation - PrevStartSocketWorldLocation;
-		FVector EndSocketLocationDifference = CurrentEndSocketWorldLocation - PrevEndSocketWorldLocation;
-
-		FVector StartTraceLocation = (StartSocketLocation - StartSocketLocationDifference);
-		FVector EndTraceLocation = (EndSocketLocation - EndSocketLocationDifference);
-
-		//DrawDebugSphere(GetWorld(), StartTraceLocation, 3.0f, 12, FColor::Blue, false, 3.0f);
-		//DrawDebugSphere(GetWorld(), EndTraceLocation, 3.0f, 12, FColor::Blue, false, 3.0f);
-		//DrawDebugLine(GetWorld(), StartTraceLocation, EndTraceLocation, FColor::Black, false, 3.0f);
-
-		StartLoc = StartTraceLocation;
-		EndLoc = EndTraceLocation;
+		StartLoc = PrevStartSocketWorldLocation;
+		EndLoc = PrevEndSocketWorldLocation;
 
 		CurWeaponLength = FVector::Distance(StartLoc, EndLoc);
 		CurHalfHeight = (CurWeaponLength * 0.5f);
@@ -230,7 +221,8 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 						float OutDamage = WeaponInfo.AttackPower * CurAttackInfo.AttackDetail[ComboIndex].DamageMultiplier;
 						float OutPoiseDamage = WeaponInfo.PoisePower * CurAttackInfo.AttackDetail[ComboIndex].PoiseDamageMultiplier;
 						float OutStanceDamage = WeaponInfo.StancePower * CurAttackInfo.AttackDetail[ComboIndex].StanceDamageMultiplier;
-						HitResponse OutResponse = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.Response;
+						EHitResponse OutResponse = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.Response;
+						EAttackType OutAttackType = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.AttackType;
 						FVector OutHitPoint = Result.ImpactPoint;
 						FString OutHitPointName = Result.PhysMaterial.IsValid() ? Result.PhysMaterial->GetName() : FString();
 						bool OutCanBlocked = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.CanBlocked;
@@ -267,6 +259,5 @@ void UPlayerAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh
 
 		DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Red, false, 1.0f);
 	}
-
 	DetectTracePrevTime.Value = CurTime;
 }

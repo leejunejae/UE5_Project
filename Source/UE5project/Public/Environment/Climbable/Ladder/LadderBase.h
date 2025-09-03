@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Interaction/Climb/Interfaces/LadderInterface.h"
 #include "Environment/Climbable/ClimbableObjectBase.h"
+#include "Interaction/Climb/Data/ClimbHeader.h"
 #include "LadderBase.generated.h"
 
 /**
@@ -18,9 +19,9 @@ class UE5PROJECT_API ALadderBase : public AClimbableObjectBase, public ILadderIn
 public:
 	ALadderBase();
 
-	virtual USceneComponent* GetEnterTopTarget_Implementation();
-	virtual USceneComponent* GetInitTopTarget_Implementation();
-	virtual USceneComponent* GetInitBottomTarget_Implementation();
+	virtual const USceneComponent* GetInitClimbTarget_Implementation() const {	return EnterPosition; }
+	virtual const USceneComponent* GetInitEnterTarget_Implementation(bool IsTop) const { return IsTop ? ClimbTopLocation : ClimbBottomLocation; }
+	virtual const USceneComponent* GetTopEnterHandTarget_Implementation(bool IsRight) const { return IsRight ? TopEnterRightHandTarget : TopEnterLeftHandTarget; }
 
 #pragma region Ladder Basic Composition
 ////////////////////////////////////
@@ -40,7 +41,7 @@ protected:
 ////////////////////////////////////
 protected:
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-		USceneComponent* EnterTopPosition;
+	TObjectPtr<USceneComponent> EnterPosition;
 
 	UPROPERTY(EditAnywhere, Category = LadderSetting) // Layer for modular ladder
 		int32 LadderLevel;
@@ -56,5 +57,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Mesh)
 		TArray<UBoxComponent*> GripCollisions;
+
+	UPROPERTY(EditAnywhere, Category = Mesh)
+		TObjectPtr<USceneComponent> TopEnterLeftHandTarget;
+
+	UPROPERTY(EditAnywhere, Category = Mesh)
+		TObjectPtr<USceneComponent> TopEnterRightHandTarget;
 #pragma endregion
 };

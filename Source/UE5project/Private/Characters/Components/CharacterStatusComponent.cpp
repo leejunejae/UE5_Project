@@ -4,7 +4,6 @@
 #include "Characters/Components/CharacterStatusComponent.h"
 #include "GameFramework/Character.h" 
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Characters/Components/StatComponent.h"
 
 // Sets default values for this component's properties
 UCharacterStatusComponent::UCharacterStatusComponent()
@@ -19,12 +18,7 @@ void UCharacterStatusComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UStatComponent* StatComp = GetOwner()->FindComponentByClass<UStatComponent>();
-	if (StatComp)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Death DELEGATE"));
-		StatComp->OnDeath.BindUObject(this, &UCharacterStatusComponent::HandleDeath);
-	}
+	CachedCharacter = Cast<ACharacter>(GetOwner());
 	// ...
 }
 
@@ -37,42 +31,8 @@ bool UCharacterStatusComponent::IsInAir() const
 	return false;
 }
 
-void UCharacterStatusComponent::HandleDeath()
+void UCharacterStatusComponent::ExecuteDeath()
 {
 	bIsDead = true;
 	OnDeath.Broadcast();
 }
-
-bool UCharacterStatusComponent::CanTransition(const ECharacterGroundState NewState) const
-{
-	switch (GroundState)
-	{
-	case ECharacterGroundState::Normal:
-		return true;
-	case ECharacterGroundState::Block:
-		return NewState != ECharacterGroundState::Block;
-	case ECharacterGroundState::Dodge:
-	{
-		return NewState == ECharacterGroundState::Invincible;
-	}
-	case ECharacterGroundState::Parry:
-	{
-		return NewState == ECharacterGroundState::Invincible;
-	}
-	case ECharacterGroundState::Invincible:
-	{
-		return false;
-	}
-	default:
-		return false;
-	}
-}
-
-void UCharacterStatusComponent::SetCombatState(ECharacterGroundState NewState)
-{
-	if (!CanTransition(NewState))
-		return;
-
-	GroundState = NewState;
-}
-

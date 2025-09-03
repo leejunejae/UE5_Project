@@ -12,10 +12,10 @@
 #include "Interaction/Climb/Data/ClimbHeader.h"
 #include "PEnumHeader.h"
 #include "Characters/Data/StatusData.h"
+
 // 인터페이스
 #include "Characters/Player/Interfaces/PlayerInterface.h"
 #include "Combat/Interfaces/HitReactionInterface.h"
-#include "Interaction/Climb/Interfaces/ClimbInterface.h"
 #include "Characters/Player/Interfaces/ViewDataInterface.h"
 #include "Characters/Interfaces/CharacterTransformInterface.h"
 
@@ -29,12 +29,12 @@ class UCameraComponent;
 class USpringArmComponent;
 class UCharacterMovementComponent;
 
-class UCharacterStatusComponent;
+class UPlayerStatusComponent;
 class UStatComponent;
 class UEquipmentComponent;
 class UCombatComponent;
 class UPlayerAttackComponent;
-class UHitReactionComponent;
+class UPlayerHitReactionComponent;
 class UClimbComponent;
 class UInteractComponent;
 
@@ -50,7 +50,6 @@ UCLASS()
 class UE5PROJECT_API ACharacterBase : public ACharacter, 
 	public IHitReactionInterface, 
 	public IPlayerInterface, 
-	public IClimbInterface, 
 	public IViewDataInterface,
 	public ICharacterTransformInterface
 {
@@ -159,13 +158,11 @@ protected:
 
 	FVector InputVector;
 	FVector DodgeVector;
-	FVector DodgeDirection;
 
 	bool IsAction;
 	bool IsRun;
 	bool IsAttack;
 	bool IsRoll;
-	bool CanDodge;
 	bool IsInteraction;
 	bool CanInput=true;
 	float InputDirection;
@@ -228,13 +225,13 @@ private:
 		TObjectPtr<UStatComponent> StatComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Status)
-		TObjectPtr<UCharacterStatusComponent> CharacterStatusComponent;
+		TObjectPtr<UPlayerStatusComponent> CharacterStatusComponent;
 
 	bool IsBlockInput = false;
 
 public:
 	FORCEINLINE UStatComponent* GetStatComponent() const { return StatComponent; }
-	FORCEINLINE UCharacterStatusComponent* GetCharacterStatusComponent() const { return CharacterStatusComponent; }
+	FORCEINLINE UPlayerStatusComponent* GetCharacterStatusComponent() const { return CharacterStatusComponent; }
 
 
 #pragma endregion Status
@@ -269,9 +266,8 @@ protected:
 // Variables For State & Stance
 ////////////////////////////////////	
 protected:
-	ECharacterState CurrentState = ECharacterState::Ground;
-	ELadderStance CurLadderStance = ELadderStance::Idle;
-	EGroundStance CurGroundStance = EGroundStance::Walk;
+	//EClimbPhase CurLadderStance = EClimbPhase::Idle;
+	ELocomotionState CurGroundStance = ELocomotionState::Walk;
 	ERideStance CurRideStance = ERideStance::Riding;
 
 
@@ -279,9 +275,8 @@ protected:
 // Methods For State & Stance
 ////////////////////////////////////
 public:
-	ECharacterState GetCurrentState();
-	ELadderStance GetCurLadderStance();
-	EGroundStance GetCurGroundStance();
+	EClimbPhase GetCurLadderStance();
+	ELocomotionState GetCurGroundStance();
 	ERideStance GetCurRideStance();
 	float GetClimbDistance();
 #pragma endregion State & Stance
@@ -307,6 +302,8 @@ private:
 	bool bForcedRotatingInputDirection = false;
 	float ForcedRotationSpeed = 720.0f;
 
+	UAnimMontage* RollMontage;
+
 #pragma endregion Ground
 
 #pragma region Ladder
@@ -319,7 +316,7 @@ private:
 	bool CanMovementInput;
 
 protected:
-	void DecideLadderStance();
+	void DecidEClimbPhase();
 
 	UPROPERTY(VisibleAnywhere, Category = Climb)
 		UClimbComponent* ClimbComponent;
@@ -327,14 +324,13 @@ protected:
 	UPROPERTY(EditAnywhere)
 		float MinGripInterval = 15.0f;
 	UPROPERTY(EditAnywhere)
-		float MaxGripInterval = 50.0f;
+		float MaxGripInterval = 60.0f;
 	UPROPERTY(EditAnywhere)
-		float MinFirstGripHeight = 40.0f;
+		float MinFirstGripHeight = 0.0f;
 
 public:
 	FORCEINLINE UClimbComponent* GetClimbComponent() const { return ClimbComponent; }
 	void SetCanMovementInput(bool CanMove);
-	virtual void SetNextGripDown_Implementation(FName BoneName, int32 Count) override;
 
 #pragma endregion
 
@@ -385,7 +381,7 @@ protected:
 	void HandleArrivedInteractionPoint();
 
 	UPROPERTY(VisibleAnywhere, Category = Interact)
-		UInteractComponent* InteractComponent;
+		TObjectPtr<UInteractComponent> InteractComponent;
 
 public:
 	virtual void RegisterInteractableActor_Implementation(AActor* Interactable);
@@ -398,10 +394,10 @@ public:
 #pragma region Combat
 private:
 	UPROPERTY(VisibleAnywhere, Category = Combat)
-		UCombatComponent* CombatComponent;
+		TObjectPtr<UCombatComponent> CombatComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
-		UPlayerAttackComponent* AttackComponent;
+		TObjectPtr<UPlayerAttackComponent> AttackComponent;
 
 	virtual void Attack(FName AttackName);
 	void AttackInput();
@@ -420,7 +416,7 @@ public:
 #pragma region HitReaction
 protected:
 	UPROPERTY(VisibleAnywhere, Category = HitReaction)
-		UHitReactionComponent* HitReactionComponent;
+		TObjectPtr<UPlayerHitReactionComponent> HitReactionComponent;
 
 	void OnBlock();
 	void OffBlock();
@@ -434,7 +430,7 @@ public:
 	virtual void OnDeathEnd_Implementation() override;
 	virtual void OnDeath();
 
-	FORCEINLINE UHitReactionComponent* GetHitReactionComponent() const { return HitReactionComponent; }
+	FORCEINLINE UPlayerHitReactionComponent* GetHitReactionComponent() const { return HitReactionComponent; }
 #pragma endregion HitReaction
 
 

@@ -13,7 +13,7 @@ UDialogueSystem::UDialogueSystem()
 
 	// ...
 
-	static ConstructorHelpers::FClassFinder<UScriptWidget> ScriptWidget (TEXT("/Game/00_Character/C_Source/ScriptWidget_BP.ScriptWidget_BP_C"));
+	static ConstructorHelpers::FClassFinder<UScriptWidget> ScriptWidget (TEXT("/Game/00_Character/Data/ScriptWidget_BP.ScriptWidget_BP_C"));
 	if (!ensure(ScriptWidget.Class != nullptr)) return;
 
 	DialogueWidgetClass = ScriptWidget.Class;

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Characters/Data/StatusData.h"
+#include "Characters/Interfaces/CharacterStatusInterface.h"
 #include "CharacterStatusComponent.generated.h"
 
 class ACharacter;
@@ -14,6 +15,7 @@ DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UCharacterStatusComponent : public UActorComponent
+	, public ICharacterStatusInterface
 {
 	GENERATED_BODY()
 
@@ -25,29 +27,49 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-#pragma region Ground
 public:
-	FORCEINLINE bool IsDodging() const { return GroundState == ECharacterGroundState::Dodge; }
-	FORCEINLINE bool IsBlocking() const { return GroundState == ECharacterGroundState::Block; }
-	FORCEINLINE bool IsParrying() const { return GroundState == ECharacterGroundState::Parry; }
-	FORCEINLINE bool IsInvincible() const { return GroundState == ECharacterGroundState::Invincible; }
 	FORCEINLINE bool IsDead() const { return bIsDead; }
+
 	bool IsInAir() const;
 
-	void HandleDeath();
-	
-	bool CanTransition(const ECharacterGroundState NewState) const;
+	void ExecuteDeath();
 
-	FORCEINLINE ECharacterGroundState GetGroundState() const { return GroundState; }
-
-	void SetCombatState(ECharacterGroundState NewState);
-
-public:
 	FOnMultiDelegate OnDeath;
 
-private:
-	ECharacterGroundState GroundState;
+protected:
+	TWeakObjectPtr<ACharacter> CachedCharacter;
 
 	bool bIsDead = false;
+
+#pragma region State
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "State")
+	ECharacterState CurrentState = ECharacterState::Ground;
+
+public:
+	FORCEINLINE ECharacterState GetCharacterState_Native() const { return CurrentState; }
+	FORCEINLINE void SetCharacterState_Native(ECharacterState NewState) { CurrentState = NewState; }
+
+	ECharacterState GetCharacterState_Implementation() const { return CurrentState; }
+	void SetCharacterState_Implementation(ECharacterState NewState) { CurrentState = NewState; }
+#pragma endregion State
+
+
+#pragma region Ground
+public:
+	FORCEINLINE bool IsDodging() const { return GroundStance == EGroundStance::Dodge; }
+	FORCEINLINE bool IsBlocking() const { return GroundStance == EGroundStance::Block; }
+	FORCEINLINE bool IsParrying() const { return GroundStance == EGroundStance::Parry; }
+	FORCEINLINE bool IsInvincible() const { return GroundStance == EGroundStance::Invincible; }
+
+	FORCEINLINE EGroundStance GetGroundStance_Native() const { return GroundStance; }
+	FORCEINLINE void SetGroundStance_Native(EGroundStance NewStance) { GroundStance = NewStance; }
+
+	EGroundStance GetGroundStance_Implementation() const { return GroundStance; }
+	void SetGroundStance_Implementation(EGroundStance NewStance) { GroundStance = NewStance; }
+
+private:
+	UPROPERTY(VisibleAnywhere, Category = "Stance")
+	EGroundStance GroundStance;
 #pragma endregion Ground
 };
