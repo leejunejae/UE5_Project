@@ -15,6 +15,8 @@
 
 class ACharacter;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentMulDel, const EWeaponType);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UEquipmentComponent : public UActorComponent,
 	public IEquipmentDataInterface
@@ -32,7 +34,7 @@ protected:
 private:
 	TWeakObjectPtr<ACharacter> CachedCharacter;
 	TScriptInterface<IStatInterface> CachedStat;
-
+	
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		TObjectPtr<UStaticMeshComponent> WeaponMesh;
 
@@ -63,10 +65,16 @@ public:
 	UStaticMeshComponent* GetMainWeaponMeshComponent_Implementation() const { return WeaponMesh; }
 	UStaticMeshComponent* GetSubEquipMeshComponent_Implementation() const { return SubEquipMesh; }
 	void EquipWeapon_Implementation(FName WeaponKey) override;
+	FVector GetWeaponSocketLocation_Implementation(FName SocketName, bool IsSubWeapon) const;
 
 	void SetWeaponSocketName(FName SocketName) { WeaponSocket = SocketName; }
 	void SetSubEquipSocketName(FName SocketName) { SubEquipSocket = SocketName; }
 
 	bool ReCastOwner();
 	bool CheckOwnerExist();
+
+	const bool CheckWeaponValid(bool IsSubWeapon) const;
+
+	FOnEquipmentMulDel OnWeaponChangedDelegate;
+	virtual FOnEquipmentMulDel& OnWeaponSetChanged() override { return OnWeaponChangedDelegate; }
 };

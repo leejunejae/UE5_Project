@@ -36,3 +36,9 @@ void UCharacterStatusComponent::ExecuteDeath()
 	bIsDead = true;
 	OnDeath.Broadcast();
 }
+
+bool UCharacterStatusComponent::CanTransitionGroundStance(EGroundStance DestStance, EGroundStance TargetStance)
+{
+
+	return false;
+}

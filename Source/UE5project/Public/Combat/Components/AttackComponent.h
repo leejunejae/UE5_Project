@@ -4,19 +4,30 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Engine/DataTable.h" // 데이터에셋으로 변경 후 삭제
 #include "Engine/DataAsset.h"
 
 // 인터페이스
 #include "Characters/Interfaces/EquipmentDataInterface.h"
 
-#include "Combat/Data/AttackData.h"
+#include "Combat/Data/DataAsset/PlayerAttackDataAsset.h"
 #include "AttackComponent.generated.h"
 
 class UPBEHAnimInstance;
 class UHitReactionInterface;
+class UNiagaraSystem;
+class UNiagaraComponent;
 
 DECLARE_DELEGATE(FOnSingleDelegate);
+
+struct FWeaponSegment {
+	FVector StartWS;
+	FVector EndWS;
+
+	FWeaponSegment() {}
+	FWeaponSegment(const FVector& InStart, const FVector& InEnd)
+		: StartWS(InStart), EndWS(InEnd)
+	{}
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UAttackComponent : public UActorComponent
@@ -44,60 +55,53 @@ public:
 	bool CheckOwnerExist();
 	ACharacter* GetMyCharacter();
 
-	void SetAttackDT(const UDataTable* AttackDT);
 	FORCEINLINE void SetAttackDA(const UDataAsset* AttackDA) { AttackListDA = AttackDA; }
 
-	virtual void AnalysisAttackData(FName RowName, FName StartSection = FName("None"));
-	virtual void ExecuteAttack(FName SectionName, float Playrate = 1.0f);
-	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted, const FAttackInfo* CurAnimData);
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	//void SetCurAttackType(EWeaponType WeaponType);
+	virtual void ExecuteAttack(FName AttackName, float Playrate = 1.0f);
+	virtual void PlayAnimation(FPlayerAttackInfo AttackInfo, int32 index, float Playrate = 1.0f);
 	virtual void DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsDetectEnd = false, bool IsSubWeaponAttack = false);
 
-	void Detect_LineTrace(FAttackFeature AttackFeature, FVector StartLoc, FVector EndLoc, bool IsDrawLine = false);
-	void Detect_Circular(FAttackFeature AttackFeature, FVector Center, FVector Direction, FVector VerticalVector, float StartAngle, float EndAngle, float Radius, int TraceNum = 1, bool IsDrawLine = false);
-	void Detect_Circular(FName AttackName, FVector Center, FVector Direction, FVector VerticalVector, float StartAngle, float EndAngle, float Radius, int TraceNum = 1, bool IsDrawLine = false);
-	void Detect_Sphere(FVector StartLoc, FVector EndLoc, float Radius);
-	void Detect_Capsule(FVector StartLoc, FVector EndLoc, float Radius, float Padding = 0.0f);
-	void Detect_Box(FVector StartLoc, FVector EndLoc, FVector HalfExtent);
-	void Detect_Collision(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	void InflictDamage(AActor* Target);
-	void SetDashDistance();
-	void SetWeaponData(FVector Start, FVector End, FVector Add = FVector::ZeroVector);
+	void ExecuteWeaponTrail(FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsTrailEnd = false, bool IsSubWeaponTrail = false);
 
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	bool SampleWeaponSegmentAtTime(float Time, const UAnimBoneTransformDataAsset* BoneData, const FWeaponPartInfo& WeaponPart, FWeaponSegment& OutSeg) const;
 
 private:
-	UFUNCTION()
-		void TriggerBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	//UFUNCTION()
-		//void TriggerEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-private:
-	TWeakObjectPtr<ACharacter> CachedCharacter;
-	TScriptInterface<IEquipmentDataInterface> CachedEquipment;
-
-	FAttackInfoList* CurAttackDTRow;
-	FAttackInfo* CurAttack;
-
-	ACharacter* CurTarget;
-
-	//FOnSingleDelegate AttackDelegate;
 	FTimerHandle AttackTimerHandle;
+	FTimerHandle TrailTimerHandle;
 
 	bool IsDetectAttackTarget;
 
 protected:
 	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
-		const class UDataTable* AttackListDT;
-
-	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 		const class UDataAsset* AttackListDA;
 
 	UAnimInstance* AnimInstance;
+
+	TWeakObjectPtr<ACharacter> CachedCharacter;
+	TScriptInterface<IEquipmentDataInterface> CachedEquipment;
 
 	FOnMontageEnded OnMontageEndedDelegate;
 
 	TTuple<bool, float> DetectTracePrevTime;
 
+	TTuple<bool, float> TrailPrevTime;
+
 	TSet<AActor*> HitActorListCurrentAttack;
+
+	UPROPERTY(VisibleAnywhere, Category = Effect)
+		TObjectPtr<UNiagaraSystem> TrailSystem;
+
+	UPROPERTY(VisibleAnywhere, Category = Effect)
+		TObjectPtr<UNiagaraComponent> TrailComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = Attack)
+		FPlayerAttackInfoList CurAttackType;
+
+	UPROPERTY(VisibleAnywhere, Category = Attack)
+		FPlayerAttackInfo CurAttackInfo;
+
+	UPROPERTY(VisibleAnywhere, Category = Attack)
+		int32 ComboIndex = 0;
 };

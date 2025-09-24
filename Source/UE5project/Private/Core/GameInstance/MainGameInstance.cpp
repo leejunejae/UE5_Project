@@ -4,6 +4,7 @@
 #include "Core/GameInstance/MainGameInstance.h"
 #include "Core/Subsystems/WeaponDataSubsystem.h"
 #include "Core/Subsystems/EnemyDataSubsystem.h"
+#include "Core/Subsystems/PlayerAnimRegistrySubsystem.h"
 //#include "UObject/SoftObjectPath.h"
 
 void UMainGameInstance::Init()
@@ -16,6 +17,11 @@ void UMainGameInstance::Init()
         UE_LOG(LogTemp, Log, TEXT("WeaponSubSystem Loaded Successful"));
     }
 
+    UPlayerAnimRegistrySubsystem* PlayerAnimRegistrySubsystem = GetSubsystem<UPlayerAnimRegistrySubsystem>();
+    if (PlayerAnimRegistrySubsystem)
+    {
+        UE_LOG(LogTemp, Log, TEXT("PlayerAnimRegistrySubsystem Loaded Successful"));
+    }
 
     UEnemyDataSubsystem* EnemyDataSubsystem = GetSubsystem<UEnemyDataSubsystem>();
     if (EnemyDataSubsystem)

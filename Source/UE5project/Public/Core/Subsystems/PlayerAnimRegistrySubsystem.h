@@ -3,24 +3,26 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "Animation/PlayerAnimSetDataAsset.h"
+
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "Items/Weapons/Data/WeaponData.h"
-#include "Engine/DataTable.h"
-#include "WeaponDataSubsystem.generated.h"
+#include "PlayerAnimRegistrySubsystem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE5PROJECT_API UWeaponDataSubsystem : public UGameInstanceSubsystem
+class UE5PROJECT_API UPlayerAnimRegistrySubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
+	
 private:
 	UPROPERTY(EditDefaultsOnly)
-		TObjectPtr<UDataTable> WeaponList = nullptr;
-	
+		TObjectPtr<UPlayerAnimSetDataAsset> PlayerAnimAsset;
+
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
-	const FWeaponSetsInfo* GetWeaponInfo(const FName& WeaponName) const;
+	
+	const FPlayerAnimSet* GetPlayerAnimSet(const EWeaponType& WeaponType) const;
 };

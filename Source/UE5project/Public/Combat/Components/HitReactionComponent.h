@@ -11,7 +11,7 @@
 
 #include "HitReactionComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnHitReactionMulDel);
 
 class ICharacterStatusInterface;
 
@@ -41,7 +41,7 @@ public:
 
 	void OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo HitReaction, const FName SectionName);
 
-	FOnMultiDelegate OnHitAirReaction;
+	FOnHitReactionMulDel OnHitAirReaction;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))

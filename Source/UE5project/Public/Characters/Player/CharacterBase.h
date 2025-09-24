@@ -28,6 +28,7 @@ class UInputAction;
 class UCameraComponent;
 class USpringArmComponent;
 class UCharacterMovementComponent;
+class UBaseChracterMovementComponent;
 
 class UPlayerStatusComponent;
 class UStatComponent;
@@ -57,7 +58,7 @@ class UE5PROJECT_API ACharacterBase : public ACharacter,
 
 public:
 	// Sets default values for this character's properties
-	ACharacterBase();
+	ACharacterBase(const FObjectInitializer& ObejctInitializer);
 
 protected:
 	// Called when the game starts or when spawned
@@ -91,6 +92,10 @@ private:
 
 /* PROTECTED VARIATION */
 protected:
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
+		class UBaseCharacterMovementComponent* BaseMovement;
+
 	MovementDirection CurrentDirection;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -138,9 +143,6 @@ protected:
 		TObjectPtr<UInputAction> SprintAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
-		TObjectPtr<UInputAction> SwitchStanceAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
 		TObjectPtr<UInputAction> InteractAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
@@ -161,7 +163,6 @@ protected:
 
 	bool IsAction;
 	bool IsRun;
-	bool IsAttack;
 	bool IsRoll;
 	bool IsInteraction;
 	bool CanInput=true;
@@ -184,7 +185,6 @@ protected:
 	void EndMoveInput();
 
 	virtual void Dodge();
-	virtual void SwitchStance();
 	void CameraSetting();
 	
 	void Jump();
@@ -275,18 +275,17 @@ protected:
 // Methods For State & Stance
 ////////////////////////////////////
 public:
-	EClimbPhase GetCurLadderStance();
 	ELocomotionState GetCurGroundStance();
 	ERideStance GetCurRideStance();
-	float GetClimbDistance();
 #pragma endregion State & Stance
 
 #pragma region Ground
 protected:
 	virtual void Walk();
-	virtual void WalkEnd();
+	//virtual void WalkEnd();
+	virtual void Jog();
 	virtual void Sprint();
-	virtual void SprintEnd();
+	//virtual void SprintEnd();
 	void EnterLocomotion();
 	void LeftLocomotion();
 
@@ -308,15 +307,9 @@ private:
 
 #pragma region Ladder
 private:
-	FGripNode1D* Grip1D_Hand_R;
-	FGripNode1D* Grip1D_Hand_L;
-	FGripNode1D* Grip1D_Foot_R;
-	FGripNode1D* Grip1D_Foot_L;
-	float ClimbDistance;
 	bool CanMovementInput;
 
 protected:
-	void DecidEClimbPhase();
 
 	UPROPERTY(VisibleAnywhere, Category = Climb)
 		UClimbComponent* ClimbComponent;

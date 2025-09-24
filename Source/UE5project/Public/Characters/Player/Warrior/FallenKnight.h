@@ -20,13 +20,9 @@ class UE5PROJECT_API AFallenKnight : public ACharacterBase
 	GENERATED_BODY()
 	
 public:
-	AFallenKnight();
+	AFallenKnight(const FObjectInitializer& ObjectInitializer);
 
 	virtual void BeginPlay() override;
-	bool IsAttacking();
-	bool IsRolling();
-	int32 CheckCombo();
-	WarriorStance GetStance();
 
 public:
 	// Called every frame
@@ -64,41 +60,4 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		USkeletalMeshComponent* ArmorMesh;
 		*/
-
-	FTimerHandle MoveSpeedTimerHandle;
-
-	FVector InitPosition;
-	float PreviousCurveValue;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		bool CanNextCombo;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		int32 CurrentCombo=0;
-
-	bool IsInvincible;
-	bool CanAttack;
-	bool CanInputBuffer;
-
-	bool SetCharDirection;
-	FRotator TargetRotation;
-
-	WarriorStance CurStance = WarriorStance::SNS;
-
-private:
-	void MoveSpeedTimer();
-
-	virtual void Sprint() override;
-
-	void SwitchStance() override;
-	void ResetAttackState();
-	void AttackTimer();
-
-	FTimerHandle AttackTimerHandle;
-
-	UFUNCTION()
-		void IsMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-	UFUNCTION()
-		void IsMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 };

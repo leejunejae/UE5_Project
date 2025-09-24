@@ -89,22 +89,19 @@ void UClimbComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	}
 
 	FVector NewLocation = FMath::Lerp(ClimbLocation.Key, ClimbLocation.Value, BodyCurveValue);
-	LimbToGripNode[ELimbList::Body].LimbLocation = NewLocation;
-	//CachedCharacter->SetActorLocation(NewLocation);
+
+	CachedCharacter->SetActorLocation(NewLocation);
+	//LimbToGripNode[ELimbList::Body].LimbLocation = NewLocation;
 
 	switch (LadderStance)
 	{
 	case EClimbPhase::Enter_From_Bottom:
 	{
-		//AnimTime += DeltaTime;
-		//BodyCurveValue = BottomEnterBodyCurve.Get()->GetVectorValue(AnimTime);
+
 		break;
 	}
 	case EClimbPhase::Enter_From_Top:
 	{
-		//AnimTime += DeltaTime;
-		//BodyCurveValue = ClimbCurveSet.TopEnterBodyCurve.Get()->GetVectorValue(AnimTime);
-
 		const USceneComponent* EnterTopPoint = ILadderInterface::Execute_GetInitEnterTarget(ClimbObject, true);
 		const FRotator StartRotator = EnterTopPoint->GetComponentRotation();
 		const USceneComponent* InitTargetPoint = ILadderInterface::Execute_GetInitClimbTarget(ClimbObject);
@@ -117,8 +114,8 @@ void UClimbComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 		const FRotator NewRotator = FRotator(CachedCharacter->GetActorRotation().Pitch, NewRotatorYaw, CachedCharacter->GetActorRotation().Roll);
 		CachedCharacter->SetActorRotation(NewRotator);
 
-		const USceneComponent* InitLeftHandPoint = ILadderInterface::Execute_GetTopEnterHandTarget(ClimbObject, false);
-		const USceneComponent* InitRightHandPoint = ILadderInterface::Execute_GetTopEnterHandTarget(ClimbObject, true);
+		const USceneComponent* InitLeftHandPoint = ILadderInterface::Execute_GetTopEnterHandTarget(ClimbObject, true);
+		const USceneComponent* InitRightHandPoint = ILadderInterface::Execute_GetTopEnterHandTarget(ClimbObject, false);
 
 		FVector HandRTarget = LimbToGripNode[ELimbList::HandR].LimbTargetGrip->Position;
 		HandRTarget += ClimbObject->GetActorRightVector() * -15.0f;
@@ -145,28 +142,22 @@ void UClimbComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 			HandLCurveValue = HandLCurve->GetVectorValue(AnimTime);
 		}
 
-		//LimbToGripNode[ELimbList::HandL].LimbLocation = SetBoneIKTargetLadder(HandRTargetGrip, )
-
 		LimbToGripNode[ELimbList::HandR].LimbLocation = SetBoneIKTargetLadder(HandRTarget, HandCurveValue, InitRightHandPoint->GetComponentLocation());
 		LimbToGripNode[ELimbList::HandL].LimbLocation = SetBoneIKTargetLadder(HandLTarget, HandLCurveValue, InitLeftHandPoint->GetComponentLocation());
 		LimbToGripNode[ELimbList::FootL].LimbLocation = SetBoneIKTargetLadder(FootLTargetGrip, FootCurveValue, 15.0f, FootLTargetGrip->PrevGrip);
 
-		UE_LOG(LogTemp, Warning, TEXT("[Rotator Yaw : %f]"), NewRotatorYaw);
 		break;
 	}
 	case EClimbPhase::Exit_From_Bottom_Right:
 	case EClimbPhase::Exit_From_Bottom_Left:
 	{
-		//AnimTime += DeltaTime;
 
-		//BodyCurveValue = ClimbCurveSet.BottomExitBodyCurve.Get()->GetVectorValue(AnimTime);
 		break;
 	}
 	case EClimbPhase::Exit_From_Top_Right:
 	case EClimbPhase::Exit_From_Top_Left:
 	{
-		//AnimTime += DeltaTime;
-		//BodyCurveValue = ClimbCurveSet.TopExitBodyCurve.Get()->GetVectorValue(AnimTime);
+
 		break;
 	}
 	case EClimbPhase::ClimbUp_Right:
@@ -180,9 +171,6 @@ void UClimbComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 		{
 			FootCurveValue = FootCurve->GetVectorValue(AnimTime);
 		}
-
-		//HandCurveValue = ClimbCurveSet.ClimbUpRightHandCurve.Get()->GetVectorValue(AnimTime);
-		//FootCurveValue = ClimbCurveSet.ClimbUpLeftFootCurve.Get()->GetVectorValue(AnimTime);
 
 		FGripNode1D* HandRTargetGrip = LimbToGripNode[ELimbList::HandR].LimbTargetGrip;
 		FGripNode1D* FootLTargetGrip = LimbToGripNode[ELimbList::FootL].LimbTargetGrip;
@@ -213,11 +201,6 @@ void UClimbComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	}
 	case EClimbPhase::ClimbDown_Right:
 	{
-		//AnimTime += DeltaTime;
-		//BodyCurveValue = ClimbCurveSet.ClimbDownRightBodyCurve.Get()->GetVectorValue(AnimTime);
-		//HandCurveValue = ClimbCurveSet.ClimbDownRightHandCurve.Get()->GetVectorValue(AnimTime);
-		//FootCurveValue = ClimbCurveSet.ClimbDownLeftFootCurve.Get()->GetVectorValue(AnimTime);
-
 		if (UCurveVector* HandCurve = ClimbCurveSet.Curves[FClimbCurveKey{ LadderStance, ELimbList::HandR }].LoadSynchronous())
 		{
 			HandCurveValue = HandCurve->GetVectorValue(AnimTime);
@@ -238,11 +221,6 @@ void UClimbComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	}
 	case EClimbPhase::ClimbDown_Left:
 	{
-		//AnimTime += DeltaTime;
-		//BodyCurveValue = ClimbCurveSet.ClimbDownLeftBodyCurve.Get()->GetVectorValue(AnimTime);
-		//HandCurveValue = ClimbCurveSet.ClimbDownLeftHandCurve.Get()->GetVectorValue(AnimTime);
-		//FootCurveValue = ClimbCurveSet.ClimbDownRightFootCurve.Get()->GetVectorValue(AnimTime);
-
 		if (UCurveVector* HandCurve = ClimbCurveSet.Curves[FClimbCurveKey{ LadderStance, ELimbList::HandL }].LoadSynchronous())
 		{
 			HandCurveValue = HandCurve->GetVectorValue(AnimTime);
@@ -289,6 +267,7 @@ bool UClimbComponent::RequestEnterLadder(AActor* TargetLadder)
 	}
 	else
 	{
+		//CachedCharacter->GetCapsuleComponent()->SetCapsuleHalfHeight(50.0f);
 		const USceneComponent* InitLeftHandPoint = ILadderInterface::Execute_GetTopEnterHandTarget(TargetLadder, false);
 		const USceneComponent* InitRightHandPoint = ILadderInterface::Execute_GetTopEnterHandTarget(TargetLadder, true);
 
@@ -649,59 +628,6 @@ FVector UClimbComponent::GetLimbIKTarget(ELimbList LimbName)
 	return LimbToGripNode[LimbName].LimbLocation;
 }
 
-/*
-TOptional<FTransform> UClimbComponent::GetEnterTopPosition()
-{
-	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
-	{
-		USceneComponent* InitTopTarget = ILadderInterface::Execute_GetInitClimbTarget(ClimbObject);
-		FTransform InitTopPosition = InitTopTarget->GetComponentTransform();
-		return InitTopPosition;
-	}
-
-	return TOptional<FTransform>();
-}
-
-TOptional<FTransform> UClimbComponent::GetEnterBottomPosition()
-{
-	return TOptional<FTransform>();
-}
-
-TOptional<FTransform> UClimbComponent::GetInitTopPosition()
-{
-	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
-	{
-		USceneComponent* InitTopTarget = ILadderInterface::Execute_GetInitEnterTarget(ClimbObject);
-		FTransform InitTopPosition = InitTopTarget->GetComponentTransform();
-		return InitTopPosition;
-	}
-
-	return TOptional<FTransform>();
-}
-
-TOptional<FTransform> UClimbComponent::GetInitBottomPosition()
-{
-	if (ClimbObject->GetClass()->ImplementsInterface(ULadderInterface::StaticClass()))
-	{
-		USceneComponent* InitBottomTarget = ILadderInterface::Execute_GetInitEnterTarget(ClimbObject);
-		FTransform InitBottomPosition = InitBottomTarget->GetComponentTransform();
-		return InitBottomPosition;
-	}
-
-	return TOptional<FTransform>();
-}
-
-
-float UClimbComponent::GetLadderTopTransitionDistance()
-{
-	if (!GetInitTopPosition().IsSet() || !GetEnterTopPosition().IsSet())
-		return 0.0f;
-
-	const FVector2D InitLocation = FVector2D(GetInitTopPosition().GetValue().GetLocation().X, GetInitTopPosition().GetValue().GetLocation().Y);
-	const FVector2D EnterLocation = FVector2D(GetEnterTopPosition().GetValue().GetLocation().X, GetEnterTopPosition().GetValue().GetLocation().Y);
-	return FVector2D::Distance(InitLocation, EnterLocation);
-}
-*/
 void UClimbComponent::ResetClimbState()
 {
 	bIsClimbing = false;
@@ -852,201 +778,3 @@ FGripNode1D* UClimbComponent::GetHighestGrip1D()
 
 	return &GripList1D.Last();
 }
-
-/*
-FGripNode1D* UClimbComponent::GetGripByHeightUpWard(float MinHeight, float Comparison)
-{
-	for (FGripNode1D& GripNode : GripList1D)
-	{
-		if (GripNode.Position.Z - Comparison > MinHeight)
-		{
-			return &GripNode;
-		}
-	}
-
-	return nullptr;
-}
-
-FGripNode1D* UClimbComponent::GetGripByHeightDownWard(float MinHeight, float Comparison)
-{
-	for (FGripNode1D& GripNode : GripList1D)
-	{
-		if (Comparison - GripNode.Position.Z > MinHeight)
-		{
-			return &GripNode;
-		}
-	}
-
-	return nullptr;
-}
-
-FGripNode1D* UClimbComponent::GetGripNeighborUpByRange(const FGripNode1D* CurrentGrip, float Range)
-{
-	//check(CurrentGrip != nullptr);
-
-	if (CurrentGrip == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDownByRange"));
-		return nullptr;
-	}
-
-	if (CurrentGrip->NeighborUp.Distance < Range)
-	{
-		return GetGripNeighborUpByRange(CurrentGrip->NeighborUp.Neighbor, Range - CurrentGrip->NeighborUp.Distance);
-	}
-
-	return CurrentGrip->NeighborUp.Neighbor;
-}
-
-FGripNode1D* UClimbComponent::GetGripNeighborDownByRange(const FGripNode1D* CurrentGrip, float Range)
-{
-	if (CurrentGrip == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDownByRange"));
-		return nullptr;
-	}
-
-	if (CurrentGrip->NeighborDown.Distance < Range)
-	{
-		return GetGripNeighborDownByRange(CurrentGrip->NeighborDown.Neighbor, Range - CurrentGrip->NeighborDown.Distance);
-	}
-
-	return CurrentGrip->NeighborDown.Neighbor;
-}
-
-FGripNode1D* UClimbComponent::GetGripNeighborUp(const FGripNode1D* CurrentGrip, int32 Count)
-{	
-	if (CurrentGrip == nullptr)
-	{
-		return nullptr;
-	}
-
-	if (Count > 1)
-	{
-		return GetGripNeighborUp(CurrentGrip->NeighborUp.Neighbor, Count - 1);
-	}
-
-	return CurrentGrip->NeighborUp.Neighbor;
-}
-
-FGripNode1D* UClimbComponent::GetGripNeighborDown(const FGripNode1D* CurrentGrip, int32 Count)
-{
-	if (CurrentGrip == nullptr)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("CurrentGrip is Nullptr By Function GetGripNeighborDown"));
-		return nullptr;
-	}
-
-	//UE_LOG(LogTemp, Warning, TEXT("Count : %d"), Count);
-	if (Count > 1)
-	{
-		return GetGripNeighborDown(CurrentGrip->NeighborDown.Neighbor, Count - 1);
-	}
-
-	//UE_LOG(LogTemp, Warning, TEXT("GripIndex : %d"), CurrentGrip->GripIndex);
-	return CurrentGrip->NeighborDown.Neighbor;
-}
-
-FGripNode1D* UClimbComponent::GetGripUpward(const FGripNode1D* CurrentGrip, float MinInterval)
-{
-	int32 SearchIndex = CurrentGrip->GripIndex + 1;
-	
-	while (GripList1D.IsValidIndex(SearchIndex))
-	{
-		float GripPositionDiff = FMath::Abs(GripList1D[SearchIndex].Position.Z - CurrentGrip->Position.Z);
-
-		if (GripPositionDiff > MinInterval)
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("LeftHand : %f"), GripPositionDiff);
-			return &GripList1D[SearchIndex];
-		}
-
-		SearchIndex++;
-	}
-
-	return nullptr;
-}
-
-FGripNode1D* UClimbComponent::GetGripDownward(const FGripNode1D* CurrentGrip, float MinInterval)
-{
-	int32 SearchIndex = CurrentGrip->GripIndex - 1;
-
-	while (GripList1D.IsValidIndex(SearchIndex))
-	{
-		float GripPositionDiff = FMath::Abs(CurrentGrip->Position.Z - GripList1D[SearchIndex].Position.Z);
-
-		if (GripPositionDiff > MinInterval)
-		{
-			return &GripList1D[SearchIndex];
-		}
-
-		SearchIndex--;
-	}
-
-	return nullptr;
-}
-
-TOptional<int32> UClimbComponent::FindGripLevelDifference(const FGripNode1D* StartGrip, const FGripNode1D* DestGrip)
-{
-	if (StartGrip == nullptr || DestGrip == nullptr)
-	{
-		if (StartGrip == nullptr)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("StartGrip Null"));
-		}
-
-		if (DestGrip == nullptr)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("DestGrip Null"));
-		}
-		return TOptional<int32>();
-	}
-	
-
-	return FMath::Abs(DestGrip->GripIndex - StartGrip->GripIndex);
-}
-
-TOptional<float> UClimbComponent::FindGripDistance(const FGripNode1D* StartGrip, const FGripNode1D* DestGrip)
-{
-	if (StartGrip == nullptr || DestGrip == nullptr)
-		return TOptional<float>();
-
-	return DestGrip->Position.Z - StartGrip->Position.Z;
-}
-
-void UClimbComponent::SetGripNeighborUp(FGripNode1D*& CurrentGrip, int32 Count)
-{
-	if (!CurrentGrip)
-	{
-		return;
-	}
-
-	FGripNode1D* PrevGrip = CurrentGrip;
-	CurrentGrip = GetGripNeighborUp(CurrentGrip, Count);
-
-	if (CurrentGrip)
-	{
-		CurrentGrip->PrevGrip = PrevGrip;
-	}
-
-	PrevGrip->PrevGrip = nullptr;
-}
-
-void UClimbComponent::SetGripNeighborDown(FGripNode1D*& CurrentGrip, int32 Count)
-{
-	if (!CurrentGrip)
-	{
-		return;
-	}
-
-	FGripNode1D* PrevGrip = CurrentGrip;
-	CurrentGrip = GetGripNeighborDown(CurrentGrip, Count);
-
-	if (CurrentGrip)
-	{
-		CurrentGrip->PrevGrip = PrevGrip;
-	}
-
-	PrevGrip->PrevGrip = nullptr;
-}
-*/

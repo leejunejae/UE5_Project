@@ -108,13 +108,6 @@ APBEHHereticSoldier::APBEHHereticSoldier()
 
 	Tags.Add("HereticSoldier");
 	ResetCombo();
-
-	static ConstructorHelpers::FObjectFinder<UDataTable> AttackDT_Asset(TEXT("DataTable'/Game/Enemy/E_Human/EH_HereticSoldier/HSoldierAttackDT.HSoldierAttackDT'"));
-	if (AttackDT_Asset.Succeeded())
-	{
-		AttackComponent->SetAttackDT(AttackDT_Asset.Object);
-	}
-
 }
 
 void APBEHHereticSoldier::BeginPlay()
@@ -294,7 +287,6 @@ void APBEHHereticSoldier::ResetCombo()
 void APBEHHereticSoldier::Attack(FName AttackName, ACharacter* Target)
 {
 	//HSoldierAnim->PlayMontage(FName("Combo1"));
-	AttackComponent->AnalysisAttackData(AttackName);
 	MotionWarpComp->AddOrUpdateWarpTargetFromLocation(TEXT("Warp"), Target->GetActorLocation());
 	MotionWarpComp->AddOrUpdateWarpTargetFromLocation(TEXT("Smash"), Target->GetActorLocation());
 	
@@ -324,24 +316,7 @@ void APBEHHereticSoldier::Attack(FName AttackName, ACharacter* Target)
 
 void APBEHHereticSoldier::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
 {
-	if (NotifyName == FName("Slash"))
-	{
-		for (int i = -1; i <= 1; i++)
-		{
-			AttackComponent->Detect_Circular(NotifyName, GetActorLocation() + GetActorForwardVector() * 150.0f + GetActorRightVector() * 30.0f * i - FVector(0.0f, 0.0f, 90.0f), GetActorForwardVector(), -GetActorUpVector(), 0.0f, 30.0f, 1050.0f, 10);
-		}
-	}
-	else if (NotifyName == FName("Rush"))
-	{
-		for (int i = -1; i <= 1; i++)
-		{
-			AttackComponent->Detect_Circular(NotifyName, GetActorLocation() + GetActorForwardVector() * 150.0f + GetActorRightVector() * 30.0f * i - FVector(0.0f, 0.0f, 90.0f), GetActorForwardVector(), GetActorRightVector(), 0.0f, 30.0f, 1050.0f, 10);
-		}
-	}
-	else if (NotifyName == FName("Sweep"))
-	{
-		AttackComponent->Detect_Circular(NotifyName, GetActorLocation(), GetActorForwardVector(), GetActorRightVector(), -180.0f, 180.0f, 800.0f, 72, false);
-	}
+
 }
 
 void APBEHHereticSoldier::OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)

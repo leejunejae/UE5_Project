@@ -12,16 +12,17 @@
 #include "Characters/Data/StatusData.h"
 #include "Interaction/Climb/Data/ClimbHeader.h"
 #include "Characters/Data/IKData.h"
+#include "Animation/AnimData.h"
+#include "Items/Weapons/Data/WeaponData.h"
 
 // 인터페이스
 #include "Animation/Interfaces/IAnimInstance.h"
-
 
 #include "Animation/AnimInstance.h"
 #include "CharacterBaseAnimInstance.generated.h"
 
 DECLARE_DELEGATE(FOnSingleDelegate);
-DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnAnimInstanceMulDel);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMulOneParamDelegate, FName);
 /**
  * 
@@ -39,6 +40,19 @@ struct FFootTraceStruct
 		float IK;
 };
 */
+
+//struct FWeaponSetsInfo;
+
+UENUM(BlueprintType)
+enum class EAnimDirection : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Forward UMETA(DisplayName = "Forward"),
+	Backward UMETA(DisplayName = "Backward"),
+	Right UMETA(DisplayName = "Right"),
+	Left UMETA(DisplayName = "Left")
+};
+
 UCLASS()
 class UE5PROJECT_API UCharacterBaseAnimInstance : public UAnimInstance, public IIAnimInstance
 {
@@ -53,27 +67,10 @@ public:
 	FOnSingleDelegate OnEnterLocomotion;
 	FOnSingleDelegate OnLeftLocomotion;
 
-	FOnMultiDelegate OnResetHurt;
-	FOnMultiDelegate OnSetAttackDirection;
-	FOnMultiDelegate OnAttackStart;
-
-	FOnMultiDelegate OnParryEnd;
-	FOnMultiDelegate OnNextAttackCheck;
-	FOnMultiDelegate OnEndAttack;
-	FOnMultiDelegate OnMountEnd;
-	FOnMultiDelegate OnDisMountEnd;
-
-	FOnMultiDelegate OnEquipEnd;
-	FOnMultiDelegate OnHolsterEnd;
-
-// Ladder Delegate
-	FOnMultiDelegate OnClimbEnd;
-	FOnMulOneParamDelegate OnNextGrip;
+	FOnAnimInstanceMulDel OnMountEnd;
+	FOnAnimInstanceMulDel OnDisMountEnd;
 
 private:
-	FVector PrevLoc;
-	FVector NextLoc;
-
 	class AFallenKnight* Character = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Classes, Meta = (AllowPrivateAccess = true))
@@ -83,10 +80,16 @@ private:
 		bool IsMovementInput;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsRun;
+		bool IsInAir;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsInAir;
+		bool IsJumping;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		bool IsFalling;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
+		bool IsLanding;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		bool IsAttack;
@@ -95,35 +98,10 @@ private:
 		bool IsAttackInput;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		bool IsParry;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsRoll;
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		EHitResponse Response;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		float BlockBlend;
 
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool CombatMode;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
 		bool IsTurning=false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		bool CanAttack;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		bool IsNextAttack;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		int32 ComboCount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		WarriorStance CurStance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		float Speed;
@@ -152,38 +130,11 @@ private:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
 		float Yaw = 0.0f;
 
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = TIP, Meta = (AllowPrivateAccess = true))
-		float RootYawOffset = 0.0f;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = TIP, Meta = (AllowPrivateAccess = true))
-		float MaxTurnAngle = 90.0f;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = TIP, Meta = (AllowPrivateAccess = true))
-		float DistanceCurveValue = -90.0f;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = TIP, Meta = (AllowPrivateAccess = true))
-		FName DistanceCurve = TEXT("DistanceToPivot");
-
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = TIP, Meta = (AllowPrivateAccess = true))
-		FName Turning = TEXT("Turning");
-
-
-	UFUNCTION()
-		void AnimNotify_NOT_ParryEnd();
-
-	UFUNCTION()
-		void AnimNotify_NOT_NextAttack();
-
 	UFUNCTION()
 		void AnimNotify_NOT_MountEnd();
 
 	UFUNCTION()
 		void AnimNotify_NOT_DisMountEnd();
-
-
-
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_ResetHurt();
 
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_EnterLocomotion();
@@ -191,25 +142,59 @@ private:
 	UFUNCTION(BlueprintCallable)
 		void AnimNotify_NOT_LeftLocomotion();
 
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_SetAttackDirection();
-
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_AttackStart();
-
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_EndAttack();
-
-	/*
-	UFUNCTION()
-		void AnimNotify_NOT_EquipEnd();
-
-	UFUNCTION()
-		void AnimNotify_NOT_HolsterEnd();
-		*/
-
 	FName GetAttackMontageSectionName(int32 Section);
+
+
+#pragma region Animation Data
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true)) 
+		TObjectPtr<UBlendSpace1D> Locomotion_CycleBS = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Locomotion_Idle = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Locomotion_Start = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Locomotion_Stop_Jog = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Locomotion_Stop_Run = nullptr;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Jump_Start = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Jump_Loop = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Fall_Loop = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Land_Jump = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Land_Fall = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Land_Jog = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Land_High = nullptr;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> HitAir_Start = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> HitAir_Loop = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> HitAir_End = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> GetUp = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> HitAir_Death = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Ground_Death = nullptr;
+
+	void HandleWeaponChange(EWeaponType WeaponData);
+
+	bool bInitAnimSet = false;
+#pragma endregion Animation Data
+
 #pragma region State & Stance
+private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
 		EGroundStance CharacterGroundState;
 
@@ -219,26 +204,7 @@ public:
 	virtual float GetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb);
 
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float RightFootIKAlpha;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float LeftFootIKAlpha;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float RightFootIKTypeAlpha;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
-		float LeftFootIKTypeAlpha;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float RightHandIKTypeAlpha;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
-		float LeftHandIKTypeAlpha;
-
 	FName LockIK = TEXT("LockIK");
-	TMap<FName, EBodyType> BoneNameToBodyType;
 #pragma endregion State & Stance_IK
 
 private:
@@ -264,8 +230,8 @@ private:
 		FIKContextWeights LadderIKWeights;
 
 public:
-	FOnMultiDelegate OnEnterWalkState;
-	FOnMultiDelegate OnEnterLadderState;
+	FOnAnimInstanceMulDel OnEnterWalkState;
+	FOnAnimInstanceMulDel OnEnterLadderState;
 
 #pragma region Ground
 private:
@@ -303,19 +269,26 @@ private:
 	// Variables For FootIK
 	////////////////////////////////////
 private:
+	void UpdateVelocity();
+	FVector LocalVelocity;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
+		float MovementAlpha;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
+		bool HasVelocity;
+
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
+		EAnimDirection CurrentDirection;
+
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 		bool CanMovementInput = true;
 
 	float CharacterYaw;
-
 	float GetAnimDirection(float DeltaSeconds);
 
-public:
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_EnterIdleState();
+	bool IsFirstUpdateYaw;
 
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_LeftIdleState();
 #pragma endregion Ground_Movement
 
 
@@ -333,27 +306,6 @@ private:
 		bool bQuickTurn;
 #pragma endregion Ground_Quick Turn
 
-
-#pragma region Ground_Turn In Place
-
-private:
-	// Turn In Place // 
-	void SetPitch();
-	void SetRootYawOffset();
-
-protected:
-	float YawLastTick = 0.0f;
-	float YawChangeOverFrame = 0.0f;
-	float ABSRootYawOffset = 0.0f;
-	float DistanceCurveValueLastFrame = 0.0f;
-	float DistanceCurveDifference = 0.0f;
-	float YawToSubtract = 0.0f;
-	float YawMultiplier = 0.0f;
-	float TurnDirection = 0.0f;
-	bool IsMove = false;
-
-#pragma endregion Ground_Turn In Place
-
 #pragma endregion Ground
 
 
@@ -369,40 +321,14 @@ private:
 		FVector LeftHandLadderOffset;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = HandIK, Meta = (AllowPrivateAccess = true))
 		FVector RightHandLadderOffset;
-
-	float Hand_L_Y_Distance;
-	float Hand_R_Y_Distance;
-	float Foot_L_Y_Distance;
-	float Foot_R_Y_Distance;
 #pragma endregion Ladder_IK
 
 protected:
-	//virtual void NativeNotify(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
-
-	UFUNCTION(BlueprintCallable)
-	void AnimNotify_NOT_CheckLadderStance();
-
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_NOT_EnableInputLock();
 
 	UFUNCTION(BlueprintCallable)
-	void AnimNotify_NOT_ClimbEnd();
-
-	UFUNCTION(BlueprintCallable)
-	void AnimNotify_NOT_ClimbStart();
-
-	UFUNCTION(BlueprintCallable)
 	void AnimNotify_NOT_ResetClimbState();
-	
-	void CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds);
-
-private:
-	bool bIsClimb;
-	float CurveValue_Root_Z;
-	float CurveValue_Root_Y;
-	float CurveValue_Root_Rotator;
-
-	float RootCurveDifferenceSum = 0.0f;
 #pragma endregion Ladder
 
 #pragma endregion State & Stance
@@ -424,11 +350,4 @@ private:
 		bool bIsDead = false;
 
 #pragma endregion HitReaction
-
-
-#pragma region Debug Region
-private:
-	float PelvisCurveSum = 0.0f;
-	float AdjustCurveSum = 0.0f;
-#pragma endregion Debug Region
 };

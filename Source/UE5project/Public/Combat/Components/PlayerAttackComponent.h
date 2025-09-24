@@ -20,17 +20,13 @@ public:
 	//void AnalysisAttackData(FName RowName, FName StartSection = FName("None")) ;
 	//void ExecuteAttack(FName SectionName);
 
-	void ExecuteAttack(FName AttackName, float Playrate = 1.0f);
-	void PlayAnimation(FPlayerAttackInfo AttackInfo, int32 index, float Playrate = 1.0f);
-	
-	UFUNCTION()
-	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void SetCurAttackType(EWeaponType WeaponData);//EWeaponType WeaponType);
 
-	void SetCurAttackType(EWeaponType WeaponType);
-
-	void DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsDetectEnd = false, bool IsSubWeaponAttack = false) override;
+protected:
+	void BeginPlay() override;
 
 private:
+	/*
 	//TScriptInterface<IStatDataInterface> CachedStat;
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
@@ -41,4 +37,5 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
 		int32 ComboIndex = 0;
+		*/
 };

@@ -34,12 +34,6 @@ void UANS_IKBlend::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBa
     }
 }
 
-static float Ease01(float x, float exp)
-{
-    x = FMath::Clamp(x, 0.f, 1.f);
-    return FMath::InterpEaseInOut(0.f, 1.f, x, FMath::Max(1.f, exp));
-}
-
 void UANS_IKBlend::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Anim, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
 {
     Elapsed += FrameDeltaTime;
@@ -76,7 +70,7 @@ void UANS_IKBlend::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBas
                 //UE_LOG(LogTemp, Warning, TEXT("[Limb : %s] [OutAlpha = %f]"), *UEnum::GetValueAsString(R.TargetLimb), OutAlpha);
             }
         }
-        //UE_LOG(LogTemp, Warning, TEXT("/////////////////////////////////////////////////////////"));
+       // UE_LOG(LogTemp, Warning, TEXT("/////////////////////////////////////////////////////////"));
     }
 }
 
@@ -99,7 +93,7 @@ void UANS_IKBlend::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
                 IIAnimInstance::Execute_SetIKWeight(MeshComp->GetAnimInstance(), ToContext, R.TargetLimb, TargetAlpha);
                 IIAnimInstance::Execute_SetIKWeight(MeshComp->GetAnimInstance(), FromContext, R.TargetLimb, 1.0f - TargetAlpha);
             }
-            UE_LOG(LogTemp, Warning, TEXT("[Limb : %s] [OutAlpha = %f]"), *UEnum::GetValueAsString(R.TargetLimb), TargetAlpha);
+            //UE_LOG(LogTemp, Warning, TEXT("[Limb : %s] [OutAlpha = %f]"), *UEnum::GetValueAsString(R.TargetLimb), TargetAlpha);
         }
     }
 }

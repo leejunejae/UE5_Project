@@ -68,6 +68,7 @@ public:
 	EGroundStance GetGroundStance_Implementation() const { return GroundStance; }
 	void SetGroundStance_Implementation(EGroundStance NewStance) { GroundStance = NewStance; }
 
+	bool CanTransitionGroundStance(EGroundStance DestStance, EGroundStance TargetStance);
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Stance")
 	EGroundStance GroundStance;

@@ -79,7 +79,7 @@ void UEquipmentComponent::BeginPlay()
 		SubEquipMesh->SetGenerateOverlapEvents(false);
 		SubEquipMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 
-		//EquipWeapon_Implementation(DefaultWeaponKey);
+		EquipWeapon_Implementation(DefaultWeaponKey);
 	}
 }
 
@@ -107,6 +107,9 @@ void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 
 		if (FindWeapon)
 		{
+			WeaponMesh->SetStaticMesh(nullptr);
+			SubEquipMesh->SetStaticMesh(nullptr);
+
 			EquipedWeapon = *FindWeapon;
 			WeaponMesh->SetStaticMesh(EquipedWeapon.MainWeapon.WeaponInstance.LoadSynchronous()->WeaponMesh);
 			WeaponMesh->SetRelativeTransform(EquipedWeapon.MainWeapon.WeaponTransform);
@@ -127,8 +130,21 @@ void UEquipmentComponent::EquipWeapon_Implementation(FName WeaponKey)
 				SubEquipMesh->SetStaticMesh(EquipedWeapon.SubWeapon.WeaponInstance.LoadSynchronous()->WeaponMesh);
 				SubEquipMesh->SetRelativeTransform(EquipedWeapon.SubWeapon.WeaponTransform);
 			}
+
+			OnWeaponChangedDelegate.Broadcast(FindWeapon->WeaponType);
 		}
 	}
+}
+
+FVector UEquipmentComponent::GetWeaponSocketLocation_Implementation(FName SocketName, bool IsSubWeapon) const
+{
+	if (!CheckWeaponValid(IsSubWeapon))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GetWeaponSocketLocation called with no valid weapon! IsSubWeapon=%d"), IsSubWeapon);
+		return FVector::ZeroVector;
+	}
+
+	return !IsSubWeapon ? WeaponMesh->GetSocketLocation(SocketName) : SubEquipMesh->GetSocketLocation(SocketName);
 }
 
 bool UEquipmentComponent::ReCastOwner()
@@ -148,4 +164,9 @@ bool UEquipmentComponent::CheckOwnerExist()
 	}
 
 	return IsExist;
+}
+
+const bool UEquipmentComponent::CheckWeaponValid(bool IsSubWeapon) const
+{
+	return !IsSubWeapon ? EquipedWeapon.MainWeapon.WeaponInstance.IsValid() : EquipedWeapon.HasSubWeapon;
 }

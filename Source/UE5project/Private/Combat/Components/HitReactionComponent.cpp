@@ -131,7 +131,8 @@ void UHitReactionComponent::PlayReaction(const FHitReactionInfo HitReaction, con
 void UHitReactionComponent::OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo HitReaction, const FName SectionName)
 {
 	if (Montage != HitReaction.Anim) return;
-
+	UE_LOG(LogTemp, Warning, TEXT("Hit ReactionEnded"));
+	ICharacterStatusInterface::Execute_SetGroundStance(CachedPlayerStatus.GetObject(), EGroundStance::Normal);
 }
 
 float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)

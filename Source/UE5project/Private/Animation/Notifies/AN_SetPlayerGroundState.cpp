@@ -12,7 +12,7 @@ void UAN_SetPlayerGroundState::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 		{
 			if (Comp->GetClass()->ImplementsInterface(UCharacterStatusInterface::StaticClass()))
 			{
-				ICharacterStatusInterface::Execute_SetGroundState(Comp, NewState);
+				ICharacterStatusInterface::Execute_SetGroundStance(Comp, NewState);
 			}
 		}
 	}

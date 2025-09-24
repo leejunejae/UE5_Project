@@ -41,4 +41,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void EquipWeapon(FName WeaponKey);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		FVector GetWeaponSocketLocation(FName SocketName, bool IsSubWeapon = false) const;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnWeaponSetChanged, const EWeaponType);
+	virtual FOnWeaponSetChanged& OnWeaponSetChanged() = 0; // 장착/해제 알림
 };

@@ -3,13 +3,17 @@
 // 엔진 헤더
 #include "Characters/Player/CharacterBaseAnimInstance.h"
 #include "Components/CapsuleComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Core/Subsystems/PlayerAnimRegistrySubsystem.h"
+
+#include "Characters/Components/BaseCharacterMovementComponent.h"
 #include "Characters/Player/Components/PlayerStatusComponent.h"
+#include "Characters/Components/EquipmentComponent.h"
 
 // 참조할 액터
 #include "Characters/Player/Warrior/FallenKnight.h" // CharacterBase로 변경예정
 
 // Kismet 유틸리티
+#include "KismetAnimationLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -19,11 +23,6 @@
 UCharacterBaseAnimInstance::UCharacterBaseAnimInstance()
 {
 	IsInAir = false;
-
-	BoneNameToBodyType.Add("Hand_L", EBodyType::Hand_L);
-	BoneNameToBodyType.Add("Hand_R", EBodyType::Hand_R);
-	BoneNameToBodyType.Add("Foot_L", EBodyType::Foot_L);
-	BoneNameToBodyType.Add("Foot_R", EBodyType::Foot_R);
 }
 
 void UCharacterBaseAnimInstance::NativeInitializeAnimation()
@@ -33,8 +32,8 @@ void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 
 	if (Character)
 	{
-		
 		Character->GetCharacterStatusComponent()->OnDeath.AddUObject(this, &UCharacterBaseAnimInstance::HandleDeath);
+		Character->GetEquipmentComponent()->OnWeaponChangedDelegate.AddUObject(this, &UCharacterBaseAnimInstance::HandleWeaponChange);
 	}
 }
 
@@ -43,16 +42,19 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	if (Character)
 	{
-		//IKWeights.
 		IsMovementInput = Character->GetIsMovementInput();
 		CurrentState = Character->GetCharacterStatusComponent()->GetCharacterState_Native();
-		CurStance = Character->GetStance();
-		IsAccelerating = Character->GetCharacterMovement()->GetCurrentAcceleration() != FVector::ZeroVector && Speed > 3.0f ? true : false;
-		IsInAir = Character->GetMovementComponent()->IsFalling();
-		IsAttack = Character->IsAttacking();
-		IsRoll = Character->IsRolling();
-		ComboCount = Character->CheckCombo();
+		//IsAccelerating = Character->GetCharacterMovement()->GetCurrentAcceleration() != FVector::ZeroVector && Speed > 3.0f ? true : false;
+		
 		CharacterGroundState = Character->GetCharacterStatusComponent()->GetGroundStance_Native();
+
+		FVector WorldAcceleration = Character->GetCharacterMovement()->GetCurrentAcceleration() * FVector(1.0f, 1.0f, 0.0f);
+		FVector LocalAcceleration = Character->GetActorRotation().UnrotateVector(WorldAcceleration);
+		float AccelerationLength = LocalAcceleration.SizeSquared();
+		IsAccelerating = !FMath::IsNearlyZero(AccelerationLength);
+		
+		SetIKWeight_Implementation(EIKContext::Ladder, ELimbList::HandL, GetCurveValue(FName("Ladder_HandL_IK")));
+		SetIKWeight_Implementation(EIKContext::Ladder, ELimbList::HandR, GetCurveValue(FName("Ladder_HandR_IK")));
 
 		switch (CurrentState)
 		{
@@ -60,12 +62,24 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			CurGroundStance = Character->GetCurGroundStance();
 
-			RightFootIKAlpha = GetCurveValue(FName("EnableRightLegIK"));
-			LeftFootIKAlpha = GetCurveValue(FName("EnableLeftLegIK"));
-
 			Speed = Character->GetVelocity().Length();
 			Direction = GetAnimDirection(DeltaSeconds);
-				//CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
+			IsInAir = Character->GetMovementComponent()->IsFalling();
+			IsJumping = false;
+			IsFalling = false;
+			IsLanding = false;
+			if (IsInAir)
+			{
+				Character->GetVelocity().Z > 0.0f ? IsJumping = true : IsFalling = true;
+				auto* BaseMovement = Cast<UBaseCharacterMovementComponent>(Character->GetMovementComponent());
+				if (BaseMovement)
+				{
+					float GroundDistance = BaseMovement->GetGroundDistance(false);
+					IsLanding = GroundDistance < 50.0f;
+				}
+			}
+			MovementAlpha = FMath::GetRangePct(400.0f, 600.0f, Speed);
+
 			float LocomotionAnimCurrentTime = GetCurveValue(FName("LocomotionTimeCurve"));
 			float LocomotionAnimLength = GetCurveValue(FName("LocomotionAnimEntireLength"));
 			LocomotionAnimTime = LocomotionAnimCurrentTime / LocomotionAnimLength;
@@ -83,8 +97,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				bQuickTurn = AngleDotProduct < -0.5f ? true : false;
 			}
 
-			//Character->GetCharacterMovement()->RotationRate = FRotator(0.0f, FMath::Lerp(540.0f, 150.0f, GetCurveValue(FName("TurnRate"))), 0.0f);
-
 			if (IsAccelerating)
 			{
 				LastDirection = Direction;
@@ -96,9 +108,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 			TTuple<FVector, float> TraceLeftFoot = FootTrace("Foot_L");
 			TTuple<FVector, float> TraceRightFoot = FootTrace("Foot_R");
-
-			TraceLeftFoot.Value *= LeftFootIKAlpha;
-			TraceRightFoot.Value *= RightFootIKAlpha;
 
 			FootRotation(DeltaSeconds, TraceLeftFoot.Key, &LeftFootRotator, 20.0f);
 			FootRotation(DeltaSeconds, TraceRightFoot.Key, &RightFootRotator, 20.0f);
@@ -123,8 +132,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{			
 			CurLadderStance = Character->GetClimbComponent()->GetLadderStance_Native();
 
-			Character->SetActorLocation(Character->GetClimbComponent()->GetLimbIKTarget(ELimbList::Body));
-
 			LeftHandLadderOffset = Character->GetClimbComponent()->GetLimbIKTarget(ELimbList::HandL);
 			FVector Hand_L_Location = Character->GetMesh()->GetSocketLocation(FName("Hand_L_Offset"));
 			FVector Palm_L_Location = Character->GetMesh()->GetSocketLocation(FName("Palm_L"));
@@ -145,19 +152,6 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			FVector Sole_L_Location = Character->GetMesh()->GetSocketLocation(FName("Sole_L"));
 			LeftFootLadderOffset -= Sole_L_Location - Foot_L_Location;
 
-			UE_LOG(LogTemp, Warning, TEXT("HandLOffset = [X : %f, Y : %f, Z : %f]"),
-				LeftHandLadderOffset.X,
-				LeftHandLadderOffset.Y,
-				LeftHandLadderOffset.Z
-			);
-
-			UE_LOG(LogTemp, Warning, TEXT("HandLLocation = [X : %f, Y : %f, Z : %f]"),
-				Character->GetMesh()->GetSocketLocation("Hand_L").X,
-				Character->GetMesh()->GetSocketLocation("Hand_L").Y,
-				Character->GetMesh()->GetSocketLocation("Hand_L").Z
-			);
-
-			UE_LOG(LogTemp, Warning, TEXT("/////////////////////////////////////////////////////////////////////"))
 			break;
 		}
 		case ECharacterState::Ride:
@@ -189,7 +183,33 @@ void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 		}
 	}
+
+
+	IsFirstUpdateYaw = false;
 }
+
+void UCharacterBaseAnimInstance::UpdateVelocity()
+{
+	bool bCharacterMove = LocalVelocity.IsZero();
+	FVector WorldVelocity = Character->GetVelocity() * FVector(1.0f, 1.0f, 0.0f);
+	LocalVelocity = Character->GetActorRotation().UnrotateVector(WorldVelocity);
+
+	float LocalDirectionAngle = UKismetAnimationLibrary::CalculateDirection(WorldVelocity, Character->GetActorRotation());
+	float AbsAngle = FMath::Abs(LocalDirectionAngle);
+
+	if (AbsAngle <= 45.0f)
+		CurrentDirection = EAnimDirection::Forward;
+	else if (AbsAngle >= 135.0f)
+		CurrentDirection = EAnimDirection::Backward;
+	else if (LocalDirectionAngle > 0.0f)
+		CurrentDirection = EAnimDirection::Right;
+	else
+		CurrentDirection = EAnimDirection::Left;
+
+	float VelocityLength = LocalVelocity.SizeSquared();
+	HasVelocity = !FMath::IsNearlyZero(VelocityLength);
+}
+
 
 TTuple<FVector, float> UCharacterBaseAnimInstance::FootTrace(FName SocketName)
 {
@@ -234,75 +254,6 @@ void UCharacterBaseAnimInstance::FootRotation(float DeltaTime, FVector TargetNor
 	*FootRotator = UKismetMathLibrary::RInterpTo(*FootRotator, TargetRotator, DeltaTime, fInterpSpeed);
 }
 
-
-///////// Ladder Placement /////////////
- 
-/* 삭제
-void UCharacterBaseAnimInstance::SetLadderIK(const FName& BoneName, const FName& MiddleBoneName, FVectorCurveNameSet CurveNameList, FVector& BoneTarget, float LimbYDistance, float DeltaSeconds, float Offset, bool IsDebug)
-{
-	if (!BoneNameToBodyType.Contains(BoneName) || !Character->GetMesh()->DoesSocketExist(BoneName))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Bone Type or Bone is not valid"));
-		return;
-	}
-
-	const TOptional<TTuple<FVector, FVector>> GripLoc = Character->GetLadderIKTargetLoc(BoneNameToBodyType[BoneName]);
-
-	// 본 설정이 잘못되거나 손잡이에 대한 정보가 없는 경우
-	// EX) 사다리에 올라타지 않은 상태, 본 이름이 잘못 입력된 상태
-	if (!GripLoc.IsSet())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Target Grip Not Set"));
-		return;
-	}
-
-	FVector TargetLoc;
-	FVector ForwardVector = Character->GetActorForwardVector();
-	FVector RightVector = Character->GetActorRightVector();
-
-	TArray<FName> ActiveCurveNames;
-	// 현재 애니메이션에서 활성화된 Float 커브 목록 가져오기
-	GetActiveCurveNames(EAnimCurveType::AttributeCurve, ActiveCurveNames);
-
-	if (ActiveCurveNames.Contains(CurveNameList.CurveNameZ))
-	{
-		TargetLoc = FMath::Lerp(GripLoc.GetValue().Get<1>(), GripLoc.GetValue().Get<0>(), GetCurveValue(CurveNameList.CurveNameZ));
-	}
-	else
-	{
-		TargetLoc = GripLoc.GetValue().Get<0>();
-	}
-
-	FVector BoneLoc = Character->GetMesh()->GetSocketLocation(BoneName);
-	FVector AdjustBoneLoc = FVector::ZeroVector;
-
-	if (Character->GetMesh()->DoesSocketExist(MiddleBoneName))
-	{
-		FVector MiddleBoneLoc = Character->GetMesh()->GetSocketLocation(MiddleBoneName);
-		AdjustBoneLoc = (MiddleBoneLoc - BoneLoc) * Offset;
-	} 
-
-	TargetLoc -= AdjustBoneLoc;
-
-	FVector ForwardOffset = (ForwardVector * LimbYDistance) * GetCurveValue(CurveNameList.CurveNameY);
-
-	BoneTarget = TargetLoc + ((RightVector * GetCurveValue(CurveNameList.CurveNameX)) + ((ForwardVector * LimbYDistance) * GetCurveValue(CurveNameList.CurveNameY)));
-
-	if (IsDebug)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CurveValue : X = %f, Y = %f, Z = %f"), GetCurveValue(CurveNameList.CurveNameX), GetCurveValue(CurveNameList.CurveNameY), GetCurveValue(CurveNameList.CurveNameZ));
-		UE_LOG(LogTemp, Warning, TEXT("TargetLoc : X = %f, Y = %f, Z = %f"), TargetLoc.X, TargetLoc.Y, TargetLoc.Z);
-		UE_LOG(LogTemp, Warning, TEXT("Bone Target : X = %f, Y = %f, Z = %f"), BoneTarget.X, BoneTarget.Y, BoneTarget.Z);
-		UE_LOG(LogTemp, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
-	}
-}
-*/
-
-void UCharacterBaseAnimInstance::CheckIKValid(FName CurveName, float& AlphaValue, float DeltaSeconds)
-{
-	AlphaValue = 1.0f - GetCurveValue(CurveName);
-}
-
 void UCharacterBaseAnimInstance::SetHitAir(bool HitState)
 {
 	bIsHitAir = HitState;
@@ -311,76 +262,6 @@ void UCharacterBaseAnimInstance::SetHitAir(bool HitState)
 void UCharacterBaseAnimInstance::ResetHitAir_Implementation()
 {
 	SetHitAir(false);
-}
-
-void UCharacterBaseAnimInstance::SetPitch()
-{
-	FRotator PawnRotation = Character->GetActorRotation();
-	FRotator AimRotation = Character->GetBaseAimRotation();
-	Pitch = UKismetMathLibrary::NormalizedDeltaRotator(AimRotation, PawnRotation).Pitch;
-}
-
-void UCharacterBaseAnimInstance::SetRootYawOffset()
-{
-	if (Speed > 0.f || IsAnyMontagePlaying())
-	{
-		IsMove = true;
-		RootYawOffset = 0.0f;
-		return;
-	}
-
-	YawLastTick = Yaw;
-	Yaw = Character->GetActorRotation().Yaw;
-	if (IsMove)
-	{
-		YawLastTick = Yaw;
-		IsMove = false;
-	}
-	YawChangeOverFrame = YawLastTick - Yaw;
-
-	RootYawOffset = UKismetMathLibrary::NormalizeAxis(YawChangeOverFrame + RootYawOffset);
-
-	if (GetCurveValue(Turning) > 0.0f)
-	{
-		DistanceCurveValueLastFrame = DistanceCurveValue;
-		DistanceCurveValue = GetCurveValue(DistanceCurve);
-
-		(RootYawOffset > 0.0f) ? TurnDirection = -1.0f : TurnDirection = 1.0f;
-		DistanceCurveDifference = DistanceCurveValueLastFrame - DistanceCurveValue;
-
-		RootYawOffset = RootYawOffset - (DistanceCurveDifference * TurnDirection);
-		ABSRootYawOffset = UKismetMathLibrary::Abs(RootYawOffset);
-		if (ABSRootYawOffset > MaxTurnAngle)
-		{
-			YawToSubtract = ABSRootYawOffset - MaxTurnAngle;
-			YawMultiplier = 0.0f;
-			(RootYawOffset > 0.0f) ? YawMultiplier = 1.0f : YawMultiplier = -1.0f;
-			YawToSubtract = YawToSubtract * YawMultiplier;
-			RootYawOffset = RootYawOffset - YawToSubtract;
-		}
-	}
-
-	return;
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_ParryEnd()
-{
-	OnParryEnd.Broadcast();
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_NextAttack()
-{
-	OnNextAttackCheck.Broadcast();
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_SetAttackDirection()
-{
-	OnSetAttackDirection.Broadcast();
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_EndAttack()
-{
-	OnEndAttack.Broadcast();
 }
 
 void UCharacterBaseAnimInstance::ResetTurn_Implementation()
@@ -413,35 +294,10 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_TurnEnd()
 	UE_LOG(LogTemp, Warning, TEXT("TurnEnd"));
 }
 
-void UCharacterBaseAnimInstance::AnimNotify_NOT_CheckLadderStance()
-{
-	//CurLadderStance = Character->GetCurLadderStance();
-}
-
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnableInputLock()
 {
 	//Character->EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 	Character->SetCanMovementInput(true);
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_ClimbEnd()
-{
-	OnClimbEnd.Broadcast();
-	bIsClimb = false;
-	//CurLadderStance = Character->GetCurLadderStance();
-	UE_LOG(LogTemp, Warning, TEXT("ClimbEnd"));
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_ClimbStart()
-{
-	CurveValue_Root_Z = 0.0f;
-	CurveValue_Root_Y = 0.0f;
-	Hand_L_Y_Distance = FMath::RandRange(-15.0f, -30.0f);
-	Hand_R_Y_Distance = FMath::RandRange(-15.0f, -30.0f);
-	Foot_L_Y_Distance = FMath::RandRange(-15.0f, -30.0f);
-	Foot_R_Y_Distance = FMath::RandRange(-15.0f, -30.0f);
-	bIsClimb = true;
-	UE_LOG(LogTemp, Warning, TEXT("ClimbStart"));
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_ResetClimbState()
@@ -460,12 +316,6 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_DisMountEnd()
 	OnDisMountEnd.Broadcast();
 }
 
-void UCharacterBaseAnimInstance::AnimNotify_NOT_ResetHurt()
-{
-	//UE_LOG(LogTemp, Warning, TEXT("ResetHurt"));
-	OnResetHurt.Broadcast();
-}
-
 void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterLocomotion()
 {
 	OnEnterLocomotion.ExecuteIfBound();
@@ -477,14 +327,50 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_LeftLocomotion()
 	OnLeftLocomotion.ExecuteIfBound();
 }
 
-void UCharacterBaseAnimInstance::AnimNotify_NOT_AttackStart()
-{
-	OnAttackStart.Broadcast();
-}
-
 FName UCharacterBaseAnimInstance::GetAttackMontageSectionName(int32 Section)
 {
 	return FName(*FString::Printf(TEXT("Light%d"), Section));
+}
+
+void UCharacterBaseAnimInstance::HandleWeaponChange(EWeaponType WeaponData)
+{
+	UWorld* World = GetWorld();
+	if (!World)
+		return;
+
+	UPlayerAnimRegistrySubsystem* PlayerAnimSubsystem = World->GetGameInstance()->GetSubsystem<UPlayerAnimRegistrySubsystem>();
+	if (!PlayerAnimSubsystem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerAnimSubsystem not found"));
+		return;		
+	}
+
+	const EWeaponType TargetAnimType = WeaponData;
+
+	const FPlayerAnimSet* TargetAnimSet = PlayerAnimSubsystem->GetPlayerAnimSet(TargetAnimType);
+
+	Locomotion_CycleBS = TargetAnimSet->Locomotion_CycleBS.IsNull() ? nullptr : TargetAnimSet->Locomotion_CycleBS.LoadSynchronous();
+	Locomotion_Idle = TargetAnimSet->Locomotion_Idle.IsNull() ? nullptr : TargetAnimSet->Locomotion_Idle.LoadSynchronous();
+	Locomotion_Start = TargetAnimSet->Locomotion_Start.IsNull() ? nullptr : TargetAnimSet->Locomotion_Start.LoadSynchronous();
+	Locomotion_Stop_Jog = TargetAnimSet->Locomotion_Stop_Jog.IsNull() ? nullptr : TargetAnimSet->Locomotion_Stop_Jog.LoadSynchronous();
+	Locomotion_Stop_Run = TargetAnimSet->Locomotion_Stop_Run.IsNull() ? nullptr : TargetAnimSet->Locomotion_Stop_Run.LoadSynchronous();
+
+	Jump_Start = TargetAnimSet->Jump_Start.IsNull() ? nullptr : TargetAnimSet->Jump_Start.LoadSynchronous();
+	Jump_Loop = TargetAnimSet->Jump_Loop.IsNull() ? nullptr : TargetAnimSet->Jump_Loop.LoadSynchronous();
+	Fall_Loop = TargetAnimSet->Fall_Loop.IsNull() ? nullptr : TargetAnimSet->Fall_Loop.LoadSynchronous();
+	Land_Jump = TargetAnimSet->Land_Jump.IsNull() ? nullptr : TargetAnimSet->Land_Jump.LoadSynchronous();
+	Land_Fall = TargetAnimSet->Land_Fall.IsNull() ? nullptr : TargetAnimSet->Land_Fall.LoadSynchronous();
+	Land_Jog = TargetAnimSet->Land_Jog.IsNull() ? nullptr : TargetAnimSet->Land_Jog.LoadSynchronous();
+	Land_High = TargetAnimSet->Land_High.IsNull() ? nullptr : TargetAnimSet->Land_High.LoadSynchronous();
+
+	HitAir_Start = TargetAnimSet->HitAir_Start.IsNull() ? nullptr : TargetAnimSet->HitAir_Start.LoadSynchronous();
+	HitAir_Loop = TargetAnimSet->HitAir_Loop.IsNull() ? nullptr : TargetAnimSet->HitAir_Loop.LoadSynchronous();
+	HitAir_End = TargetAnimSet->HitAir_End.IsNull() ? nullptr : TargetAnimSet->HitAir_End.LoadSynchronous();
+	GetUp = TargetAnimSet->GetUp.IsNull() ? nullptr : TargetAnimSet->GetUp.LoadSynchronous();
+	HitAir_Death = TargetAnimSet->HitAir_Death.IsNull() ? nullptr : TargetAnimSet->HitAir_Death.LoadSynchronous();
+	Ground_Death = TargetAnimSet->Ground_Death.IsNull() ? nullptr : TargetAnimSet->Ground_Death.LoadSynchronous();
+
+	bInitAnimSet = true;
 }
 
 void UCharacterBaseAnimInstance::SetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb, float Weight)
@@ -532,32 +418,12 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterWalkState()
 
 float UCharacterBaseAnimInstance::GetAnimDirection(float DeltaSeconds)
 {
-	if (Speed > 200.0f)
-	{
-		float PrevCharacterYaw = CharacterYaw;
-		CharacterYaw = Character->GetActorRotation().Yaw;
+	float PrevCharacterYaw = CharacterYaw;
+	CharacterYaw = Character->GetActorRotation().Yaw;
 
-		float DeltaCharacterYaw = CharacterYaw - PrevCharacterYaw;
-		float LeanAngle = FMath::Clamp((UKismetMathLibrary::SafeDivide(DeltaCharacterYaw, DeltaSeconds) / 200.0f), -1.0f, 1.0f);
+	float DeltaCharacterYaw = CharacterYaw - PrevCharacterYaw;
+	float YawDeltaSpeed = UKismetMathLibrary::SafeDivide(DeltaCharacterYaw, DeltaSeconds);
+	float LeanAngle = YawDeltaSpeed * 0.0375;
 
-
-		return LeanAngle;
-	}
-	else
-	{
-		return 0.0f;
-	}
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_EnterIdleState()
-{
-	//CurLadderStance = Character->GetCurLadderStance();
-	CanMovementInput = true;
-	//UE_LOG(LogTemp, Warning, TEXT("EnterIdleState"));
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_LeftIdleState()
-{
-	CanMovementInput = false;
-	//UE_LOG(LogTemp, Warning, TEXT("LeftIdleState"));
+	return LeanAngle;
 }

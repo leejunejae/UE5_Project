@@ -75,6 +75,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float HitBoxRadius;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool NeedIK;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "NeedIK"))
+		FName IKTargetSocket;
 };
 
 USTRUCT(Atomic, BlueprintType)

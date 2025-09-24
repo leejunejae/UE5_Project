@@ -25,5 +25,5 @@ bool UPBEnemy_CheckAttack_Decorator::CalculateRawConditionValue(UBehaviorTreeCom
 		return false;
 	}
 
-	return Target->IsAttacking() && Target->GetDistanceTo(ControllingPawn) < 300.0f;
+	return Target->GetDistanceTo(ControllingPawn) < 300.0f;
 }
