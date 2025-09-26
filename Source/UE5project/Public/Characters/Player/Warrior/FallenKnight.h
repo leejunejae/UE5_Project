@@ -4,7 +4,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Player/CharacterBase.h"
+#include "Characters/Player/PlayerBase.h"
 #include "Components/TimeLineComponent.h"
 #include "FallenKnight.generated.h"
 
@@ -15,7 +15,7 @@
 class UCharacterBaseAnimInstance;
 
 UCLASS()
-class UE5PROJECT_API AFallenKnight : public ACharacterBase
+class UE5PROJECT_API AFallenKnight : public APlayerBase
 {
 	GENERATED_BODY()
 	
@@ -47,17 +47,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Equipment)
 		UStaticMeshComponent* SheatheMesh;
-
-	/*
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* BracerMesh;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* CapeMesh;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* ShoulderMesh;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* GorgetMesh;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* ArmorMesh;
-		*/
 };

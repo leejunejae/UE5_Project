@@ -35,7 +35,7 @@ class UE5PROJECT_API APBEHuman : public AEnemyBase, public ICombatInterface
 	GENERATED_BODY()
 
 public:
-	APBEHuman();
+	APBEHuman(const FObjectInitializer& ObjectInitializer);
 
 	void SetMovementSpeed(float speed);
 	FRangeInfo GetIdealRange();
@@ -97,12 +97,6 @@ public:
 	FOnMultiDelegate OnDashEnd;
 
 protected:
-	UPROPERTY(VisibleAnywhere, Category = Combat)
-		UStatComponent* Statcomponent;
-
-	UPROPERTY(VisibleAnywhere, Category = Combat)
-		UAttackComponent* AttackComponent;
-
 	UPROPERTY(VisibleAnywhere, Category = Combat)
 		UMotionWarpingComponent* MotionWarpComp;
 

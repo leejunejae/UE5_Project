@@ -16,7 +16,7 @@ class UE5PROJECT_API APBEHHereticSoldier : public APBEHuman
 	GENERATED_BODY()
 	
 public:
-	APBEHHereticSoldier();
+	APBEHHereticSoldier(const FObjectInitializer& ObjectInitializer);
 	void Attack(FName AttackName, ACharacter* Target) override;
 	void Appear() override;
 	void Death() override;

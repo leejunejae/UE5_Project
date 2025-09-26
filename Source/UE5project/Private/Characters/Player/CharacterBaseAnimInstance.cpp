@@ -10,7 +10,7 @@
 #include "Characters/Components/EquipmentComponent.h"
 
 // 참조할 액터
-#include "Characters/Player/Warrior/FallenKnight.h" // CharacterBase로 변경예정
+#include "Characters/Player/PlayerBase.h" // CharacterBase로 변경예정
 
 // Kismet 유틸리티
 #include "KismetAnimationLibrary.h"
@@ -28,7 +28,7 @@ UCharacterBaseAnimInstance::UCharacterBaseAnimInstance()
 void UCharacterBaseAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	Character = Cast<AFallenKnight>(TryGetPawnOwner());
+	Character = Cast<APlayerBase>(TryGetPawnOwner());
 
 	if (Character)
 	{
@@ -292,12 +292,6 @@ void UCharacterBaseAnimInstance::AnimNotify_NOT_TurnEnd()
 	//SetRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
 	
 	UE_LOG(LogTemp, Warning, TEXT("TurnEnd"));
-}
-
-void UCharacterBaseAnimInstance::AnimNotify_NOT_EnableInputLock()
-{
-	//Character->EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-	Character->SetCanMovementInput(true);
 }
 
 void UCharacterBaseAnimInstance::AnimNotify_NOT_ResetClimbState()

@@ -13,16 +13,11 @@
 // 콜리전
 #include "Components/CapsuleComponent.h"
 
-APBEHuman::APBEHuman()
+APBEHuman::APBEHuman(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = GetCapsuleComponent();
-
-	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("AttackComponent"));
-	AttackComponent->bAutoActivate = true;
-
-	Statcomponent = CreateDefaultSubobject<UStatComponent>(TEXT("Statcomponent"));
-	Statcomponent->bAutoActivate = true;
 
 	MotionWarpComp = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("UMotionWarpingComponent"));
 	MotionWarpComp->bAutoActivate = true;
@@ -47,11 +42,6 @@ void APBEHuman::PostInitializeComponents()
 void APBEHuman::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (Statcomponent != nullptr)
-	{
-		Statcomponent->OnDeath.BindUFunction(this, FName("Death"));
-	}
 }
 
 void APBEHuman::Attack(FName AttackName, ACharacter* Target)
@@ -150,33 +140,3 @@ UStaticMeshComponent* APBEHuman::GetWeapon_Implementation()
 {
 	return Weapon;
 }
-
-/*
-void APBEHuman::TakeDamage_Implementation(FAttackInfo DamageInfo)
-{
-	IHitReactionInterface::TakeDamage_Implementation(DamageInfo);
-
-	return statcomponent->TakeDamage(DamageInfo);
-}
-
-float APBEHuman::GetMaxHealth_Implementation()
-{
-	IHitReactionInterface::GetMaxHealth_Implementation();
-
-	return statcomponent->GetfloatValue("MaxHealth");
-}
-
-float APBEHuman::GetHealth_Implementation()
-{
-	IHitReactionInterface::GetHealth_Implementation();
-
-	return 0.0f;//statcomponent->GetfloatValue("Health");
-}
-
-float APBEHuman::Heal_Implementation(float amount)
-{
-	IHitReactionInterface::Heal_Implementation(amount);
-
-	return statcomponent->Heal(amount);
-}
-*/

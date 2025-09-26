@@ -253,6 +253,8 @@ bool UClimbComponent::RequestEnterLadder(AActor* TargetLadder)
 
 	CachedCharacter->GetCapsuleComponent()->IgnoreActorWhenMoving(TargetLadder, true);
 
+	//ResetClimbState();
+
 	const USceneComponent* InitTargetPoint = ILadderInterface::Execute_GetInitClimbTarget(TargetLadder);
 	FVector InitCharacterPosition = InitTargetPoint->GetComponentLocation();
 
@@ -380,6 +382,14 @@ void UClimbComponent::ExitLadderFloat()
 	ICharacterStatusInterface::Execute_SetCharacterState(CachedPlayerStatus.GetObject(), ECharacterState::Ground);
 	CachedCharacter->GetCapsuleComponent()->IgnoreActorWhenMoving(ClimbObject, false);
 	CachedCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	LimbToGripNode.Empty();
+	GripList1D.Empty();
+	ClimbObject = nullptr;
+	bIsClimbing = false;
+	AnimTime = 0.0f;
+	LadderStance = EClimbPhase::Idle;
+	SetComponentTickEnabled(false);
+	UE_LOG(LogTemp, Warning, TEXT("ExitLadderFloat"));
 }
 
 void UClimbComponent::ClimbUpLadder()
@@ -570,8 +580,13 @@ void UClimbComponent::RegisterClimbObject(AActor* RegistObject)
 
 void UClimbComponent::DeRegisterClimbObject()
 {
-	ClimbObject = nullptr;
+	LimbToGripNode.Empty();
 	GripList1D.Empty();
+	ClimbObject = nullptr;
+	bIsClimbing = false;
+	AnimTime = 0.0f;
+	LadderStance = EClimbPhase::Idle;
+	SetComponentTickEnabled(false);
 }
 
 AActor* UClimbComponent::GetClimbObject()

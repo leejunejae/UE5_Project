@@ -71,7 +71,7 @@ public:
 	FOnAnimInstanceMulDel OnDisMountEnd;
 
 private:
-	class AFallenKnight* Character = nullptr;
+	class APlayerBase* Character = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Classes, Meta = (AllowPrivateAccess = true))
 		class UAnimInstance* Warrior_AnimInstance;
@@ -324,9 +324,6 @@ private:
 #pragma endregion Ladder_IK
 
 protected:
-	UFUNCTION(BlueprintCallable)
-	void AnimNotify_NOT_EnableInputLock();
-
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_NOT_ResetClimbState();
 #pragma endregion Ladder

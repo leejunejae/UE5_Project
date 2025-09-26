@@ -17,7 +17,7 @@ class UE5PROJECT_API APBEHHeretic : public APBEHuman
 	GENERATED_BODY()
 	
 public:
-	APBEHHeretic();
+	APBEHHeretic(const FObjectInitializer& ObjectInitializer);
 	void Tick(float DeltaTime) override;
 	void Skill_Attack(HereticSkill SelectedSkill);
 	void Summon() override;

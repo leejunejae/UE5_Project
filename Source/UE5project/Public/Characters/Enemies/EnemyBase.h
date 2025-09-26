@@ -14,7 +14,7 @@
 #include "Characters/Enemies/Data/EnemyData.h"
 #include "Combat/Data/CombatData.h"
 
-#include "GameFramework/Character.h"
+#include "Characters/Player/CharacterBase.h"
 #include "EnemyBase.generated.h"
 
 class UAttackComponent;
@@ -25,15 +25,14 @@ class AEnemyBaseAIController;
 DECLARE_DELEGATE(FOnSingleDelegate);
 
 UCLASS()
-class UE5PROJECT_API AEnemyBase : public ACharacter,
-	public IHitReactionInterface,
+class UE5PROJECT_API AEnemyBase : public ACharacterBase,
 	public IDeathInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	AEnemyBase();
+	AEnemyBase(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	// Called when the game starts or when spawned
@@ -43,9 +42,6 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -75,14 +71,8 @@ public:
 
 
 #pragma region HitReaction
-protected:
-	UPROPERTY(VisibleAnywhere, Category = HitReaction)
-		TObjectPtr<UHitReactionComponent> HitReactionComponent;
-
 public:
-	virtual void OnHit_Implementation(const FAttackRequest& AttackInfo) override;
-
-	FORCEINLINE UHitReactionComponent* GetHitReactionComponent() const { return HitReactionComponent; }
+	void OnHit_Implementation(const FAttackRequest& AttackInfo) override;
 	
 #pragma endregion HitReaction
 
@@ -91,11 +81,6 @@ public:
 	FOnDeathDelegate OnDeath;
 	virtual FOnDeathDelegate& GetOnDeathDelegate() override { return OnDeath; }
 
-protected:
-	UPROPERTY(VisibleAnywhere, Category = Status)
-		TObjectPtr<UCharacterStatusComponent> CharacterStatusComponent;
-
-	FORCEINLINE UCharacterStatusComponent* GetCharacterStatusComponent() const { return CharacterStatusComponent; }
 #pragma endregion Status
 
 #pragma region AI

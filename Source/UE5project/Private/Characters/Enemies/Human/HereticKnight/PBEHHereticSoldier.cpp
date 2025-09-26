@@ -25,7 +25,8 @@
 // 파티클
 #include "NiagaraComponent.h"
 
-APBEHHereticSoldier::APBEHHereticSoldier()
+APBEHHereticSoldier::APBEHHereticSoldier(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 

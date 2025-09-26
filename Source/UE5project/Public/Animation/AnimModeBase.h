@@ -9,9 +9,20 @@
 /**
  * 
  */
+
+class UCharacterBaseAnimInstance;
+class ACharacterBase;
+
 UCLASS()
 class UE5PROJECT_API UAnimModeBase : public UObject
 {
 	GENERATED_BODY()
 	
+public:
+	TWeakObjectPtr<ACharacterBase> Character;
+	TWeakObjectPtr<UCharacterBaseAnimInstance> AnimInst;
+
+	virtual void OnEnter() {}
+	virtual void OnExit() {}
+	virtual void Tick(float DeltaSeconds) {}
 };

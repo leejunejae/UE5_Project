@@ -91,5 +91,5 @@ void AFallenKnight::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
-	CharacterBaseAnim = Cast<UFallenKnightAnimInstance>(GetMesh()->GetAnimInstance());
+	//CharacterBaseAnim = Cast<UFallenKnightAnimInstance>(GetMesh()->GetAnimInstance());
 }

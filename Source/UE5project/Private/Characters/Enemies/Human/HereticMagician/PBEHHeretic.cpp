@@ -16,7 +16,8 @@
 #include "Skills/Actors/PBSkill_DarkBeam.h"
 #include "Skills/Actors/PBSkill_DarkTornado.h"
 
-APBEHHeretic::APBEHHeretic()
+APBEHHeretic::APBEHHeretic(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 

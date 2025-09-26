@@ -14,4 +14,6 @@ class UE5PROJECT_API UAnimMode_Ride : public UAnimModeBase
 {
 	GENERATED_BODY()
 	
+public:
+	virtual void Tick(float DeltaSeconds) override;
 };
