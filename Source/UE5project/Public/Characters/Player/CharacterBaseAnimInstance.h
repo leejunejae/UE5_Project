@@ -58,6 +58,11 @@ class UE5PROJECT_API UCharacterBaseAnimInstance : public UAnimInstance, public I
 {
 	GENERATED_BODY()
 
+	friend class UAnimModeBase;
+	friend class UAnimMode_Ground;
+	friend class UAnimMode_Ladder;
+	friend class UAnimMode_Ride;
+
 public:
 	UCharacterBaseAnimInstance();
 	virtual void NativeInitializeAnimation() override;

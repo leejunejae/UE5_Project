@@ -2,6 +2,8 @@
 
 
 #include "Animation/AnimMode_Ladder.h"
+
+#include "Characters/Player/CharacterBase.h"
 #include "Characters/Player/CharacterBaseAnimInstance.h"
 #include "Interaction/Climb/Components/ClimbComponent.h"
 

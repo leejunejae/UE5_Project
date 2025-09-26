@@ -3,6 +3,7 @@
 
 #include "Animation/AnimMode_Ground.h"
 
+#include "Characters/Player/CharacterBase.h"
 #include "Characters/Player/CharacterBaseAnimInstance.h"
 #include "Characters/Components/BaseCharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -14,7 +15,7 @@ void UAnimMode_Ground::Tick(float DeltaSeconds)
 	auto* Ch = Character.Get();
 	auto* Anim = AnimInst.Get();
 
-	Anim->CurGroundStance = Ch->GetCurGroundStance();
+	//Anim->CurGroundStance = Ch->CurGroundStance();
 
 	Anim->Speed = Ch->GetVelocity().Length();
 	Anim->Direction = Anim->GetAnimDirection(DeltaSeconds);

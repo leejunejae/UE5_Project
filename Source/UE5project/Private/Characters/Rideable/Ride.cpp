@@ -530,28 +530,21 @@ FRotator ARide::GetControllerRotation_Implementation()
 
 float ARide::GetRideSpeed_Implementation()
 { 
-	IRideInterface::GetRideSpeed_Implementation();
 
 	return GetVelocity().Length();;
 }
 
 float ARide::GetRideDirection_Implementation()
 {
-	IRideInterface::GetRideDirection_Implementation();
-
 	return GetDirection();
 }
 
 bool ARide::GetMountDir_Implementation()
 {
-	IRideInterface::GetMountDir_Implementation();
-
 	return MountRight;
 }
 
 FTransform ARide::GetMountTransform_Implementation()
 {
-	IRideInterface::GetMountTransform_Implementation();
-
 	return RiderLocation->GetComponentTransform();
 }

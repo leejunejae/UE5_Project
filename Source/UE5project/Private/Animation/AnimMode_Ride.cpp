@@ -2,13 +2,15 @@
 
 
 #include "Animation/AnimMode_Ride.h"
-#include "Characters/Player/CharacterBaseAnimInstance.h"
+
+#include "Characters/Player/PlayerBase.h"
+#include "Characters/Player/PlayerBaseAnimInstance.h"
 
 void UAnimMode_Ride::Tick(float DeltaSeconds)
 {
 	if (!Character.IsValid() || !AnimInst.IsValid()) return;
 
-	auto* Ch = Character.Get();
+	auto* Ch = Cast<APlayerBase>(Character.Get());
 	auto* Anim = AnimInst.Get();
 
 	Anim->CurRideStance = Ch->GetCurRideStance();
