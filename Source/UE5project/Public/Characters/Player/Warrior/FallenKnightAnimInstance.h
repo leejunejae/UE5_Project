@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Player/CharacterBaseAnimInstance.h"
+#include "Characters/Player/PlayerBaseAnimInstance.h"
 #include "FallenKnightAnimInstance.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE5PROJECT_API UFallenKnightAnimInstance : public UCharacterBaseAnimInstance
+class UE5PROJECT_API UFallenKnightAnimInstance : public UPlayerBaseAnimInstance
 {
 	GENERATED_BODY()
 

@@ -29,7 +29,7 @@
 #include "Blueprint/UserWidget.h"
 
 // 애니메이션
-#include "Characters/Player/CharacterBaseAnimInstance.h"
+#include "Characters/Player/PlayerBaseAnimInstance.h"
 
 // 참조할 액터
 #include "Characters/Player/PlayerRide.h"
@@ -388,24 +388,12 @@ void APlayerBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	CharacterBaseAnim = Cast<UCharacterBaseAnimInstance>(GetMesh()->GetAnimInstance());
+	CharacterBaseAnim = Cast<UPlayerBaseAnimInstance>(GetMesh()->GetAnimInstance());
 
 	InteractComponent->OnArrivedInteractionPoint.BindUObject(this, &APlayerBase::HandleArrivedInteractionPoint);
 
-
 	if (CharacterBaseAnim)
 	{
-		CharacterBaseAnim->OnEnterLocomotion.BindUObject(this, &APlayerBase::EnterLocomotion);
-
-		CharacterBaseAnim->OnLeftLocomotion.BindUObject(this, &APlayerBase::LeftLocomotion);
-
-		CharacterBaseAnim->OnEnterWalkState.AddLambda([this]()->void {
-			CharacterStatusComponent->SetCharacterState_Native(ECharacterState::Ground);
-			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			CanRide = true;
-			});
-
 		CharacterBaseAnim->OnMountEnd.AddUObject(this, &APlayerBase::MountEnd);
 		CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &APlayerBase::DisMountEnd);
 	}
@@ -439,9 +427,6 @@ void APlayerBase::Move(const FInputActionValue& value)
 
 		FVector2D MovementScale = DirectionValue;
 		MovementScale.Normalize();
-
-		if (!IsLocomotion)
-			return;
 
 		AddMovementInput(UKismetMathLibrary::GetForwardVector(YawRotation), MovementScale.Y);
 		AddMovementInput(UKismetMathLibrary::GetRightVector(YawRotation), MovementScale.X);
@@ -479,18 +464,6 @@ void APlayerBase::StartMoveInput()
 void APlayerBase::EndMoveInput()
 {
 	IsMovementInput = false;
-}
-
-void APlayerBase::EnterLocomotion()
-{
-	IsLocomotion = true;
-	CanRide = true;
-}
-
-void APlayerBase::LeftLocomotion()
-{
-	IsLocomotion = false;
-	CanRide = false;
 }
 
 void APlayerBase::Dodge()
@@ -554,7 +527,7 @@ void APlayerBase::Dodge()
 
 void APlayerBase::Jump()
 {
-	if (!IsLocomotion || CharacterBaseAnim->GetCurveValue(FName("EnableJump")) < 0.9f)
+	if (CharacterBaseAnim->GetCurveValue(FName("EnableJump")) < 0.9f)
 		return;
 
 	if (CharacterBaseAnim->GetCurrentActiveMontage())
@@ -943,8 +916,11 @@ void APlayerBase::OnDeath()
 
 void APlayerBase::SpawnRide()
 {
-	if (!CanRide)
+	if (CharacterBaseAnim->GetCurveValue(FName("EnableRide")) < 0.9f)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cant Spawn Ride"));
 		return;
+	}
 
 	Ride = GetWorld()->SpawnActor<APlayerRide>(GetActorLocation(), GetActorRotation());
 	if (!Ride)
@@ -965,7 +941,6 @@ void APlayerBase::SpawnRide()
 
 	
 	//CanMovementInput = false;
-	CanRide = false;
 
 	GetWorldTimerManager().SetTimer(MountTimerHandle, this, &APlayerBase::MountTimer, 0.01f, true);
 }

@@ -18,40 +18,15 @@
 // 인터페이스
 #include "Animation/Interfaces/IAnimInstance.h"
 
+// 애님모드
+#include "Animation/AnimModeBase.h"
+
 #include "Animation/AnimInstance.h"
 #include "CharacterBaseAnimInstance.generated.h"
 
 DECLARE_DELEGATE(FOnSingleDelegate);
 DECLARE_MULTICAST_DELEGATE(FOnAnimInstanceMulDel);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMulOneParamDelegate, FName);
-/**
- * 
- 
-
-USTRUCT(BlueprintType)
-struct FFootTraceStruct
-{
-	GENERATED_BODY()
-
-		UPROPERTY()
-		FRotator Rot;
-
-	UPROPERTY()
-		float IK;
-};
-*/
-
-//struct FWeaponSetsInfo;
-
-UENUM(BlueprintType)
-enum class EAnimDirection : uint8
-{
-	None UMETA(DisplayName = "None"),
-	Forward UMETA(DisplayName = "Forward"),
-	Backward UMETA(DisplayName = "Backward"),
-	Right UMETA(DisplayName = "Right"),
-	Left UMETA(DisplayName = "Left")
-};
 
 UCLASS()
 class UE5PROJECT_API UCharacterBaseAnimInstance : public UAnimInstance, public IIAnimInstance
@@ -68,86 +43,20 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-public:
-	FOnSingleDelegate OnEnterLocomotion;
-	FOnSingleDelegate OnLeftLocomotion;
-
-	FOnAnimInstanceMulDel OnMountEnd;
-	FOnAnimInstanceMulDel OnDisMountEnd;
-
-private:
+protected:
 	class APlayerBase* Character = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Classes, Meta = (AllowPrivateAccess = true))
-		class UAnimInstance* Warrior_AnimInstance;
+#pragma region Animation Mode
+protected:
+	UPROPERTY(VisibleAnywhere)
+		TMap<ECharacterState, UAnimModeBase*> AnimModeMap;
+	
+	UPROPERTY(VisibleAnywhere)
+		TObjectPtr<UAnimModeBase> CurrentMode = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsMovementInput;
+	void SwitchAnimMode(const ECharacterState TargetMode);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsInAir;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsJumping;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsFalling;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsLanding;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		bool IsAttack;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		bool IsAttackInput;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, Meta = (AllowPrivateAccess = true))
-		float BlockBlend;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsTurning=false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		float Speed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		float Direction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		float LocomotionAnimTime;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		float LastDirection;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		float LastSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		bool IsAccelerating;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		float Displacement = 0.0f;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
-		float Pitch = 0.0f;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Character, Meta = (AllowPrivateAccess = true))
-		float Yaw = 0.0f;
-
-	UFUNCTION()
-		void AnimNotify_NOT_MountEnd();
-
-	UFUNCTION()
-		void AnimNotify_NOT_DisMountEnd();
-
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_EnterLocomotion();
-
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_LeftLocomotion();
-
-	FName GetAttackMontageSectionName(int32 Section);
+#pragma endregion Animation Mode
 
 
 #pragma region Animation Data
@@ -207,20 +116,14 @@ private:
 public:
 	virtual void SetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb, float Weight);
 	virtual float GetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb);
-
-private:
-	FName LockIK = TEXT("LockIK");
 #pragma endregion State & Stance_IK
 
 private:
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_EnterWalkState();
+//	UFUNCTION(BlueprintCallable)
+		//void AnimNotify_NOT_EnterWalkState();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
 		ECharacterState CurrentState;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
-		ELocomotionState CurGroundStance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
 		EClimbPhase CurLadderStance;
@@ -246,12 +149,48 @@ private:
 		void AnimNotify_NOT_DisableRootLock();
 
 protected:
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		bool IsMovementInput;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		float Speed;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		float Direction;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		float LocomotionAnimTime;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		float LastDirection;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		float LastSpeed;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		bool IsAccelerating;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Jump", meta = (AllowPrivateAccess = "true"))
+		bool IsInAir;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Jump", meta = (AllowPrivateAccess = "true"))
+		bool IsJumping;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Jump", meta = (AllowPrivateAccess = "true"))
+		bool IsFalling;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Jump", meta = (AllowPrivateAccess = "true"))
+		bool IsLanding;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Combat", meta = (AllowPrivateAccess = "true"))
+		float BlockBlend;
+
 	// Foot IK //
 	TTuple<FVector, float> FootTrace(FName SocketName);
 	void FootRotation(float DeltaTime, FVector TargetNormal, FRotator* FootRotator, float fInterpSpeed);
 
 #pragma region Ground_IK
-private:
+protected:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = FootIK, Meta = (AllowPrivateAccess = true))
 		FRotator LeftFootRotator;
 
@@ -274,14 +213,8 @@ private:
 	// Variables For FootIK
 	////////////////////////////////////
 private:
-	void UpdateVelocity();
-	FVector LocalVelocity;
-
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 		float MovementAlpha;
-
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
-		bool HasVelocity;
 
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 		EAnimDirection CurrentDirection;
@@ -289,27 +222,12 @@ private:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, Category = Movement, Meta = (AllowPrivateAccess = true))
 		bool CanMovementInput = true;
 
-	float CharacterYaw;
-	float GetAnimDirection(float DeltaSeconds);
+	//float CharacterYaw;
+	//float GetAnimDirection(float DeltaSeconds);
 
-	bool IsFirstUpdateYaw;
+	//bool IsFirstUpdateYaw;
 
 #pragma endregion Ground_Movement
-
-
-#pragma region Ground_Quick Turn
-public:
-	void ResetTurn_Implementation() override;
-
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_TurnStart();
-	UFUNCTION(BlueprintCallable)
-		void AnimNotify_NOT_TurnEnd();
-
-private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = QuickTurn, Meta = (AllowPrivateAccess = true))
-		bool bQuickTurn;
-#pragma endregion Ground_Quick Turn
 
 #pragma endregion Ground
 

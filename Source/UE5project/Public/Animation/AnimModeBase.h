@@ -22,7 +22,7 @@ public:
 	TWeakObjectPtr<ACharacterBase> Character;
 	TWeakObjectPtr<UCharacterBaseAnimInstance> AnimInst;
 
-	virtual void OnEnter() {}
-	virtual void OnExit() {}
+	virtual void OnModeEnter() {}
+	virtual void OnModeExit() {}
 	virtual void Tick(float DeltaSeconds) {}
 };

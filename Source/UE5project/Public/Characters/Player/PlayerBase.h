@@ -229,7 +229,7 @@ public:
 #pragma region Animation
 protected:
 	UPROPERTY(VisibleAnywhere, Category = Animation)
-		class UCharacterBaseAnimInstance* CharacterBaseAnim;
+		class UPlayerBaseAnimInstance* CharacterBaseAnim;
 
 #pragma endregion Animation
 

@@ -10,6 +10,16 @@
 /**
  * 
  */
+UENUM(BlueprintType)
+enum class EAnimDirection : uint8
+{
+    None UMETA(DisplayName = "None"),
+    Forward UMETA(DisplayName = "Forward"),
+    Backward UMETA(DisplayName = "Backward"),
+    Right UMETA(DisplayName = "Right"),
+    Left UMETA(DisplayName = "Left")
+};
+
 USTRUCT(Atomic, BlueprintType)
 struct FPlayerAnimSet
 {
