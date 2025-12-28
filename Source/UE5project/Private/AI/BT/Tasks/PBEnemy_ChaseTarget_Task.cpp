@@ -8,7 +8,7 @@
 
 UPBEnemy_ChaseTarget_Task::UPBEnemy_ChaseTarget_Task()
 {
-	NodeName = TEXT("ChasTarget");
+	NodeName = TEXT("ChaseTarget");
 }
 
 EBTNodeResult::Type UPBEnemy_ChaseTarget_Task::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Core/MovementTypes.h"
+#include "UObject/NoExportTypes.h"
 #include "StatusData.generated.h"
 
 UENUM(BlueprintType)
@@ -36,21 +37,9 @@ enum class ERideStance : uint8
 	Riding UMETA(DisplayName = "Riding"),
 };
 
-UENUM(BlueprintType)
-enum class ELocomotionState : uint8
-{
-	Idle UMETA(DisplayName = "Idle"),
-	Walk UMETA(DisplayName = "Walk"),
-	Jog UMETA(DisplayName = "Jog"),
-	Sprint UMETA(DisplayName = "Sprint"),
-};
-
 UCLASS()
-class UE5PROJECT_API AStatusData : public AActor
+class UE5PROJECT_API UStatusData : public UObject
 {
 	GENERATED_BODY()
 	
-public:	
-	// Sets default values for this actor's properties
-	AStatusData();
 };

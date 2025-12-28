@@ -4,7 +4,7 @@
 #include "Characters/Enemies/Human/PBEHumanAI.h"
 #include "Characters/Enemies/Human/PBEHuman.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Characters/Player/CharacterBase.h"
+#include "Characters/CharacterBase.h"
 
 APBEHumanAI::APBEHumanAI()
 {

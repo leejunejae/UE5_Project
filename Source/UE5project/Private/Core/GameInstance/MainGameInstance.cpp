@@ -2,9 +2,9 @@
 
 
 #include "Core/GameInstance/MainGameInstance.h"
-#include "Core/Subsystems/WeaponDataSubsystem.h"
-#include "Core/Subsystems/EnemyDataSubsystem.h"
-#include "Core/Subsystems/PlayerAnimRegistrySubsystem.h"
+#include "Core/Subsystems/GameInstanceSystem/WeaponDataSubsystem.h"
+#include "Core/Subsystems/GameInstanceSystem/EnemyDataSubsystem.h"
+#include "Core/Subsystems/GameInstanceSystem/PlayerAnimRegistrySubsystem.h"
 //#include "UObject/SoftObjectPath.h"
 
 void UMainGameInstance::Init()

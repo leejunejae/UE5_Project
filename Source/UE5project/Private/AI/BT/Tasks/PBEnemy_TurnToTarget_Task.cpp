@@ -3,6 +3,7 @@
 #include "Characters/Enemies/EnemyBaseAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Characters/Enemies/Human/PBEHuman.h"
+#include "Utils/CoreLog.h"
 
 UPBEnemy_TurnToTarget_Task::UPBEnemy_TurnToTarget_Task()
 {
@@ -13,24 +14,22 @@ EBTNodeResult::Type UPBEnemy_TurnToTarget_Task::ExecuteTask(UBehaviorTreeCompone
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
 
-	auto ControllingPawn = Cast<APBEHuman>(OwnerComp.GetAIOwner()->GetPawn());
+	UE_LOG(Log_AI, Log, TEXT("[EnemyBaseAIController] Turn To Target"));
+
+	auto ControllingPawn = OwnerComp.GetAIOwner()->GetPawn();
 	if (nullptr == ControllingPawn)
 		return EBTNodeResult::Failed;
 
 	auto ControllingAI = OwnerComp.GetAIOwner();
 	auto Target = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
 	if (nullptr == Target)
+	{
+		UE_LOG(Log_AI, Warning, TEXT("[EnemyBaseAIController] Target NULL"));
 		return EBTNodeResult::Failed;
-	
-	if (IsMove)
-	{
-		ControllingAI->SetFocus(Target);
-		//ControllingPawn->bUseControllerRotationYaw;
 	}
-	else
-	{
-		ControllingPawn->SetLookingTarget(Target);
-		ControllingPawn->SetIsLook(true);
-	}
+
+	ControllingAI->SetFocus(Target);
+	UE_LOG(Log_AI, Log, TEXT("[EnemyBaseAIController] Set Focus"));
+
 	return EBTNodeResult::Succeeded;
 }

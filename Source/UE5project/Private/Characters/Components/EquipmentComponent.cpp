@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
-#include "Core/Subsystems/WeaponDataSubsystem.h"
+#include "Core/Subsystems/GameInstanceSystem/WeaponDataSubsystem.h"
 
 // Sets default values for this component's properties
 UEquipmentComponent::UEquipmentComponent()

@@ -2,10 +2,3 @@
 
 
 #include "Characters/Data/StatusData.h"
-
-// Sets default values
-AStatusData::AStatusData()
-{
-
-
-}

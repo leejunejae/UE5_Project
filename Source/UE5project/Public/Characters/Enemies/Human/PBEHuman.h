@@ -49,7 +49,7 @@ public:
 
 	virtual UStaticMeshComponent* GetWeapon_Implementation();
 
-	virtual void Attack(FName AttackName, ACharacter* Target = nullptr) override;
+	virtual void Attack(FName AttackName, ACharacter* Target = nullptr);
 	virtual void Summon();
 	virtual void Appear();
 	virtual void Swoop();

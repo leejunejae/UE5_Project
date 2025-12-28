@@ -3,13 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Player/CharacterBase.h"
+#include "Characters/CharacterBase.h"
 #include "InputActionValue.h"
 
 // 구조체, 자료형 
 #include "Characters/Data/BaseCharacterHeader.h"
 #include "PEnumHeader.h"
-#include "Characters/Data/StatusData.h"
 
 // 인터페이스
 #include "Characters/Player/Interfaces/PlayerInterface.h"
@@ -28,6 +27,7 @@ class USpringArmComponent;
 class UCharacterMovementComponent;
 class UBaseChracterMovementComponent;
 
+class UPlayerBaseAnimInstance;
 class UPlayerStatusComponent;
 class UStatComponent;
 class UEquipmentComponent;
@@ -84,7 +84,6 @@ private:
 
 
 	/* PROTECTED VARIATION */
-protected:
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 		class UBaseCharacterMovementComponent* BaseMovement;
@@ -229,7 +228,7 @@ public:
 #pragma region Animation
 protected:
 	UPROPERTY(VisibleAnywhere, Category = Animation)
-		class UPlayerBaseAnimInstance* CharacterBaseAnim;
+		TObjectPtr<UPlayerBaseAnimInstance> CharacterBaseAnim;
 
 #pragma endregion Animation
 
@@ -246,7 +245,6 @@ protected:
 	// Variables For State & Stance
 	////////////////////////////////////	
 protected:
-	ELocomotionState CurGroundStance = ELocomotionState::Walk;
 	ERideStance CurRideStance = ERideStance::Riding;
 
 
@@ -254,7 +252,6 @@ protected:
 	// Methods For State & Stance
 	////////////////////////////////////
 public:
-	ELocomotionState GetCurGroundStance();
 	ERideStance GetCurRideStance();
 #pragma endregion State & Stance
 

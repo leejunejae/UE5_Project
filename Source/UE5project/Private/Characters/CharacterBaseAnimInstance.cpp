@@ -1,0 +1,195 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+// 엔진 헤더
+#include "Characters/CharacterBaseAnimInstance.h"
+#include "Components/CapsuleComponent.h"
+
+#include "Characters/Components/BaseCharacterMovementComponent.h"
+#include "Characters/Player/Components/PlayerStatusComponent.h"
+
+// 애니메이션 모드
+#include "Animation/Mode/AnimMode_Ground.h"
+#include "Animation/Mode/AnimMode_Ladder.h"
+
+// 참조할 액터
+#include "Characters/CharacterBase.h"
+
+// Kismet 유틸리티
+#include "KismetAnimationLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
+
+// 컴포넌트
+#include "Interaction/Climb/Components/ClimbComponent.h"
+
+UCharacterBaseAnimInstance::UCharacterBaseAnimInstance()
+{
+	IsInAir = false;
+}
+
+void UCharacterBaseAnimInstance::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+	Character = Cast<ACharacterBase>(TryGetPawnOwner());
+
+	if (Character)
+	{
+		Character->GetCharacterStatusComponent()->OnDeath.AddUObject(this, &UCharacterBaseAnimInstance::HandleDeath);
+	}
+
+	AnimModeMap.Empty();
+	AnimModeMap.Add(ECharacterState::Ground, NewObject<UAnimMode_Ground>(this));
+	AnimModeMap.Add(ECharacterState::Ladder, NewObject<UAnimMode_Ladder>(this));
+
+	for (auto& Pair : AnimModeMap)
+	{
+		if (!IsValid(Pair.Value))
+		{
+			// 무효 엔트리 발견 시 재빌드 or 건너뛰기
+			// 여기선 안전하게 스킵
+			continue;
+		}
+
+		Pair.Value->Character = Character;
+		Pair.Value->AnimInst = this;
+	}
+
+	SwitchAnimMode(ECharacterState::Ground);
+}
+
+void UCharacterBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeUpdateAnimation(DeltaSeconds);
+	if (Character)
+	{
+		CurrentState = Character->GetCharacterStatusComponent()->GetCharacterState_Native();
+
+		const auto NewState = Character->GetCharacterStatusComponent()->GetCharacterState_Native();
+		if (!CurrentMode || AnimModeMap.FindRef(NewState) != CurrentMode)
+		{
+			SwitchAnimMode(NewState);
+		}
+
+		if (CurrentMode)
+		{
+			CurrentMode->Tick(DeltaSeconds);
+		}
+	}
+}
+
+void UCharacterBaseAnimInstance::SwitchAnimMode(const ECharacterState TargetMode)
+{
+	if (CurrentMode)
+		CurrentMode->OnModeExit();
+
+	if (CurrentMode = AnimModeMap[TargetMode])
+	{
+		CurrentMode->OnModeEnter();
+	}
+}
+
+TTuple<FVector, float> UCharacterBaseAnimInstance::FootTrace(FName SocketName)
+{
+	FVector FootLoc = Character->GetMesh()->GetSocketLocation(SocketName);
+	float TraceDistance = 50.0f;
+	FVector Start = FVector(FootLoc.X, FootLoc.Y, Character->GetActorLocation().Z);
+	FVector End = Start - FVector(0.0f, 0.0f, Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + TraceDistance);
+
+	FHitResult DistHitResult;
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.bTraceComplex = true;
+	enum ECollisionChannel TraceChannel = Speed > 50.0f ? ECC_Visibility : ECC_GameTraceChannel8;
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		DistHitResult,
+		Start,
+		End,
+		TraceChannel,
+		CollisionParams
+	);
+
+	//FColor DrawColor = bHit ? FColor::Green : FColor::Red;
+	//DrawDebugLine(GetWorld(), Start, End, DrawColor, false, 1.0f);
+
+	if (bHit)
+	{
+		float Offset = ((DistHitResult.ImpactPoint - DistHitResult.TraceEnd).Length()) - (TraceDistance - 3.0f);
+		return MakeTuple(DistHitResult.ImpactNormal, Offset);
+	}
+	else
+	{
+		return MakeTuple(FVector::ZeroVector, 0.0f);
+	}
+}
+
+void UCharacterBaseAnimInstance::FootRotation(float DeltaTime, FVector TargetNormal, FRotator *FootRotator, float fInterpSpeed)
+{
+	float AtanX = -1.0f * UKismetMathLibrary::DegAtan2(TargetNormal.X, TargetNormal.Z);
+	float AtanY = UKismetMathLibrary::DegAtan2(TargetNormal.Y, TargetNormal.Z);
+	FRotator TargetRotator = FRotator(AtanX, 0.0f, AtanY);
+
+	*FootRotator = UKismetMathLibrary::RInterpTo(*FootRotator, TargetRotator, DeltaTime, fInterpSpeed);
+}
+
+void UCharacterBaseAnimInstance::SetHitAir(bool HitState)
+{
+	bIsHitAir = HitState;
+}
+
+void UCharacterBaseAnimInstance::ResetHitAir_Implementation()
+{
+	SetHitAir(false);
+}
+
+void UCharacterBaseAnimInstance::AnimNotify_NOT_EnableRootLock()
+{
+	SetRootMotionMode(ERootMotionMode::RootMotionFromEverything);
+	UE_LOG(LogTemp, Warning, TEXT("Enable Root Motion"));
+}
+
+void UCharacterBaseAnimInstance::AnimNotify_NOT_DisableRootLock()
+{
+	SetRootMotionMode(ERootMotionMode::IgnoreRootMotion);
+}
+
+void UCharacterBaseAnimInstance::AnimNotify_NOT_ResetClimbState()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ResetClimbState"));
+	Character->GetClimbComponent()->ResetClimbState();
+}
+
+void UCharacterBaseAnimInstance::SetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb, float Weight)
+{
+	switch (IKContext)
+	{
+	case EIKContext::Ground:
+	{
+		GroundIKWeights.Set(Limb, Weight);
+		break;
+	}
+	case EIKContext::Ladder:
+	{
+		LadderIKWeights.Set(Limb, Weight);
+		break;
+	}
+	default:
+		return;
+	}
+}
+
+float UCharacterBaseAnimInstance::GetIKWeight_Implementation(EIKContext IKContext, ELimbList Limb)
+{
+	switch (IKContext)
+	{
+	case EIKContext::Ground:
+	{
+		return GroundIKWeights.Get(Limb);
+	}
+	case EIKContext::Ladder:
+	{
+		return LadderIKWeights.Get(Limb);
+	}
+	default:
+		return 0.0f;
+	}
+}

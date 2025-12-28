@@ -3,12 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Player/CharacterBaseAnimInstance.h"
+#include "Characters/CharacterBaseAnimInstance.h"
 #include "PlayerBaseAnimInstance.generated.h"
 
 /**
  * 
  */
+class APlayerBase;
+
 UCLASS()
 class UE5PROJECT_API UPlayerBaseAnimInstance : public UCharacterBaseAnimInstance
 {
@@ -21,11 +23,65 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-#pragma region Locomotion
+protected:
+	UPROPERTY(Transient)
+		TObjectPtr<APlayerBase> Player = nullptr;
+
+#pragma region Animation Data
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stance, Meta = (AllowPrivateAccess = true))
-		ELocomotionState CurGroundStance;
-#pragma endregion Locomotion
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UBlendSpace1D> Locomotion_CycleBS = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Locomotion_Idle = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Locomotion_Start = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Locomotion_Stop_Jog = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Locomotion_Stop_Run = nullptr;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Jump_Start = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Jump_Loop = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Fall_Loop = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Land_Jump = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Land_Fall = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Land_Jog = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Land_High = nullptr;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> HitAir_Start = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> HitAir_Loop = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> HitAir_End = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> GetUp = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> HitAir_Death = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UAnimSequence> Ground_Death = nullptr;
+
+	bool bInitAnimSet = false;
+
+protected:
+	void HandleWeaponChange(EWeaponType WeaponData);
+
+#pragma endregion Animation Data
+
+#pragma region Input
+private:
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		bool IsMovementInput;
+#pragma endregion Input
 
 #pragma region Ride
 public:

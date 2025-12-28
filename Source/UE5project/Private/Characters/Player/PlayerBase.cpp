@@ -71,7 +71,7 @@ APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
 	InteractComponent->bAutoActivate = true;
 
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
+	//GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 
@@ -192,7 +192,7 @@ APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 	GetMesh()->SetGenerateOverlapEvents(true);
 
 	//CanMovementInput = true;
-	CurGroundStance = ELocomotionState::Jog;
+	CurLocomotionGait = ELocomotionGait::Jog;
 
 	GetCharacterMovement()->MaxWalkSpeed = 450.0f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 800.0f;
@@ -563,20 +563,20 @@ void APlayerBase::Landed(const FHitResult& Hit)
 
 void APlayerBase::Walk()
 {
-	CurGroundStance = ELocomotionState::Walk;
+	CurLocomotionGait = ELocomotionGait::Walk;
 	GetCharacterMovement()->MaxWalkSpeed = 200.0f;
 }
 
 void APlayerBase::Jog()
 {
-	CurGroundStance = ELocomotionState::Jog;
+	CurLocomotionGait = ELocomotionGait::Jog;
 	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
 	GetCharacterMovement()->BrakingFriction = 0.3f;
 }
 
 void APlayerBase::Sprint()
 {
-	CurGroundStance = ELocomotionState::Sprint;
+	CurLocomotionGait = ELocomotionGait::Sprint;
 	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 	GetCharacterMovement()->BrakingFriction = 0.1f;
 }
@@ -694,11 +694,6 @@ float APlayerBase::GetRideDirection()
 FVector APlayerBase::GetInputDirection()
 {
 	return DodgeVector;
-}
-
-ELocomotionState APlayerBase::GetCurGroundStance()
-{
-	return CurGroundStance;
 }
 
 ERideStance APlayerBase::GetCurRideStance()

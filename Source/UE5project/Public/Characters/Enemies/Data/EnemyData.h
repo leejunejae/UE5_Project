@@ -9,6 +9,7 @@
 #include "Characters/Enemies/Data/EnemyComponentDataAsset.h"
 #include "Characters/Enemies/Data/EnemyInstanceDataAsset.h"
 #include "Characters/Enemies/Data/EnemyAIDataAsset.h"
+#include "Core/MovementTypes.h"
 #include "EnemyData.generated.h"
 
 UENUM(BlueprintType)
@@ -20,7 +21,6 @@ enum class HSoldierSkill : uint8
 	Slash UMETA(DisplayName = "Summon"),
 	Rush UMETA(DisplayName = "Death"),
 };
-
 
 USTRUCT(BlueprintType)
 struct FEnemyStats :public FTableRowBase
@@ -66,6 +66,10 @@ struct FEnemyStats :public FTableRowBase
     /** 상태이상 저항 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
         float Resistance;
+
+    /** 캐릭터 성향 : 공격성 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+        float Aggressiveness;
 };
 
 USTRUCT(BlueprintType)
@@ -77,21 +81,25 @@ struct FEnemyInfo : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
         FName ID;
 
-    /** 적 이름 */
+    /** 이름 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
         FText Name;
 
-    /** 적 위치 */
+    /** 위치 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
         FText Location;
 
-    /** 적 세력 */
+    /** 세력 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-        EFaction Faction;
+        FGameplayTag Faction;
 
-    /** 적 종족 */
+    /** 종족 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-        ERace Race;
+        FGameplayTag Race;
+
+    /** 역할 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+        FGameplayTag Role;
 
     /** 드랍 테이블 */
    // UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Refs")
@@ -108,6 +116,10 @@ struct FEnemyInfo : public FTableRowBase
     /** 컴포넌트 데이터 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
         TSoftObjectPtr<UEnemyComponentDataAsset> ComponentData;
+
+    /** 전투 패턴 데이터 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+        TSoftObjectPtr<UDataTable> CombatPatternData;
 };
 
 // 참조, 캐싱, 반환을 위한 데이터 묶음
@@ -163,6 +175,7 @@ struct FEnemyRuntimeStats
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
         float Resistance;
 
+public:
     void InitFromDataTable(const FEnemyStats& Data)
     {
         MaxHealth = Data.Health;
@@ -175,6 +188,25 @@ struct FEnemyRuntimeStats
         MagicDefense = Data.MagicDefense;
         DamageNegation = Data.DamageNegation;
     }
+
+    FORCEINLINE float GetHealth() const { return Health; }
+    FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+    FORCEINLINE float GetHealthPercent() const
+    {
+        return (MaxHealth > KINDA_SMALL_NUMBER) ? (Health / MaxHealth) : 0.0f;
+    }
+
+    FORCEINLINE float GetPoise() const { return Poise; }
+    FORCEINLINE float GetMaxPoise() const { return MaxPoise; }
+
+    FORCEINLINE float GetStance() const { return Stance; }
+    FORCEINLINE float GetMaxStance() const { return MaxStance; }
+
+    FORCEINLINE bool IsDead() const { return Health <= 0.0f; }
+
+    FORCEINLINE bool IsPoiseBroken() const { return Poise <= 0.0f; }
+
+    FORCEINLINE bool IsStanceBroken() const { return Stance <= 0.0f; }
 };
 
 UCLASS()

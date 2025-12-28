@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "PEnumHeader.h"
+#include "Core/MovementTypes.h"
 #include "PBEnemy_SetMovementSpeed_Task.generated.h"
 
 /**
@@ -23,5 +23,5 @@ public:
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (ExposeOnSpawn = "true", OverrideNativeName = "bOnHand"))
-	float CurrentMovement;
+		ELocomotionGait LocomotionGait;
 };

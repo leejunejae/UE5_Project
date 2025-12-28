@@ -3,7 +3,7 @@
 
 #include "AI/BT/Services/PBEnemy_CheckRange_Service.h"
 #include "Characters/Enemies/Human/PBEHumanAI.h"
-#include "Characters/Player/CharacterBase.h"
+#include "Characters/CharacterBase.h"
 
 UPBEnemy_CheckRange_Service::UPBEnemy_CheckRange_Service()
 {

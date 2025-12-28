@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Engine/DataTable.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "EnemyAIDataAsset.generated.h"
@@ -24,4 +25,7 @@ public:
     // 사용하는 비헤이비어 트리
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI")
         TObjectPtr<UBehaviorTree> EnemyBehaviorTree;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI")
+        TObjectPtr<UDataTable> CombatDesci;
 };

@@ -17,8 +17,4 @@ class UE5PROJECT_API UPBEnemy_TurnToTarget_Task : public UBTTaskNode
 public:
 	UPBEnemy_TurnToTarget_Task();
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State", meta = (ExposeOnSpawn = "true", OverrideNativeName = "bOnHand"))
-		bool IsMove;
 };
