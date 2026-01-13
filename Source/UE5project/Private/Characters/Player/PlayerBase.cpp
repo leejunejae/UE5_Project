@@ -18,6 +18,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Components/InputComponent.h"
 #include "InputMappingContext.h"
+#include "Characters/Player/InputConfigDataAsset.h"
 
 // Kismet 유틸리티
 #include "Kismet/GameplayStatics.h"
@@ -41,13 +42,17 @@
 // 유저 컴포넌트
 #include "Characters/Components/BaseCharacterMovementComponent.h"
 #include "Characters/Player/Components/PlayerStatusComponent.h"
-#include "Characters/Components/StatComponent.h"
+#include "Characters/Player/Components/PlayerStatComponent.h"
 #include "Characters/Components/EquipmentComponent.h"
 #include "Combat/Components/CombatComponent.h"
 #include "Combat/Components/PlayerAttackComponent.h"
 #include "Combat/Components/PlayerHitReactionComponent.h"
 #include "Interaction/Components/InteractComponent.h"
 #include "Interaction/Climb/Components/ClimbComponent.h"
+#include "Characters/Player/Components/LockOnComponent.h"
+
+//유틸리티
+#include "Utils/CoreLog.h"
 
 // Sets default values
 APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
@@ -59,7 +64,7 @@ APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	StatComponent = CreateDefaultSubobject<UStatComponent>(TEXT("StatComponent"));
+	StatComponent = CreateDefaultSubobject<UPlayerStatComponent>(TEXT("StatComponent"));
 	StatComponent->bAutoActivate = true;
 
 	EquipmentComponent = CreateDefaultSubobject<UEquipmentComponent>(TEXT("EquipmentComponent"));
@@ -71,101 +76,20 @@ APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
 	InteractComponent->bAutoActivate = true;
 
-	//GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character"));
+	LockOnComponent = CreateDefaultSubobject<ULockOnComponent>(TEXT("LockOnComponent"));
+	LockOnComponent->bAutoActivate = true;
+
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Character_Player"));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 
 	GetCapsuleComponent()->SetCapsuleHalfHeight(90.0f);
 	//GetMesh()->SetOwnerNoSee(true);
 
-	static ConstructorHelpers::FObjectFinder<UInputMappingContext>PBC_Context(TEXT("/Game/00_Character/C_Input/C_BasicInput.C_BasicInput"));
-	if (PBC_Context.Succeeded())
+	static ConstructorHelpers::FObjectFinder<UInputConfigDataAsset>InputConfig_DA(TEXT("/Game/00_Character/C_Input/PlayerInput_DA.PlayerInput_DA"));
+	if (InputConfig_DA.Succeeded())
 	{
-		DefaultContext = PBC_Context.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Move(TEXT("/Game/00_Character/C_Input/C_Move.C_Move"));
-	if (IP_Move.Succeeded())
-	{
-		MoveAction = IP_Move.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Look(TEXT("/Game/00_Character/C_Input/C_Look.C_Look"));
-	if (IP_Look.Succeeded())
-	{
-		LookAction = IP_Look.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Dodge(TEXT("/Game/00_Character/C_Input/C_Dodge.C_Dodge"));
-	if (IP_Dodge.Succeeded())
-	{
-		DodgeAction = IP_Dodge.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Walk(TEXT("/Game/00_Character/C_Input/C_Walk.C_Walk"));
-	if (IP_Walk.Succeeded())
-	{
-		WalkAction = IP_Walk.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Sprint(TEXT("/Game/00_Character/C_Input/C_Sprint.C_Sprint"));
-	if (IP_Sprint.Succeeded())
-	{
-		SprintAction = IP_Sprint.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_CheckMoveInput(TEXT("/Game/00_Character/C_Input/C_CheckMoveInput.C_CheckMoveInput"));
-	if (IP_CheckMoveInput.Succeeded())
-	{
-		CheckMoveAction = IP_CheckMoveInput.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Jump(TEXT("/Game/00_Character/C_Input/C_Jump.C_Jump"));
-	if (IP_Jump.Succeeded())
-	{
-		JumpAction = IP_Jump.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Attack(TEXT("/Game/00_Character/C_Input/C_Attack.C_Attack"));
-	if (IP_Attack.Succeeded())
-	{
-		AttackAction = IP_Attack.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_HeavyAttack(TEXT("/Game/00_Character/C_Input/C_HeavyAttack.C_HeavyAttack"));
-	if (IP_HeavyAttack.Succeeded())
-	{
-		HeavyAttackAction = IP_HeavyAttack.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Block(TEXT("/Game/00_Character/C_Input/C_Block.C_Block"));
-	if (IP_Block.Succeeded())
-	{
-		BlockAction = IP_Block.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Parry(TEXT("/Game/00_Character/C_Input/C_Parry.C_Parry"));
-	if (IP_Parry.Succeeded())
-	{
-		ParryAction = IP_Parry.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Interact(TEXT("/Game/00_Character/C_Input/C_Interact.C_Interact"));
-	if (IP_Interact.Succeeded())
-	{
-		InteractAction = IP_Interact.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_SpawnRide(TEXT("/Game/00_Character/C_Input/C_SpawnRide.C_SpawnRide"));
-	if (IP_SpawnRide.Succeeded())
-	{
-		SpawnRideAction = IP_SpawnRide.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_Modifier(TEXT("/Game/00_Character/C_Input/C_Modifier.C_Modifier"));
-	if (IP_Modifier.Succeeded())
-	{
-		ModifierAction = IP_Modifier.Object;
+		InputConfig = InputConfig_DA.Object;
 	}
 
 	static ConstructorHelpers::FClassFinder<UDefaultWidget>Class_DefualtWidget(TEXT("/Game/00_Character/Data/DefaultWidget_BP"));
@@ -183,7 +107,7 @@ APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 		AttackComponent->SetAttackDA(AttackDA_Asset.Object);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UAnimMontage> RollMontageAsset(TEXT("/Game/00_Character/C_Warrior/CW_Animation/Animation/Sequence/SSH/Roll/Roll_Montage.Roll_Montage"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> RollMontageAsset(TEXT("/Game/04_Animations/Player/SSH/Roll/Normal/Roll_Montage.Roll_Montage"));
 	if (RollMontageAsset.Succeeded())
 	{
 		RollMontage = RollMontageAsset.Object;
@@ -223,7 +147,7 @@ void APlayerBase::BeginPlay()
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* SubSystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
-			SubSystem->AddMappingContext(DefaultContext, 0);
+			SubSystem->AddMappingContext(InputConfig->DefaultContext, 0);
 		}
 	}
 
@@ -259,6 +183,19 @@ void APlayerBase::Tick(float DeltaTime)
 		{
 			SetActorRotation(NewRot);
 		}
+	}
+
+	if (LockOnComponent && LockOnComponent->IsLockedOn())
+	{
+		LockOnComponent->TickLockOn(DeltaTime);
+
+		if (!LockOnComponent->IsLockedOn())
+		{
+			SetLockOnMovementMode(false);
+			return;
+		}
+
+		ApplyLockOnRotation(DeltaTime);
 	}
 
 	FVector LastInputDirection = GetLastMovementInputVector().GetSafeNormal();
@@ -352,35 +289,40 @@ void APlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerBase::Move);
-		EnhancedInputComponent->BindAction(CheckMoveAction, ETriggerEvent::Started, this, &APlayerBase::StartMoveInput);
-		EnhancedInputComponent->BindAction(CheckMoveAction, ETriggerEvent::Completed, this, &APlayerBase::EndMoveInput);
+		EnhancedInputComponent->BindAction(InputConfig->Move, ETriggerEvent::Triggered, this, &APlayerBase::Move);
+		EnhancedInputComponent->BindAction(InputConfig->CheckMove, ETriggerEvent::Started, this, &APlayerBase::StartMoveInput);
+		EnhancedInputComponent->BindAction(InputConfig->CheckMove, ETriggerEvent::Completed, this, &APlayerBase::EndMoveInput);
 
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerBase::Look);
+		EnhancedInputComponent->BindAction(InputConfig->Look, ETriggerEvent::Triggered, this, &APlayerBase::Look);
 
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerBase::Jump);
-		//EnhancedInputComponent->BindAction(SwitchStanceAction, ETriggerEvent::Triggered, this, &APlayerBase::SwitchStance);
+		EnhancedInputComponent->BindAction(InputConfig->Jump, ETriggerEvent::Triggered, this, &APlayerBase::Jump);
 
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Ongoing, this, &APlayerBase::OnBlock);
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &APlayerBase::OffBlock);
-		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Triggered, this, &APlayerBase::Parry);
+		EnhancedInputComponent->BindAction(InputConfig->Block, ETriggerEvent::Ongoing, this, &APlayerBase::OnBlock);
+		EnhancedInputComponent->BindAction(InputConfig->Block, ETriggerEvent::Triggered, this, &APlayerBase::OffBlock);
 
-		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &APlayerBase::Dodge);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerBase::Interact);
+		EnhancedInputComponent->BindAction(InputConfig->Parry, ETriggerEvent::Triggered, this, &APlayerBase::Parry);
 
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &APlayerBase::Sprint);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &APlayerBase::Jog);
+		EnhancedInputComponent->BindAction(InputConfig->Dodge, ETriggerEvent::Triggered, this, &APlayerBase::Dodge);
 
-		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &APlayerBase::Walk);
-		EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Triggered, this, &APlayerBase::Jog);
+		EnhancedInputComponent->BindAction(InputConfig->Interact, ETriggerEvent::Triggered, this, &APlayerBase::Interact);
 
-		EnhancedInputComponent->BindAction(SpawnRideAction, ETriggerEvent::Triggered, this, &APlayerBase::SpawnRide);
+		EnhancedInputComponent->BindAction(InputConfig->Sprint, ETriggerEvent::Started, this, &APlayerBase::Sprint);
+		EnhancedInputComponent->BindAction(InputConfig->Sprint, ETriggerEvent::Triggered, this, &APlayerBase::Jog);
 
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &APlayerBase::AttackInput);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &APlayerBase::AttackInputEnd);
+		EnhancedInputComponent->BindAction(InputConfig->Walk, ETriggerEvent::Started, this, &APlayerBase::Walk);
+		EnhancedInputComponent->BindAction(InputConfig->Walk, ETriggerEvent::Triggered, this, &APlayerBase::Jog);
 
-		EnhancedInputComponent->BindAction(ModifierAction, ETriggerEvent::Ongoing, this, &APlayerBase::ModifierInput);
-		EnhancedInputComponent->BindAction(ModifierAction, ETriggerEvent::Triggered, this, &APlayerBase::ModifierInputEnd);
+		EnhancedInputComponent->BindAction(InputConfig->SpawnRide, ETriggerEvent::Triggered, this, &APlayerBase::SpawnRide);
+
+		EnhancedInputComponent->BindAction(InputConfig->Attack, ETriggerEvent::Started, this, &APlayerBase::AttackInput);
+		EnhancedInputComponent->BindAction(InputConfig->Attack, ETriggerEvent::Triggered, this, &APlayerBase::AttackInputEnd);
+
+		EnhancedInputComponent->BindAction(InputConfig->Modifier, ETriggerEvent::Ongoing, this, &APlayerBase::ModifierInput);
+		EnhancedInputComponent->BindAction(InputConfig->Modifier, ETriggerEvent::Triggered, this, &APlayerBase::ModifierInputEnd);
+
+		EnhancedInputComponent->BindAction(InputConfig->LockOn, ETriggerEvent::Triggered, this, &APlayerBase::OnLockOnToggle);
+		EnhancedInputComponent->BindAction(InputConfig->LockOnSwitchLeft, ETriggerEvent::Triggered, this, &APlayerBase::OnLockOnSwitchLeft);
+		EnhancedInputComponent->BindAction(InputConfig->LockOnSwitchRight, ETriggerEvent::Triggered, this, &APlayerBase::OnLockOnSwitchRight);
 	}
 }
 
@@ -402,11 +344,6 @@ void APlayerBase::PostInitializeComponents()
 	{
 		GetCharacterStatusComponent()->OnDeath.AddUObject(this, &APlayerBase::OnDeath);
 	}
-
-	if (GetHitReactionComponent())
-	{
-		GetHitReactionComponent()->OnHitAirReaction.AddUObject(this, &APlayerBase::HandleHitAir);
-	}
 }
 
 /* Input Action */
@@ -424,9 +361,16 @@ void APlayerBase::Move(const FInputActionValue& value)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		InputVector = FVector(DirectionValue.X, DirectionValue.Y, 0.0f);
 
-
 		FVector2D MovementScale = DirectionValue;
 		MovementScale.Normalize();
+
+		if (LockOnComponent->IsLockedOn())
+		{
+			float ForwardScale = CurLocomotionGait == ELocomotionGait::Sprint ? 1.0f : 0.8f;
+			float BackwardScale = 0.85f;
+
+			MovementScale.Y *= MovementScale.Y > 0.0f ? ForwardScale : BackwardScale;
+		}
 
 		AddMovementInput(UKismetMathLibrary::GetForwardVector(YawRotation), MovementScale.Y);
 		AddMovementInput(UKismetMathLibrary::GetRightVector(YawRotation), MovementScale.X);
@@ -435,10 +379,9 @@ void APlayerBase::Move(const FInputActionValue& value)
 	case ECharacterState::Ladder:
 	{
 		IsMovementInput = FMath::IsNearlyZero(DirectionValue.Y) ? false : true;
-		if (IsMovementInput)
-		{
-			DirectionValue.Y > 0.0f ? GetClimbComponent()->ClimbUpLadder() : GetClimbComponent()->ClimbDownLadder();
-		}
+		if (!IsMovementInput) return;
+		
+		DirectionValue.Y > 0.0f ? GetClimbComponent()->ClimbUpLadder() : GetClimbComponent()->ClimbDownLadder();
 		break;
 
 	}
@@ -577,8 +520,11 @@ void APlayerBase::Jog()
 void APlayerBase::Sprint()
 {
 	CurLocomotionGait = ELocomotionGait::Sprint;
-	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
-	GetCharacterMovement()->BrakingFriction = 0.1f;
+	if (!LockOnComponent->IsLockedOn())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+		GetCharacterMovement()->BrakingFriction = 0.1f;
+	}
 }
 
 float APlayerBase::GetDirection()
@@ -821,12 +767,6 @@ void APlayerBase::Parry()
 	//CharacterStatusComponent
 }
 
-void APlayerBase::HandleHitAir()
-{
-	CharacterBaseAnim->SetHitAir(true);
-	UE_LOG(LogTemp, Warning, TEXT("Hit Air"));
-}
-
 void APlayerBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 {
 	float HitAngle = GetHitReactionComponent()->CalculateHitAngle(AttackInfo.HitPoint);
@@ -844,9 +784,9 @@ void APlayerBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 	case EHitResponse::KnockBack:
 	case EHitResponse::KnockDown:
 	{
-		StatComponent->ApplyDamage(AttackInfo.Damage, AttackInfo.AttackType);
-		bool IsPoiseEnough = StatComponent->ChangePoise(AttackInfo.PoiseDamage, EStatChangeType::Damage);
-		if (!IsPoiseEnough && !GetCharacterStatusComponent()->IsDead())
+		GetStatComponent()->ApplyDamage(AttackInfo.Damage, AttackInfo.AttackType);
+		GetStatComponent()->ChangePoise(AttackInfo.PoiseDamage, EStatChangeType::Damage);
+		if (GetStatComponent()->GetCommonStats().GetPoise() <= 0.0f && !GetCharacterStatusComponent()->IsDead())
 		{
 			FHitReactionRequest InputReaction = { Response,HitAngle };
 			GetCharacterStatusComponent()->SetGroundStance_Native(EGroundStance::Hit);
@@ -857,8 +797,8 @@ void APlayerBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 	case EHitResponse::HitAir:
 	{
 		StatComponent->ApplyDamage(AttackInfo.Damage, AttackInfo.AttackType);
-		bool IsPoiseEnough = StatComponent->ChangePoise(AttackInfo.PoiseDamage, EStatChangeType::Damage);
-		if (StatComponent->GetBaseStats_Native().Poise <= 0.0f || GetCharacterStatusComponent()->IsDead())
+		StatComponent->ChangePoise(AttackInfo.PoiseDamage, EStatChangeType::Damage);
+		if (GetStatComponent()->GetCommonStats().GetPoise() <= 0.0f || GetCharacterStatusComponent()->IsDead())
 		{
 			CharacterBaseAnim->SetHitAir(true);
 			GetCharacterStatusComponent()->SetGroundStance_Native(EGroundStance::Hit);
@@ -913,14 +853,14 @@ void APlayerBase::SpawnRide()
 {
 	if (CharacterBaseAnim->GetCurveValue(FName("EnableRide")) < 0.9f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Cant Spawn Ride"));
+		UE_LOG(Log_RideSpawn, Warning, TEXT("[APlayerBase] %s : Cant Spawn Ride"), *GetName());
 		return;
 	}
 
 	Ride = GetWorld()->SpawnActor<APlayerRide>(GetActorLocation(), GetActorRotation());
 	if (!Ride)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Horse Not Spawn"));
+		UE_LOG(Log_RideSpawn, Warning, TEXT("[APlayerBase] %s : Horse was Not Spawned"), *GetName());
 		return;
 	}
 
@@ -929,13 +869,9 @@ void APlayerBase::SpawnRide()
 	IRideInterface::Execute_Mount(Ride, this, GetVelocity());
 
 	GetCharacterMovement()->SetMovementMode(MOVE_None);
-	//GetCharacterMovement()->DisableMovement();
 
 	CurRideStance = ERideStance::Mount;
 	GetCharacterStatusComponent()->SetCharacterState_Native(ECharacterState::Ride);
-
-	
-	//CanMovementInput = false;
 
 	GetWorldTimerManager().SetTimer(MountTimerHandle, this, &APlayerBase::MountTimer, 0.01f, true);
 }
@@ -1084,6 +1020,53 @@ UPlayerAttackComponent* APlayerBase::GetAttackComponent() const
 UPlayerHitReactionComponent* APlayerBase::GetHitReactionComponent() const
 {
 	return Cast<UPlayerHitReactionComponent>(HitReactionComponent);
+}
+
+void APlayerBase::ApplyLockOnRotation(float DeltaTime)
+{
+	AActor* Target = LockOnComponent ? LockOnComponent->GetCurrentTarget() : nullptr;
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!Target || !PC) return;
+
+	const FVector MyLoc = GetActorLocation();
+	const FVector TLoc = Target->GetActorLocation();
+
+	FRotator Desired = (TLoc - MyLoc).Rotation();
+	Desired.Pitch = 0.f;
+	Desired.Roll = 0.f;
+
+	FRotator Current = PC->GetControlRotation();
+	FRotator NewRot = FMath::RInterpTo(Current, Desired, DeltaTime, LockOnTurnInterpSpeed);
+
+	PC->SetControlRotation(NewRot);
+}
+
+void APlayerBase::SetLockOnMovementMode(bool bLockOn)
+{
+	bUseControllerRotationYaw = bLockOn;
+	GetCharacterMovement()->bOrientRotationToMovement = !bLockOn;
+	Jog();
+}
+
+void APlayerBase::OnLockOnToggle()
+{
+	UE_LOG(Log_LockOn, Warning, TEXT("[APlayerBase] %s Execute LockOn Toggle"), *GetName());
+	if (LockOnComponent)
+	{
+		UE_LOG(Log_LockOn, Warning, TEXT("[APlayerBase] %s Access LockOn Allowed"), *GetName());
+		const bool bLocked = LockOnComponent->ToggleLockOn();
+		SetLockOnMovementMode(bLocked);
+	}
+}
+
+void APlayerBase::OnLockOnSwitchLeft()
+{
+	if(LockOnComponent) LockOnComponent->SwitchTarget(false);
+}
+
+void APlayerBase::OnLockOnSwitchRight()
+{
+	if (LockOnComponent) LockOnComponent->SwitchTarget(true);
 }
 
 UPlayerStatusComponent* APlayerBase::GetCharacterStatusComponent() const

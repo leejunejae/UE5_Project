@@ -12,16 +12,6 @@
 #include "Core/MovementTypes.h"
 #include "EnemyData.generated.h"
 
-UENUM(BlueprintType)
-enum class HSoldierSkill : uint8
-{
-	None UMETA(DisplayName = "None"),
-	Combo1 UMETA(DisplayName = "Combo1"),
-	Combo2 UMETA(DisplayName = "Combo2"),
-	Slash UMETA(DisplayName = "Summon"),
-	Rush UMETA(DisplayName = "Death"),
-};
-
 USTRUCT(BlueprintType)
 struct FEnemyStats :public FTableRowBase
 {
@@ -59,13 +49,13 @@ struct FEnemyStats :public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
         float MagicDefense;
 
-    /** 데미지 감쇠 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float DamageNegation;
-
     /** 상태이상 저항 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
         float Resistance;
+
+    /** 상태이상 저항 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+        float GuardNegation;
 
     /** 캐릭터 성향 : 공격성 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
@@ -138,75 +128,6 @@ public:
     FEnemyDataSet(const FEnemyInfo* NewInfo, const FEnemyStats* NewStats)
         : Info(NewInfo), Stats(NewStats)
     {}
-};
-
-USTRUCT(BlueprintType)
-struct FEnemyRuntimeStats
-{
-    GENERATED_BODY();
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float MaxHealth;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float Health;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float MaxPoise;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float Poise;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float MaxStance;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float Stance;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float PhysicalDefense;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float MagicDefense;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float DamageNegation;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-        float Resistance;
-
-public:
-    void InitFromDataTable(const FEnemyStats& Data)
-    {
-        MaxHealth = Data.Health;
-        Health = MaxHealth;
-        MaxPoise = Data.Poise;
-        Poise = MaxPoise;
-        MaxStance = Data.Stance;
-        Stance = MaxStance;
-        PhysicalDefense = Data.PhysicalDefense;
-        MagicDefense = Data.MagicDefense;
-        DamageNegation = Data.DamageNegation;
-    }
-
-    FORCEINLINE float GetHealth() const { return Health; }
-    FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
-    FORCEINLINE float GetHealthPercent() const
-    {
-        return (MaxHealth > KINDA_SMALL_NUMBER) ? (Health / MaxHealth) : 0.0f;
-    }
-
-    FORCEINLINE float GetPoise() const { return Poise; }
-    FORCEINLINE float GetMaxPoise() const { return MaxPoise; }
-
-    FORCEINLINE float GetStance() const { return Stance; }
-    FORCEINLINE float GetMaxStance() const { return MaxStance; }
-
-    FORCEINLINE bool IsDead() const { return Health <= 0.0f; }
-
-    FORCEINLINE bool IsPoiseBroken() const { return Poise <= 0.0f; }
-
-    FORCEINLINE bool IsStanceBroken() const { return Stance <= 0.0f; }
 };
 
 UCLASS()

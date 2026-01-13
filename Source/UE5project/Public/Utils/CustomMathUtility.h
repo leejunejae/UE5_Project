@@ -82,8 +82,6 @@ namespace CustomMath
     }
 }
 
-namespace Ca
-
 UCLASS()
 class UE5PROJECT_API UCustomMathUtility : public UObject
 {

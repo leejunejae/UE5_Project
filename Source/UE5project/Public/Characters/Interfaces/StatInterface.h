@@ -27,7 +27,7 @@ public:
 		FCharacterAttributes GetBaseAttributesLevel() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-		FCharacterStats GetBaseStats() const;
+		FPlayerStats GetCharacterStats() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	float GetAttributesRequirementRatio(const FCharacterAttributes& RequireStats) const;

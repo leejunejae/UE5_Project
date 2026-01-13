@@ -17,6 +17,7 @@
 #include "Characters/CharacterBase.h"
 #include "EnemyBase.generated.h"
 
+class UCharacterStatComponent;
 class UAttackComponent;
 class UHitReactionComponent;
 class UCharacterStatusComponent;
@@ -50,6 +51,21 @@ public:
 	FOnDeathDelegate OnDeath;
 	virtual FOnDeathDelegate& GetOnDeathDelegate() override { return OnDeath; }
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float GuardNegation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float Aggressiveness;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		int32 Phase;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		bool PoiseBroken;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		bool StanceBroken;
+
 #pragma endregion Status
 
 //private:
@@ -74,14 +90,11 @@ public:
 
 #pragma region Stat
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BaseData")
-		FEnemyRuntimeStats Stats;
+	UPROPERTY(VisibleAnywhere, Category = Stat)
+		TObjectPtr<UCharacterStatComponent> StatComponent;
 
 public:
-	FORCEINLINE FEnemyRuntimeStats GetRuntimeStats() { return Stats; }
-	bool ApplyDamage(const float Amount, const EAttackType Attackype);
-	bool ChangeStance(const float Amount, const EStatChangeType StatChangeType);
-	bool ChangePoise(const float Amount, const EStatChangeType StatChangeType);
+	FORCEINLINE UCharacterStatComponent* GetStatComponent() const { return StatComponent; }
 
 #pragma endregion Stat
 

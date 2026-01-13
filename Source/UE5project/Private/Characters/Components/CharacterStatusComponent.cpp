@@ -5,6 +5,9 @@
 #include "GameFramework/Character.h" 
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Combat/Components/HitReactionComponent.h"
+#include "Characters/Components/StatComponent.h"
+
 // Sets default values for this component's properties
 UCharacterStatusComponent::UCharacterStatusComponent()
 {
@@ -19,6 +22,11 @@ void UCharacterStatusComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CachedCharacter = Cast<ACharacter>(GetOwner());
+
+	if (UHitReactionComponent* HitComp = CachedCharacter->FindComponentByClass<UHitReactionComponent>())
+	{
+		HitComp->HitEndDelegate.AddUObject(this, &UCharacterStatusComponent::SetGroundStance_Native, EGroundStance::Normal);
+	}
 	// ...
 }
 

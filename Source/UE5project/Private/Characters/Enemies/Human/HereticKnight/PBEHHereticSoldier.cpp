@@ -267,14 +267,7 @@ void APBEHHereticSoldier::IsMontageEnded(UAnimMontage* Montage, bool bInterrupte
 {
 	if (nullptr == HSoldierAnim)
 		return;
-	MontageType Type = HSoldierAnim->CheckMontage(Montage);
-	switch (Type)
-	{
-	case MontageType::Appear:
-		IsAppear = false;
-		OnAppearEnd.Broadcast();
-		break;
-	}
+
 }
 
 void APBEHHereticSoldier::ResetCombo()
@@ -282,7 +275,6 @@ void APBEHHereticSoldier::ResetCombo()
 	CanAttack = true;
 	CurrentCombo = 0;
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	CurSkill = HSoldierSkill::None;
 }
 
 void APBEHHereticSoldier::Attack(FName AttackName, ACharacter* Target)
@@ -392,55 +384,9 @@ void APBEHHereticSoldier::DashUpdateFin()
 	PreviousCurveValue = 0.0f;
 }
 
-void APBEHHereticSoldier::SetHSoldierMode(HSoldierMode NextMode)
-{
-	if (NextMode != CurMode)
-	{
-		if (NextMode == HSoldierMode::OffenseMode)
-		{
-			IsDefenseMode = false;
-			IsBlock = false;
-		}
-		else
-		{
-			IsDefenseMode = true;
-			IsBlock = true;
-		}
-		CurMode = NextMode;
-	}
-}
-
-bool APBEHHereticSoldier::CheckBool(HSoldierVar CheckVar)
-{
-	switch (CheckVar)
-	{
-	case HSoldierVar::IsAttack:
-		return false;
-	case HSoldierVar::IsHit:
-		return IsHit;
-	case HSoldierVar::IsHitLarge:
-		return IsHitLarge;
-	case HSoldierVar::IsBlock:
-		return IsBlock;
-	case HSoldierVar::IsBlockBreak:
-		return IsBlockBreak;
-	case HSoldierVar::IsParried:
-		return IsParried;
-	case HSoldierVar::IsDefenseMode:
-		return IsDefenseMode;
-	default:
-		return false;
-	}
-}
-
 bool APBEHHereticSoldier::IsDashing()
 {
 	return IsDash;
-}
-
-HSoldierSkill APBEHHereticSoldier::CheckSkill()
-{
-	return CurSkill;
 }
 
 int32 APBEHHereticSoldier::CheckCombo()

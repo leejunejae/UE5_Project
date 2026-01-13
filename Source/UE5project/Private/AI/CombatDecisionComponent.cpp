@@ -88,7 +88,6 @@ FCombatDecisionResult UCombatDecisionComponent::Decide(const FCombatContext& InC
 
     // 컨텍스트 복사 + 히스토리 주입
     FCombatContext Ctx = InCtx;
-    CollectHistoryIntoContext(Ctx);
 
     // 1) DataTable rows 가져오기
     // GetAllRows는 매번 호출하면 비용이 있으니, 실제 프로젝트에선 BeginPlay에서 캐싱 추천

@@ -49,8 +49,8 @@ private:
 
 	FWeaponSetsInfo EquipedWeapon;
 
+	UPROPERTY(EditInstanceOnly, Category = Equipment)
 	FName DefaultWeaponKey = FName("DefaultSNS");
-
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

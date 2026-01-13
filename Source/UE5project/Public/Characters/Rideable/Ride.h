@@ -79,8 +79,6 @@ protected:
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
 
-	void Stop();
-	void MoveSpeedToggle();
 	bool FindMountPos();
 
 protected:
@@ -104,9 +102,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* LookAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
-		UInputAction* MoveSpeedToggleAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
 		UInputAction* DisMountAction;

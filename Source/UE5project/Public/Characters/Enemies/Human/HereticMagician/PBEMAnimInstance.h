@@ -4,11 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "PEnumHeader.h"
 #include "PBEMAnimInstance.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnEndSkillDelegate);
-DECLARE_MULTICAST_DELEGATE(FOnStartSkillDelgeate);
 /**
  * 
  */
@@ -23,54 +20,9 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	void PlayMontage(FName MontageName);
-	HereticMontage CheckMontage(UAnimMontage* Montage);
-
-public:
-	FOnStartSkillDelgeate OnDarkBallStart;
-	FOnStartSkillDelgeate OnSawToothStart;
-	FOnStartSkillDelgeate OnDarkSpearStart;
-	FOnStartSkillDelgeate OnDarkBeamStart;
-	FOnStartSkillDelgeate OnTornadoStart;
-
-	FOnEndSkillDelegate OnDarkBallEnd;
-	FOnEndSkillDelegate OnSawToothEnd;
-	FOnEndSkillDelegate OnDarkSpearEnd;
-	FOnEndSkillDelegate OnDarkBeamEnd;
-	FOnEndSkillDelegate OnTornadoEnd;
 
 protected:
 	class APBEHHeretic* Character = nullptr;
-
-private:
-	UFUNCTION()
-		void AnimNotify_NOT_Darkball();
-
-	UFUNCTION()
-		void AnimNotify_NOT_DarkballEnd();
-
-	UFUNCTION()
-		void AnimNotify_NOT_SawTooth();
-
-	UFUNCTION()
-		void AnimNotify_NOT_SawToothEnd();
-
-	UFUNCTION()
-		void AnimNotify_NOT_DarkSpear();
-
-	UFUNCTION()
-		void AnimNotify_NOT_DarkSpearEnd();
-
-	UFUNCTION()
-		void AnimNotify_NOT_DarkBeam();
-
-	UFUNCTION()
-		void AnimNotify_NOT_DarkBeamEnd();
-
-	UFUNCTION()
-		void AnimNotify_NOT_Tornado();
-
-	UFUNCTION()
-		void AnimNotify_NOT_TornadoEnd();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))

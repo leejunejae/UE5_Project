@@ -53,7 +53,7 @@ ARide::ARide()
 
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ride"));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh>HORSE_MESH(TEXT("/Game/00_Character/Ride/R_Horse/RH_Mesh/SK_Horse.SK_Horse"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh>HORSE_MESH(TEXT("/Game/05_Ride/DefaultHorse/Mesh/SK_Horse.SK_Horse"));
 	if (HORSE_MESH.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(HORSE_MESH.Object);
@@ -62,7 +62,7 @@ ARide::ARide()
 	GetMesh()->SetRelativeLocation(FVector(-50.0f, 0.0f, -90.0f));
 
 	Saddle = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Saddle"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SADDLE(TEXT("/Game/00_Character/Ride/R_Horse/RH_Mesh/SK_Horse_Saddle.SK_Horse_Saddle"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SADDLE(TEXT("/Game/05_Ride/DefaultHorse/Mesh/SK_Horse_Saddle.SK_Horse_Saddle"));
 	if (SADDLE.Succeeded())
 	{
 		Saddle->SetSkeletalMesh(SADDLE.Object);
@@ -71,7 +71,7 @@ ARide::ARide()
 	Saddle->SetLeaderPoseComponent(GetMesh());
 
 	Reins = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Reins"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> REINS(TEXT("/Game/00_Character/Ride/R_Horse/RH_Mesh/SK_Horse_Reins.SK_Horse_Reins"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> REINS(TEXT("/Game/05_Ride/DefaultHorse/Mesh/SK_Horse_Reins.SK_Horse_Reins"));
 	if (REINS.Succeeded())
 	{
 		Reins->SetSkeletalMesh(REINS.Object);
@@ -137,13 +137,12 @@ ARide::ARide()
 	GetCharacterMovement()->BrakingFrictionFactor = 2.0f;
 
 	GetCharacterMovement()->bRunPhysicsWithNoController = true;
-	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	InputSetting();
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	
-	static ConstructorHelpers::FClassFinder<UAnimInstance>HORSE_ANIM(TEXT("/Game/00_Character/Ride/R_Horse/RH_Animation/RHA_BP/RHAB_AnimBlueprint.RHAB_AnimBlueprint_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance>HORSE_ANIM(TEXT("/Game/05_Ride/AnimData/RHAB_AnimBlueprint.RHAB_AnimBlueprint_C"));
 	if (HORSE_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(HORSE_ANIM.Class);
@@ -170,12 +169,6 @@ void ARide::InputSetting()
 	if (IP_Look.Succeeded())
 	{
 		LookAction = IP_Look.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction>IP_MoveSpeedToggle(TEXT("/Game/00_Character/C_Input/C_MoveSpeedToggle.C_MoveSpeedToggle"));
-	if (IP_MoveSpeedToggle.Succeeded())
-	{
-		MoveSpeedToggleAction = IP_MoveSpeedToggle.Object;
 	}
 
 	static ConstructorHelpers::FObjectFinder<UInputAction>IP_DisMount(TEXT("/Game/00_Character/C_Input/C_SpawnRide.C_SpawnRide"));
@@ -252,7 +245,6 @@ void ARide::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ARide::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ARide::Look);
-		EnhancedInputComponent->BindAction(MoveSpeedToggleAction, ETriggerEvent::Triggered, this, &ARide::MoveSpeedToggle);
 		EnhancedInputComponent->BindAction(DisMountAction, ETriggerEvent::Triggered, this, &ARide::DisMount);
 	}
 }
@@ -365,16 +357,6 @@ void ARide::Look(const FInputActionValue& value)
 	const FVector2D LookAxisValue = value.Get<FVector2D>();
 	AddControllerPitchInput(LookAxisValue.Y * 0.5f);
 	AddControllerYawInput(LookAxisValue.X * -0.5f);
-}
-
-void ARide::Stop()
-{
-
-}
-
-void ARide::MoveSpeedToggle()
-{
-
 }
 
 void ARide::Mount_Implementation(ACharacter* RiderCharacter, FVector InitVelocity)

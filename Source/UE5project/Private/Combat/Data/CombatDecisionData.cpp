@@ -50,6 +50,7 @@ float FCombatPattern::CalcScore(const FCombatContext& Ctx) const
         case ECombatActionType::Attack:  Score *= 0.15f; break;
         case ECombatActionType::Recover: Score *= 0.9f;  break;
         case ECombatActionType::Chase:   Score *= 1.1f;  break;
+        case ECombatActionType::Alert:   Score *= 1.3f;  break;
         default:                         Score *= 0.7f;  break;
         }
     }

@@ -24,38 +24,9 @@ AFallenKnight::AFallenKnight(const FObjectInitializer& ObjectInitializer)
 	{
 		GetMesh()->SetSkeletalMesh(MAIN_MESH.Object);
 	}
-
-	TopMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Top"));
-	TopMesh->SetupAttachment(GetMesh());
-	TopMesh->SetLeaderPoseComponent(GetMesh());
-
-	BottomMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Bottom"));
-	BottomMesh->SetupAttachment(GetMesh());
-	BottomMesh->SetLeaderPoseComponent(GetMesh());
-
-	ShoesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Shoes"));
-	ShoesMesh->SetupAttachment(GetMesh());
-	ShoesMesh->SetLeaderPoseComponent(GetMesh());
-
-	GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Gloves"));
-	GlovesMesh->SetupAttachment(GetMesh());
-	GlovesMesh->SetLeaderPoseComponent(GetMesh());
-
-	HatMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hat"));
-	HatMesh->SetupAttachment(GetMesh());
-	HatMesh->SetLeaderPoseComponent(GetMesh());
-
-	SheatheMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Sheathe"));
-
-	FName SheatheSocket(TEXT("S_Sheathe"));
-
-	if (SheatheMesh)
-	{
-		SheatheMesh->SetupAttachment(GetMesh(), SheatheSocket);
-	}
 	
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/00_Character/C_Warrior/CW_Animation/CWA_BP/Player_AnimBP.Player_AnimBP_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/00_Character/Data/AnimData/Player_AnimBP.Player_AnimBP_C"));
 	
 	if (FallenKnight_ANIM.Succeeded())
 	{

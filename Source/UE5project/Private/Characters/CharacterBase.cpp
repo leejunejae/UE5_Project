@@ -37,7 +37,7 @@ ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer)
 	GetCharacterMovement()->bEnablePhysicsInteraction = false;
 
 	TeamID = 0;
-		//GetCharacterMovement()->bPushForceOnCharacter = false;
+	//GetCharacterMovement()->bPushForceOnCharacter = false;
 	//AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	//AIControllerClass = AAIController::StaticClass(); // 커스텀 컨트롤러가 있으면 그걸로
 }

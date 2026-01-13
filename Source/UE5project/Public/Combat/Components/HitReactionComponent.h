@@ -39,9 +39,9 @@ public:
 	virtual EHitResponse EvaluateHitResponse(const FAttackRequest& AttackRequest);
 	float CalculateHitAngle(const FVector HitPoint);
 
-	void OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo HitReaction, const FName SectionName);
-
-	FOnHitReactionMulDel OnHitAirReaction;
+	void OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted);
+	
+	FOnHitReactionMulDel HitEndDelegate;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
@@ -50,7 +50,8 @@ private:
 	FHitReactionInfo CurHitReaction = FHitReactionInfo();
 	//UAnimInstance* AnimInstance;
 
-	FOnMontageEnded OnHitReactionDelegate;
+	FOnMontageEnded HitMontageEndDelegate;
+	FOnMontageBlendingOutStarted HitMontageBlendingOutDelegate;
 
 protected:
 	TWeakObjectPtr<ACharacter> CachedCharacter;

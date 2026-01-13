@@ -24,7 +24,6 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	virtual void PlayMontage(FName MontageName);
-	virtual MontageType CheckMontage(UAnimMontage* Montage);
 
 public:
 	FOnStartHitDelegate OnStartHit;

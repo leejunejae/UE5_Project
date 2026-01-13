@@ -10,8 +10,6 @@
 void UAnimMode_Ground::OnModeEnter()
 {
 	bFirstTick = true;
-	if (Character.Get())
-		PrevYaw = Character->GetActorRotation().Yaw;
 }
 
 void UAnimMode_Ground::Tick(float DeltaSeconds)
@@ -24,8 +22,9 @@ void UAnimMode_Ground::Tick(float DeltaSeconds)
 
 	// 이동량
 	AnimInst->Speed = Character->GetVelocity().Length();                     // :contentReference[oaicite:10]{index=10}
+	AnimInst->Direction = ComputeCurrentDirection();
 	if (bFirstTick) { OnModeEnter(); bFirstTick = false; }
-	AnimInst->Direction = ComputeLeanYawPerSecond(DeltaSeconds);                    // ← GetAnimDirection 대체
+
 
 	// 점프/낙하/착지 판정
 	AnimInst->IsInAir = Character->GetMovementComponent()->IsFalling();          // :contentReference[oaicite:11]{index=11}
@@ -42,24 +41,13 @@ void UAnimMode_Ground::Tick(float DeltaSeconds)
 	UpdateFootIK(DeltaSeconds, AnimInst->Speed);
 }
 
-void UAnimMode_Ground::UpdateCurrentDirection()
+float UAnimMode_Ground::ComputeCurrentDirection()
 {
 	FVector WorldVelocity = Character->GetVelocity();
 	WorldVelocity.Z = 0.0f;
 	FRotator WorldRotation = Character->GetActorRotation();
-
-	FVector LocalVelocity = WorldRotation.UnrotateVector(WorldVelocity);
 	float LocalDirection = UKismetAnimationLibrary::CalculateDirection(WorldVelocity, WorldRotation);
-}
-
-float UAnimMode_Ground::ComputeLeanYawPerSecond(float DeltaSeconds)
-{
-	if (DeltaSeconds <= KINDA_SMALL_NUMBER) return 0.f;
-	const float CurYaw = Character->GetActorRotation().Yaw;
-	const float YawDelta = CurYaw - PrevYaw;
-	PrevYaw = CurYaw;
-	const float YawPerSec = UKismetMathLibrary::SafeDivide(YawDelta, DeltaSeconds);
-	return YawPerSec * LeanScale; // = Direction:contentReference[oaicite:4]{index=4}
+	return LocalDirection;
 }
 
 TTuple<FVector, float> UAnimMode_Ground::FootTrace(

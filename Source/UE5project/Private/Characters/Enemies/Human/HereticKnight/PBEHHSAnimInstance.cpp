@@ -32,14 +32,6 @@ void UPBEHHSAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	if (HSoldier)
 	{
-		CurSkill = HSoldier->CheckSkill();
-		IsAttack = HSoldier->CheckBool(HSoldierVar::IsAttack);
-		IsHit = HSoldier->CheckBool(HSoldierVar::IsHit);
-		IsHitLarge = HSoldier->CheckBool(HSoldierVar::IsHitLarge);
-		IsBlock = HSoldier->CheckBool(HSoldierVar::IsBlock);
-		IsDefenseMode = HSoldier->CheckBool(HSoldierVar::IsDefenseMode);
-		IsBlockBreak = HSoldier->CheckBool(HSoldierVar::IsBlockBreak);
-		IsParried = HSoldier->CheckBool(HSoldierVar::IsParried);
 		IsDash = HSoldier->IsDashing();
 		IsLookAt = HSoldier->IsLookingAt();
 		LookAtTarget = HSoldier->GetLookingTarget();
@@ -105,17 +97,6 @@ void UPBEHHSAnimInstance::PlayMontage(FName MontageName)
 		Montage_Play(Combo1);
 	}
 
-}
-
-MontageType UPBEHHSAnimInstance::CheckMontage(UAnimMontage* Montage)
-{
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *Montage->GetName());
-	if (Montage == AppearMontage)
-		return MontageType::Appear;
-	else if (Montage == AttackMontage)
-		return MontageType::Attack;
-	else
-		return MontageType::None;
 }
 
 void UPBEHHSAnimInstance::AnimNotify_NOT_CanNextCombo()

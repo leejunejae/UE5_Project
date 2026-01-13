@@ -15,7 +15,7 @@ APlayerRide::APlayerRide()
 	PrimaryActorTick.bCanEverTick = true;
 
 	DespawnEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("RideDespawn"));
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem>DESPAWNEFFECT(TEXT("/Game/00_Character/Ride/R_Horse/NS_DespawnPlayerRide.NS_DespawnPlayerRide"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem>DESPAWNEFFECT(TEXT("/Game/05_Ride/NS_DespawnPlayerRide.NS_DespawnPlayerRide"));
 	if (DESPAWNEFFECT.Succeeded())
 	{
 		DespawnEffect->SetAsset(DESPAWNEFFECT.Object);
@@ -24,7 +24,7 @@ APlayerRide::APlayerRide()
 	DespawnEffect->bAutoActivate = false;
 
 	SpawnEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("RideSpawn"));
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem>SPAWNEFFECT(TEXT("/Game/00_Character/Ride/R_Horse/NS_SpawnPlayerRide.NS_SpawnPlayerRide"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem>SPAWNEFFECT(TEXT("/Game/05_Ride/NS_SpawnPlayerRide.NS_SpawnPlayerRide"));
 	if (SPAWNEFFECT.Succeeded())
 	{
 		SpawnEffect->SetAsset(SPAWNEFFECT.Object);
@@ -32,7 +32,7 @@ APlayerRide::APlayerRide()
 	SpawnEffect->SetupAttachment(GetMesh());
 	SpawnEffect->bAutoActivate = false;
 
-	static ConstructorHelpers::FObjectFinder<UCurveFloat> MOUNTCURVE(TEXT("/Game/00_Character/Ride/R_Horse/DissolveCurve.DissolveCurve"));
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> MOUNTCURVE(TEXT("/Game/05_Ride/DissolveCurve.DissolveCurve"));
 	if (MOUNTCURVE.Succeeded())
 	{
 		MountCurve = MOUNTCURVE.Object;
@@ -75,6 +75,7 @@ void APlayerRide::DespawnFin()
 {
 	MountTimeline.SetTimelineFinishedFunc(FOnTimelineEvent());
 	Destroy();
+	
 }
 
 void APlayerRide::SpawnFin()

@@ -8,7 +8,6 @@
 
 // 구조체, 자료형 
 #include "Characters/Data/BaseCharacterHeader.h"
-#include "PEnumHeader.h"
 
 // 인터페이스
 #include "Characters/Player/Interfaces/PlayerInterface.h"
@@ -22,19 +21,23 @@
  */
 class UInputMappingContext;
 class UInputAction;
+
 class UCameraComponent;
 class USpringArmComponent;
 class UCharacterMovementComponent;
 class UBaseChracterMovementComponent;
 
+class UInputConfigDataAsset;
+
 class UPlayerBaseAnimInstance;
 class UPlayerStatusComponent;
-class UStatComponent;
+class UPlayerStatComponent;
 class UEquipmentComponent;
 class UCombatComponent;
 class UPlayerAttackComponent;
 class UPlayerHitReactionComponent;
 class UInteractComponent;
+class ULockOnComponent;
 
 
 class UDefaultWidget;
@@ -88,8 +91,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 		class UBaseCharacterMovementComponent* BaseMovement;
 
-	MovementDirection CurrentDirection;
-
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		TObjectPtr<USpringArmComponent> SpringArm;
 
@@ -117,9 +118,6 @@ protected:
 		TObjectPtr<UInputAction> AttackAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
-		TObjectPtr<UInputAction> HeavyAttackAction;
-
-	UPROPERTY(EditAnywhere, Category = Input)
 		TObjectPtr<UInputAction> DodgeAction;
 
 	UPROPERTY(EditAnywhere, Category = Input)
@@ -142,6 +140,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Input)
 		TObjectPtr<UInputAction> ModifierAction;
+
 
 	FVector2D AimOffVal;
 
@@ -197,6 +196,9 @@ public:
 	/* Public FUNCTION */
 #pragma region Input
 private:
+	UPROPERTY(EditAnywhere, Category = "Input")
+		TObjectPtr<UInputConfigDataAsset> InputConfig;
+
 	FORCEINLINE void ModifierInput() { IsModifierInput = true; }
 	FORCEINLINE void ModifierInputEnd() { IsModifierInput = false; }
 
@@ -206,12 +208,12 @@ private:
 #pragma region Status
 private:
 	UPROPERTY(VisibleAnywhere, Category = Stat)
-		TObjectPtr<UStatComponent> StatComponent;
+		TObjectPtr<UPlayerStatComponent> StatComponent;
 
 	bool IsBlockInput = false;
 
 public:
-	FORCEINLINE UStatComponent* GetStatComponent() const { return StatComponent; }
+	FORCEINLINE UPlayerStatComponent* GetStatComponent() const { return StatComponent; }
 
 #pragma endregion Status
 
@@ -377,4 +379,32 @@ public:
 
 
 #pragma endregion Combat
+
+#pragma region LockOn
+private:
+	UPROPERTY(EditAnywhere, Category = Input)
+		TObjectPtr<UInputAction> LockOnAction;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+		TObjectPtr<UInputAction> LockOnSwitchLeftAction;
+
+	UPROPERTY(EditAnywhere, Category = Input)
+		TObjectPtr<UInputAction> LockOnSwitchRightAction;
+
+	UPROPERTY(VisibleAnywhere, Category = "LockOn")
+		TObjectPtr<ULockOnComponent> LockOnComponent;
+
+	UPROPERTY(EditAnywhere, Category = "LockOn")
+		float LockOnTurnInterpSpeed = 12.f;
+
+	void ApplyLockOnRotation(float DeltaTime);
+	void SetLockOnMovementMode(bool bLockOn);
+	void OnLockOnToggle();
+	void OnLockOnSwitchLeft();
+	void OnLockOnSwitchRight();
+
+public:
+	FORCEINLINE ULockOnComponent* GetLockOnComponent() const { return LockOnComponent; }
+
+#pragma endregion LockOn
 };

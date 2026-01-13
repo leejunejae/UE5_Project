@@ -145,6 +145,9 @@ protected:
 		bool IsLanding;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Combat", meta = (AllowPrivateAccess = "true"))
+		bool bIsLockOn;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Combat", meta = (AllowPrivateAccess = "true"))
 		float BlockBlend;
 
 	// Foot IK //

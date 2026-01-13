@@ -65,7 +65,11 @@ struct FPlayerAnimSet
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-        TSoftObjectPtr<UBlendSpace1D> Locomotion_CycleBS;             // 무기별 보행/달리기 블렌드스페이스
+        TSoftObjectPtr<UBlendSpace1D> Locomotion_Normal_CycleBS;             // 무기별 보행/달리기 블렌드스페이스
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        TSoftObjectPtr<UBlendSpace> Locomotion_Combat_Forward_BS;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        TSoftObjectPtr<UBlendSpace> Locomotion_Combat_Backward_BS;
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         TSoftObjectPtr<UAnimSequence> Locomotion_Idle;
     UPROPERTY(EditAnywhere, BlueprintReadWrite)

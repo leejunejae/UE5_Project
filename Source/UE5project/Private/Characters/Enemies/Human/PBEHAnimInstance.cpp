@@ -35,20 +35,6 @@ void UPBEHAnimInstance::PlayMontage(FName MontageName)
 	
 }
 
-MontageType UPBEHAnimInstance::CheckMontage(UAnimMontage* Montage)
-{
-	if (Montage == AttackMontage)
-		return MontageType::Attack;
-	else if (Montage == DeathMontage)
-		return MontageType::Death;
-	else if (Montage == HitMontage)
-		return MontageType::Hit;
-	else if (Montage == AppearMontage)
-		return MontageType::Appear;
-	else
-		return MontageType::None;
-}
-
 void UPBEHAnimInstance::AnimNotify_NOT_StartHit()
 {
 	OnStartHit.Broadcast();

@@ -23,18 +23,6 @@ enum class EAIBehaviorState : uint8
 };
 
 UENUM(BlueprintType)
-enum class EAICombatState : uint8
-{
-	None        UMETA(DisplayName = "None"),
-	Approach    UMETA(DisplayName = "Approach"),   // 거리 좁히기
-	Strafe      UMETA(DisplayName = "Strafe"),     // 좌우로 돌기
-	Attack      UMETA(DisplayName = "Attack"),     // 공격 콤보
-	Defend      UMETA(DisplayName = "Defend"),     // 가드 / 회피 위주
-	Retreat     UMETA(DisplayName = "Retreat"),    // 거리를 벌리기
-	Recover     UMETA(DisplayName = "Recover"),    // 스태미너/쿨다운 회복
-};
-
-UENUM(BlueprintType)
 enum class EThreatSense : uint8
 {
     None,
@@ -259,7 +247,8 @@ private:
 	bool bHostileMonitoring = false;
 
 public:
-	void HandleBehaviorStateChange(EAIBehaviorState NewState);
+    //FORCEINLINE FThreatEntry GetHostileEntry(AActor* Hostile) const { return HostileMap.Find(Hostile); }
+
 #pragma endregion Behavior State
 
 #pragma region Combat State

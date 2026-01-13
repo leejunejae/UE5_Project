@@ -30,7 +30,11 @@ protected:
 #pragma region Animation Data
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
-		TObjectPtr<UBlendSpace1D> Locomotion_CycleBS = nullptr;
+		TObjectPtr<UBlendSpace1D> Locomotion_Normal_CycleBS = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UBlendSpace> Locomotion_Combat_Forward_BS = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
+		TObjectPtr<UBlendSpace> Locomotion_Combat_Backward_BS = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
 		TObjectPtr<UAnimSequence> Locomotion_Idle = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Anim, Meta = (AllowPrivateAccess = true))
@@ -76,6 +80,12 @@ protected:
 	void HandleWeaponChange(EWeaponType WeaponData);
 
 #pragma endregion Animation Data
+
+#pragma region Locomotion
+protected:
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Ground|Locomotion", meta = (AllowPrivateAccess = "true"))
+		float LeanAngle;
+#pragma endregion Locomotion
 
 #pragma region Input
 private:

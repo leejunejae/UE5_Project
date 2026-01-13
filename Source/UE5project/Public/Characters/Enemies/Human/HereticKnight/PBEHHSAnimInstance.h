@@ -21,7 +21,6 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	void PlayMontage(FName MontageName) override;
-	MontageType CheckMontage(UAnimMontage* Montage) override;
 
 public:
 	FOnMultDelegate OnNextCombo;
@@ -73,9 +72,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
 		float InputDirection;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character, Meta = (AllowPrivateAccess = true))
-		HSoldierSkill CurSkill = HSoldierSkill::None;
 
 
 	float InputDirectionX;

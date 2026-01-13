@@ -34,10 +34,12 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 
 	AActor* Target = Cast<AActor>(Blackboard->GetValueAsObject(EnemyController->Key_Target));
 	
+
+
 	Context.DistanceToTarget = Blackboard->GetValueAsFloat(EnemyController->Key_TargetDistance);
 	Context.AbsDeltaYawDeg = AbsDeltaYawDeg(Enemy, Target);
-	Context.Aggressiveness;
-	Context.bHasLOS;
+	Context.Aggressiveness; // EnemyStat에서 가져오기
+	Context.bHasLOS = true; // 
 	Context.bPoiseBroken;
 	Context.bRangedThreat;
 	Context.bStanceBroken;
@@ -48,7 +50,7 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	Context.bTargetStanceBroken;
 	Context.HPPercent;
 	Context.Phase;
-	Context.CurrentTime
+	Context.CurrentTime;;
 
 	//CombatPatternDT->
 }

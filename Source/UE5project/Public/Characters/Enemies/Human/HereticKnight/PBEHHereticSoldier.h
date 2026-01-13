@@ -22,11 +22,7 @@ public:
 	void Death() override;
 	void Block(bool IsDefenseMode) override;
 	void Dash(FVector TargetLocation) override;
-	void SetHSoldierMode(HSoldierMode NextMode);
-	bool CheckBool(HSoldierVar CheckVar);
 	bool IsDashing();
-
-	HSoldierSkill CheckSkill();
 	int32 CheckCombo();
 	FVector GetDashDirection();
 
@@ -86,7 +82,6 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		int32 CurrentCombo = 0;
 
-	HSoldierSkill CurSkill =  HSoldierSkill::None;
 	bool IsBlockBreak, IsHitLarge;
 	bool IsCharge;
 	bool CanAttack;
@@ -95,9 +90,6 @@ private:
 
 	float AnimPlayRate = 1.0f;
 	FVector DashVector;
-
-	HSoldierMode CurMode = HSoldierMode::OffenseMode;
-
 
 	//Dash Function
 	FTimerHandle DashTimerHandle;

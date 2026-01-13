@@ -38,7 +38,6 @@ public:
 	APBEHuman(const FObjectInitializer& ObjectInitializer);
 
 	void SetMovementSpeed(float speed);
-	FRangeInfo GetIdealRange();
 
 	/*
 	virtual void TakeDamage_Implementation(FAttackInfo DamageInfo);
@@ -117,7 +116,6 @@ protected:
 	bool IsBlock;
 	bool IsParried;
 
-	MovementMode CurrentMovement;
 	float MeleeRadius;
 	float DefendRadius;
 	float RangedRadius;

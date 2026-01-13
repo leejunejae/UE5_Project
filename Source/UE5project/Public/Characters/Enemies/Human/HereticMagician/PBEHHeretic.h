@@ -19,15 +19,12 @@ class UE5PROJECT_API APBEHHeretic : public APBEHuman
 public:
 	APBEHHeretic(const FObjectInitializer& ObjectInitializer);
 	void Tick(float DeltaTime) override;
-	void Skill_Attack(HereticSkill SelectedSkill);
 	void Summon() override;
 	void Skill_DarkTornado();
 	void Skill_DarkSawTooth();
 	void Skill_DarkBall();
 	void Skill_DarkSpear();
 	void Skill_DarkBeam();
-	bool CheckBool(HereticVar CheckVar);
-	TArray<HereticSkill> CheckSkillIsReady();
 
 protected:
 	void Teleport() override;

@@ -69,6 +69,8 @@ void UEquipmentComponent::BeginPlay()
 		WeaponMesh->RegisterComponent();
 		WeaponMesh->AttachToComponent(CachedCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+		WeaponMesh->SetCollisionProfileName(TEXT("NoCollision"));
 		WeaponMesh->SetGenerateOverlapEvents(false);
 		WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 
@@ -76,6 +78,8 @@ void UEquipmentComponent::BeginPlay()
 		SubEquipMesh->RegisterComponent();
 		SubEquipMesh->AttachToComponent(CachedCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, SubEquipSocket);
 		SubEquipMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SubEquipMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+		SubEquipMesh->SetCollisionProfileName(TEXT("NoCollision"));
 		SubEquipMesh->SetGenerateOverlapEvents(false);
 		SubEquipMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 

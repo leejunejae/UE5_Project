@@ -14,6 +14,8 @@
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
 
+#include "Utils/CoreLog.h"
+
 // Sets default values for this component's properties
 UAttackComponent::UAttackComponent()
 {
@@ -172,7 +174,7 @@ void UAttackComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
 					float AnimSectionTime = AnimInstance->GetCurveValue(FName("AnimSectionTime"));
 					float StartTime = BranchingPointPayload.NotifyEvent->GetTriggerTime() - AnimSectionTime;
 					float EndTime = BranchingPointPayload.NotifyEvent->GetEndTriggerTime() - AnimSectionTime;
-					UE_LOG(LogTemp, Log, TEXT("NotifyState: %s, Start: %f, End: %f"),
+					UE_LOG(Log_Attack, Log, TEXT("NotifyState: %s, Start: %f, End: %f"),
 						*BranchingPointPayload.NotifyEvent->NotifyName.ToString(),
 						StartTime,
 						EndTime);
@@ -192,7 +194,7 @@ void UAttackComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
 				float AnimSectionTime = AnimInstance->GetCurveValue(FName("AnimSectionTime"));
 				float StartTime = BranchingPointPayload.NotifyEvent->GetTriggerTime() - AnimSectionTime;
 				float EndTime = BranchingPointPayload.NotifyEvent->GetEndTriggerTime() - AnimSectionTime;
-				UE_LOG(LogTemp, Log, TEXT("NotifyState: %s, Start: %f, End: %f"),
+				UE_LOG(Log_Attack, Log, TEXT("NotifyState: %s, Start: %f, End: %f"),
 					*BranchingPointPayload.NotifyEvent->NotifyName.ToString(),
 					StartTime,
 					EndTime);
@@ -218,7 +220,7 @@ void UAttackComponent::OnMontageNotifyEnd(FName NotifyName, const FBranchingPoin
 		float StartTime = BranchingPointPayload.NotifyEvent->GetTriggerTime() - AnimSectionTime;
 		float EndTime = BranchingPointPayload.NotifyEvent->GetEndTriggerTime() - AnimSectionTime;
 		DetectAttackTarget(WeaponMeshComponent, WeaponInfo, StartTime, EndTime, true, false);
-		UE_LOG(LogTemp, Warning, TEXT("Reset Detect"));
+		UE_LOG(Log_Attack, Warning, TEXT("Reset Detect"));
 		TrailComponent->Deactivate();
 		DetectTracePrevTime.Key = false;
 		HitActorListCurrentAttack.Empty();
@@ -245,8 +247,6 @@ void UAttackComponent::OnMontageNotifyEnd(FName NotifyName, const FBranchingPoin
 
 void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime,bool IsDetectEnd, bool IsSubWeaponAttack)
 {
-	UE_LOG(LogTemp, Warning, TEXT("DetectTarget"));
-
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 
 	// 실행하는 공격 애니메이션의 본 트랜스폼 데이터 가져오기
@@ -380,13 +380,17 @@ void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWea
 						IHitReactionInterface::Execute_OnHit(HitActor, OutAttackData);
 
 						// 피격에 필요한 데이터 전달(인터페이스)
-						UE_LOG(LogTemp, Warning, TEXT("Hit Bone = %s"), *Result.BoneName.ToString());
+						UE_LOG(Log_Attack, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
+						UE_LOG(Log_Attack, Warning, TEXT("Damage : %f"), *Result.BoneName.ToString());
+						UE_LOG(Log_Attack, Warning, TEXT("Poise Damage : %f"), *Result.BoneName.ToString());
+						UE_LOG(Log_Attack, Warning, TEXT("Stance Damage : %f"), *Result.BoneName.ToString());
+						UE_LOG(Log_Attack, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
 
 					}
 				}
 				else if (HitActorListCurrentAttack.Contains(HitActor))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Already Hit Actor"));
+					UE_LOG(Log_Attack, Warning, TEXT("Already Hit Actor"));
 				}
 			}
 		}

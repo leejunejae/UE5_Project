@@ -69,16 +69,6 @@ void APBEHuman::SetMovementSpeed(float speed)
 	GetCharacterMovement()->MaxWalkSpeed = speed;
 }
 
-FRangeInfo APBEHuman::GetIdealRange()
-{
-	FRangeInfo ReturnRange;
-	ReturnRange.Melee = MeleeRadius;
-	ReturnRange.Ranged = RangedRadius;
-	ReturnRange.Defend = DefendRadius;
-
-	return ReturnRange;
-}
-
 void APBEHuman::Death()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Enemy Dead"));

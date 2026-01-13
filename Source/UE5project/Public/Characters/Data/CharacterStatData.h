@@ -67,7 +67,7 @@ struct FAttribute_Strength : public FTableRowBase
 		int32 Level;
 
 	UPROPERTY(EditAnywhere)
-		float MeleeDefense = 0.f;
+		float PhysicalDefense = 0.f;
 };
 
 USTRUCT(BlueprintType)
@@ -79,7 +79,10 @@ struct FAttribute_Dexterity : public FTableRowBase
 		int32 Level;
 
 	UPROPERTY(EditAnywhere)
-		float RangedDefense = 0.f;
+		float Poise = 0.f;
+
+	UPROPERTY(EditAnywhere)
+		float Evasion = 0.f;
 };
 
 USTRUCT(BlueprintType)
@@ -103,7 +106,7 @@ struct FAttribute_Vigor : public FTableRowBase
 		int32 Level;
 
 	UPROPERTY(EditAnywhere)
-		float Poise = 0.f;
+		float EquipLoad = 0.f;
 
 	UPROPERTY(EditAnywhere)
 		float Resistance = 0.f;
@@ -153,45 +156,91 @@ struct FCharacterAttributes
 };
 
 USTRUCT(BlueprintType)
+struct FResourceStat
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) 
+		float Current;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) 
+		float Max;
+
+public:
+	void InitResource(float Value)
+	{
+		Current = Value;
+		Max = Value;
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FCharacterStats
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float MaxHealth = 0;
+		FResourceStat Health;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Health = 0;
+		FResourceStat Poise;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float MaxStamina = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Stamina = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float MaxFocus = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Focus = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float MeleeDefense = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float RangedDefense = 0;
+		float PhysicalDefense = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float MagicDefense = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float MaxPoise = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Poise = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float Resistance = 0;
+
+public:
+	FORCEINLINE float GetHealth() const { return Health.Current; }
+	FORCEINLINE float GetMaxHealth() const { return Health.Max; }
+	FORCEINLINE float GetHealthPercent() const
+	{
+		return (GetMaxHealth() > KINDA_SMALL_NUMBER) ? (GetHealth() / GetMaxHealth()) : 0.0f;
+	}
+
+	FORCEINLINE float GetPoise() const { return Poise.Current; }
+	FORCEINLINE  float GetMaxPoise() const { return Poise.Max; }
+};
+
+USTRUCT(BlueprintType)
+struct FPlayerStats
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FCharacterStats BaseStats;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FResourceStat Stamina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FResourceStat Focus;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FResourceStat EquipLoad;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Evasion;
+};
+
+USTRUCT(BlueprintType)
+struct FNPCStats
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FCharacterStats BaseStats;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FResourceStat Stance;
+
+public:
+	FORCEINLINE float GetStance() const { return Stance.Current; }
+	FORCEINLINE float GetMaxStance() const { return Stance.Max; }
 };
 
 UCLASS()

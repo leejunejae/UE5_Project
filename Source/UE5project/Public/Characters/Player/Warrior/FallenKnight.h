@@ -32,19 +32,4 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void PostInitializeComponents() override;
-
-private:
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* TopMesh;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* BottomMesh;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* ShoesMesh;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* GlovesMesh;
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		USkeletalMeshComponent* HatMesh;
-
-	UPROPERTY(VisibleAnywhere, Category = Equipment)
-		UStaticMeshComponent* SheatheMesh;
 };

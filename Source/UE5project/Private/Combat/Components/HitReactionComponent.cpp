@@ -6,7 +6,7 @@
 #include "Characters/Components/CharacterStatusComponent.h"
 #include "Characters/Interfaces/CharacterStatusInterface.h"
 #include "Characters/Data/StatusData.h"
-#include "Characters/Components/StatComponent.h"
+#include "Utils/CoreLog.h"
 
 // Sets default values for this component's properties
 UHitReactionComponent::UHitReactionComponent()
@@ -121,18 +121,27 @@ void UHitReactionComponent::PlayReaction(const FHitReactionInfo HitReaction, con
 
 	AnimInstance->Montage_JumpToSection(FoundData->SectionName);
 
-	if (OnHitReactionDelegate.IsBound())
-		OnHitReactionDelegate.Unbind();
+	//if (HitMontageEndDelegate.IsBound())
+		//HitMontageEndDelegate.Unbind();
 
-	OnHitReactionDelegate.BindUObject(this, &UHitReactionComponent::OnHitReactionEnded, HitReaction, FoundData->SectionName);
-	AnimInstance->Montage_SetBlendingOutDelegate(OnHitReactionDelegate);
+	if (HitMontageBlendingOutDelegate.IsBound())
+		HitMontageBlendingOutDelegate.Unbind();
+
+	//HitMontageEndDelegate.BindUObject(this, &UHitReactionComponent::OnHitReactionEnded);
+	HitMontageBlendingOutDelegate.BindUObject(this, &UHitReactionComponent::OnHitReactionEnded);
+
+	//AnimInstance->Montage_SetEndDelegate(HitMontageEndDelegate, HitReaction.Anim);
+	AnimInstance->Montage_SetBlendingOutDelegate(HitMontageBlendingOutDelegate, HitReaction.Anim);
 }
 
-void UHitReactionComponent::OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted, const FHitReactionInfo HitReaction, const FName SectionName)
+void UHitReactionComponent::OnHitReactionEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage != HitReaction.Anim) return;
-	UE_LOG(LogTemp, Warning, TEXT("Hit ReactionEnded"));
-	ICharacterStatusInterface::Execute_SetGroundStance(CachedPlayerStatus.GetObject(), EGroundStance::Normal);
+	if (Montage != CurHitReaction.Anim) return;
+
+	if (AActor* Owner = GetOwner())UE_LOG(Log_Hit, Log, TEXT("[HitReactionComponent] %s stagger response End"), *Owner->GetName());
+
+	//ICharacterStatusInterface::Execute_SetGroundStance(CachedPlayerStatus.GetObject(), EGroundStance::Normal);
+	HitEndDelegate.Broadcast();
 }
 
 float UHitReactionComponent::CalculateHitAngle(const FVector HitPoint)

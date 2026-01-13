@@ -60,7 +60,9 @@ void UPlayerBaseAnimInstance::HandleWeaponChange(EWeaponType WeaponData)
 
 	const FPlayerAnimSet* TargetAnimSet = PlayerAnimSubsystem->GetPlayerAnimSet(TargetAnimType);
 
-	Locomotion_CycleBS = TargetAnimSet->Locomotion_CycleBS.IsNull() ? nullptr : TargetAnimSet->Locomotion_CycleBS.LoadSynchronous();
+	Locomotion_Normal_CycleBS = TargetAnimSet->Locomotion_Normal_CycleBS.IsNull() ? nullptr : TargetAnimSet->Locomotion_Normal_CycleBS.LoadSynchronous();
+	Locomotion_Combat_Forward_BS = TargetAnimSet->Locomotion_Combat_Forward_BS.IsNull() ? nullptr : TargetAnimSet->Locomotion_Combat_Forward_BS.LoadSynchronous();
+	Locomotion_Combat_Backward_BS = TargetAnimSet->Locomotion_Combat_Backward_BS.IsNull() ? nullptr : TargetAnimSet->Locomotion_Combat_Backward_BS.LoadSynchronous();
 	Locomotion_Idle = TargetAnimSet->Locomotion_Idle.IsNull() ? nullptr : TargetAnimSet->Locomotion_Idle.LoadSynchronous();
 	Locomotion_Start = TargetAnimSet->Locomotion_Start.IsNull() ? nullptr : TargetAnimSet->Locomotion_Start.LoadSynchronous();
 	Locomotion_Stop_Jog = TargetAnimSet->Locomotion_Stop_Jog.IsNull() ? nullptr : TargetAnimSet->Locomotion_Stop_Jog.LoadSynchronous();
