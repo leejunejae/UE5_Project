@@ -12,64 +12,6 @@
  * 
  */
 
-
-USTRUCT(Atomic, BlueprintType)
-struct FPlayerAttackDetail
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FBaseAttackData BaseAttackData;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float DamageMultiplier;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float PoiseDamageMultiplier;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float StanceDamageMultiplier;
-};
-
-USTRUCT(Atomic, BlueprintType)
-struct FPlayerAttackInfo
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FName AttackName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UAnimMontage* Anim;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FPlayerAttackDetail> AttackDetail;
-
-	bool IsValid() const
-	{
-		return Anim != nullptr && !AttackDetail.IsEmpty();
-	}
-
-	inline bool operator==(const FPlayerAttackInfo& Other) const
-	{
-		return AttackName == Other.AttackName;
-	}
-};
-
-uint32 GetTypeHash(const FPlayerAttackInfo& AttackType);
-
-USTRUCT(Atomic, BlueprintType)
-struct FPlayerAttackInfoList
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TSet<FPlayerAttackInfo> AttackInfoList;
-};
-
 UCLASS()
 class UE5PROJECT_API UPlayerAttackDataAsset : public UPrimaryDataAsset
 {
@@ -77,7 +19,7 @@ class UE5PROJECT_API UPlayerAttackDataAsset : public UPrimaryDataAsset
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TMap<EWeaponType, FPlayerAttackInfoList> AttackInfoList;
+		TMap<EWeaponType, FAttackContextSet> AttackContextMap;
 
-	FPlayerAttackInfoList FindPlayerAttackInfo(const EWeaponType& WeaponType, bool bLogNotFound = false) const;
+	FAttackContextSet FindPlayerAttackContext(const EWeaponType& WeaponType, bool bLogNotFound = false) const;
 };

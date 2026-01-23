@@ -38,20 +38,20 @@ void UStatComponent::ChangeMaxPoise(const float Amount)
 	GetCommonStats().Poise.Max += Amount;
 }
 
-bool UStatComponent::ApplyDamage(const float Amount, const EAttackType AttackType)
+bool UStatComponent::ApplyDamage(const float Amount, const EDamageType AttackType)
 {
 	FCharacterStats& Stats = GetCommonStats();
 
 	float Delta = Amount;
 	switch (AttackType)
 	{
-	case EAttackType::PhysicalDamage:
+	case EDamageType::PhysicalDamage:
 		Delta *= (1.0f - (Stats.PhysicalDefense / (Stats.PhysicalDefense + 100.0f)));
 		break;
-	case EAttackType::MagicalDamage:
+	case EDamageType::MagicalDamage:
 		Delta *= (1.0f - (Stats.MagicDefense / (Stats.MagicDefense + 100.0f)));
 		break;
-	case EAttackType::TrueDamage:
+	case EDamageType::TrueDamage:
 		break;
 	}
 

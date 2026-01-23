@@ -5,8 +5,10 @@
 
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/StaticMeshSocket.h"
 
 #include "Core/Subsystems/GameInstanceSystem/WeaponDataSubsystem.h"
+#include "Utils/CoreLog.h"
 
 // Sets default values for this component's properties
 UEquipmentComponent::UEquipmentComponent()
@@ -15,27 +17,6 @@ UEquipmentComponent::UEquipmentComponent()
 	// off to improve performance if you don't need them.
 	//PrimaryComponentTick.bCanEverTick = true;
 
-	/*
-	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Weapon"));
-	WeaponMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WeaponMesh->SetGenerateOverlapEvents(false);
-	*/
-
-	/*
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> WEAPON_MESH(TEXT("/Game/Asset/SnSAnimsetPro/Models/Sword/Sword.Sword"));
-	if (WEAPON_MESH.Succeeded())
-	{
-		WeaponMesh->SetStaticMesh(WEAPON_MESH.Object);
-	}
-	
-
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SUBEQUIP_MESH(TEXT("/Game/Asset/Bjorn_Viking/Mesh/SM_Bjorn_Viking_Shield.SM_Bjorn_Viking_Shield"));
-	if (SUBEQUIP_MESH.Succeeded())
-	{
-		SubEquipMesh->SetStaticMesh(SUBEQUIP_MESH.Object);
-	}
-	*/
 	// ...
 }
 
@@ -82,8 +63,6 @@ void UEquipmentComponent::BeginPlay()
 		SubEquipMesh->SetCollisionProfileName(TEXT("NoCollision"));
 		SubEquipMesh->SetGenerateOverlapEvents(false);
 		SubEquipMesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
-
-		EquipWeapon_Implementation(DefaultWeaponKey);
 	}
 }
 
@@ -150,6 +129,41 @@ FVector UEquipmentComponent::GetWeaponSocketLocation_Implementation(FName Socket
 
 	return !IsSubWeapon ? WeaponMesh->GetSocketLocation(SocketName) : SubEquipMesh->GetSocketLocation(SocketName);
 }
+
+FAttackTraceSource UEquipmentComponent::GetAttackTraceSource_Implementation(EAttackSourceType AttackSourceType) const
+{
+	FAttackTraceSource OutData;
+
+	switch (AttackSourceType)
+	{
+	case EAttackSourceType::MainHand:
+	{
+		OutData.TraceComponent = WeaponMesh;
+		OutData.Radius = EquipedWeapon.MainWeapon.HitBoxRadius;
+		break;
+	}
+	case EAttackSourceType::OffHand:
+	{
+		OutData.TraceComponent = SubEquipMesh;
+		OutData.Radius = EquipedWeapon.SubWeapon.HitBoxRadius;
+		break;
+	}
+	}
+
+	return OutData;
+}
+
+FAttackDamageSource UEquipmentComponent::GetAttackDamageSource_Implementation() const
+{
+	FAttackDamageSource OutData;
+
+	OutData.AttackRating = EquipedWeapon.AttackPower;
+	OutData.PoiseRating = EquipedWeapon.PoisePower;
+	OutData.StanceRating = EquipedWeapon.StancePower;
+
+	return OutData;
+}
+
 
 bool UEquipmentComponent::ReCastOwner()
 {

@@ -39,6 +39,7 @@ class UPlayerHitReactionComponent;
 class UInteractComponent;
 class ULockOnComponent;
 
+class UPlayerConfig;
 
 class UDefaultWidget;
 
@@ -194,6 +195,14 @@ public:
 
 
 	/* Public FUNCTION */
+#pragma region Init Data
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
+		TObjectPtr<UPlayerConfig> Config;
+
+	void ApplyConfig();
+#pragma endregion
+
 #pragma region Input
 private:
 	UPROPERTY(EditAnywhere, Category = "Input")

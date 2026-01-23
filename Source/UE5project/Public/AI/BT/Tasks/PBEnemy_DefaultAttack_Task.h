@@ -16,17 +16,4 @@ class UE5PROJECT_API UPBEnemy_DefaultAttack_Task : public UBTTaskNode
 	
 public:
 	UPBEnemy_DefaultAttack_Task();
-
-	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-
-protected:
-	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Blackboard")
-		FName AttackName;
-
-private:
-	bool IsAttacking = false;
-	bool IsFocusing;
-	bool ChangeFocus = false;
 };

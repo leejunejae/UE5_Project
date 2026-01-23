@@ -2,3 +2,8 @@
 
 
 #include "Combat/Data/AttackData.h"
+
+uint32 GetTypeHash(const FAttackContext& AttackInfo)
+{
+	return GetTypeHash(AttackInfo.AttackName);
+}

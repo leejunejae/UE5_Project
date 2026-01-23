@@ -13,6 +13,8 @@
 // 애니메이션
 #include "Characters/Player/Warrior/FallenKnightAnimInstance.h"
 
+// 컴포넌트
+#include "Characters/Components/EquipmentComponent.h"
 
 AFallenKnight::AFallenKnight(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -27,7 +29,6 @@ AFallenKnight::AFallenKnight(const FObjectInitializer& ObjectInitializer)
 	
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	static ConstructorHelpers::FClassFinder<UAnimInstance>FallenKnight_ANIM(TEXT("/Game/00_Character/Data/AnimData/Player_AnimBP.Player_AnimBP_C"));
-	
 	if (FallenKnight_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(FallenKnight_ANIM.Class);
@@ -42,6 +43,8 @@ AFallenKnight::AFallenKnight(const FObjectInitializer& ObjectInitializer)
 void AFallenKnight::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetEquipmentComponent()->EquipWeapon_Implementation(DefaultWeaponKey);
 }
 
 void AFallenKnight::Tick(float DeltaTime)

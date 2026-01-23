@@ -8,7 +8,7 @@
 
 // 
 UENUM(BlueprintType)
-enum class EAttackType : uint8
+enum class EDamageType : uint8
 {
 	PhysicalDamage UMETA(DisplayName = "PhysicalDamage"),
 	MagicalDamage UMETA(DisplayName = "MagicalDamage"),
@@ -82,7 +82,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		EHitResponse Response;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		EAttackType AttackType;
+		EDamageType AttackType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector HitPoint;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

@@ -3,8 +3,11 @@
 
 #include "Combat/Components/AttackComponent.h"
 #include "GameFramework/Character.h"
+
 #include "Combat/Interfaces/HitReactionInterface.h"
 #include "Combat/Interfaces/CombatInterface.h"
+#include "Combat/Interfaces/AttackSourceInterface.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 
 #include "Engine/StaticMeshSocket.h"
@@ -16,17 +19,16 @@
 
 #include "Utils/CoreLog.h"
 
+
+#include "Characters/Player/PlayerBase.h"
+#include "Characters/Components/EquipmentComponent.h"
+
+
 // Sets default values for this component's properties
 UAttackComponent::UAttackComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> TrailNS(TEXT("/Game/99_TestTool/NS_Trail_10.NS_Trail_10"));
-	if (TrailNS.Succeeded())
-	{
-		TrailSystem = TrailNS.Object;
-	}
 }
 
 
@@ -35,67 +37,26 @@ void UAttackComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CachedCharacter = Cast<ACharacter>(GetOwner());
+	ACharacter* Character = Cast<ACharacter>(GetOwner());
 
-	if (!CheckOwnerExist())
-		return;
+	if (!Character) return;
 
-	for (UActorComponent* Comp : CachedCharacter->GetComponents())
+
+	if (Character->GetClass()->ImplementsInterface(UAttackSourceInterface::StaticClass()))
 	{
-		if (Comp->GetClass()->ImplementsInterface(UEquipmentDataInterface::StaticClass()))
+		AttackSourceInterface = TScriptInterface<IAttackSourceInterface>(Character);
+	}
+	else
+	{
+		for (UActorComponent* Comp : Character->GetComponents())
 		{
-			CachedEquipment = TScriptInterface<IEquipmentDataInterface>(Comp);
-			break;
+			if (Comp->GetClass()->ImplementsInterface(UAttackSourceInterface::StaticClass()))
+			{
+				AttackSourceInterface = TScriptInterface<IAttackSourceInterface>(Comp);
+				break;
+			}
 		}
 	}
-
-	// ...
-	AnimInstance = GetOwner()->GetComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
-	if (AnimInstance)
-	{
-		AnimInstance->OnPlayMontageNotifyBegin.AddDynamic(this, &UAttackComponent::OnMontageNotifyBegin);
-		AnimInstance->OnPlayMontageNotifyEnd.AddDynamic(this, &UAttackComponent::OnMontageNotifyEnd);
-	}
-
-	if (TrailSystem)
-	{
-		TrailComponent = NewObject<UNiagaraComponent>(GetOwner());
-		TrailComponent->SetAsset(TrailSystem);
-		TrailComponent->AttachToComponent(GetOwner()->GetRootComponent(),
-			FAttachmentTransformRules::KeepRelativeTransform);
-		TrailComponent->RegisterComponent();
-		TrailComponent->SetForceSolo(true);
-		TrailComponent->SetAutoActivate(false); // 필요할 때 Activate()
-	}
-}
-
-bool UAttackComponent::ReCastOwner()
-{
-	CachedCharacter = Cast<ACharacter>(GetOwner());
-
-	return CachedCharacter.IsValid() ? true : false;
-}
-
-bool UAttackComponent::CheckOwnerExist()
-{
-	bool IsExist = true;
-
-	if (!CachedCharacter.IsValid())
-	{
-		IsExist = ReCastOwner();
-	}
-
-	return IsExist;
-}
-
-ACharacter* UAttackComponent::GetMyCharacter()
-{
-	if (!CachedCharacter.IsValid())
-	{
-		return CachedCharacter.Get();
-	}
-
-	return nullptr;
 }
 
 void UAttackComponent::ExecuteAttack(FName AttackName, float Playrate)
@@ -103,21 +64,21 @@ void UAttackComponent::ExecuteAttack(FName AttackName, float Playrate)
 	bool CanPlayAttack = false;
 
 	// 실행중인 공격이 있으면 실행중인 공격과 입력이 같은지 확인	
-	if (CurAttackInfo.AttackName == AttackName)
+	if (CurAttackContext.AttackName == AttackName)
 	{
 		CanPlayAttack = true;
 		// 다음 콤보가 있으면 ComboIndex증가 아니면 첫콤보로 초기화
-		ComboIndex = CurAttackInfo.AttackDetail.IsValidIndex(ComboIndex + 1) ? ComboIndex + 1 : 0;
+		ComboIndex = CurAttackContext.AttackDetail.IsValidIndex(ComboIndex + 1) ? ComboIndex + 1 : 0;
 	}
 	else
 	{
-		if (CurAttackType.AttackInfoList.IsEmpty()) return;
-		FPlayerAttackInfo DataForFind;
+		if (CurAttackContextSet.Contexts.IsEmpty()) return;
+		FAttackContext DataForFind;
 		DataForFind.AttackName = AttackName;
-		const FPlayerAttackInfo* FoundData = CurAttackType.AttackInfoList.Find(DataForFind);
-		CurAttackInfo = FoundData ? *FoundData : FPlayerAttackInfo{};
+		const FAttackContext* FoundData = CurAttackContextSet.Contexts.Find(DataForFind);
+		CurAttackContext = FoundData ? *FoundData : FAttackContext{};
 
-		if (CurAttackInfo.Anim && !CurAttackInfo.AttackDetail.IsEmpty())
+		if (CurAttackContext.Anim && !CurAttackContext.AttackDetail.IsEmpty())
 		{
 			CanPlayAttack = true;
 			ComboIndex = 0;
@@ -126,191 +87,87 @@ void UAttackComponent::ExecuteAttack(FName AttackName, float Playrate)
 
 	if (CanPlayAttack)
 	{
-		PlayAnimation(CurAttackInfo, ComboIndex, Playrate);
+		HitActorListCurrentAttack.Empty();
+		PlayAnimation(CurAttackContext, ComboIndex, Playrate);
 	}
 }
 
-void UAttackComponent::PlayAnimation(FPlayerAttackInfo AttackInfo, int32 index, float Playrate)
+void UAttackComponent::PlayAnimation(FAttackContext AttackInfo, int32 index, float Playrate)
 {
-	AnimInstance->Montage_Play(AttackInfo.Anim, Playrate);
-	AnimInstance->Montage_JumpToSection(AttackInfo.AttackDetail[index].BaseAttackData.SectionName, AttackInfo.Anim);
+	ACharacter* Char = Cast<ACharacter>(GetOwner());
+	if (!Char) return;
 
+	UAnimInstance* Anim = Char->GetMesh()->GetAnimInstance();
+	if (!Anim) return;
+
+	Anim->Montage_Play(AttackInfo.Anim, Playrate);
+	Anim->Montage_JumpToSection(AttackInfo.AttackDetail[index].SectionName, AttackInfo.Anim);
+	
 	FOnMontageEnded MontageEndDelegate;
 	MontageEndDelegate.BindUObject(this, &UAttackComponent::OnMontageEnded);
-	AnimInstance->Montage_SetEndDelegate(MontageEndDelegate, AttackInfo.Anim);
+	Anim->Montage_SetEndDelegate(MontageEndDelegate, AttackInfo.Anim);
 }
 
 void UAttackComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	FString EndMontage = Montage ? Montage->GetName() : TEXT("None");
-	UAnimMontage* CurrentMontage = AnimInstance ? AnimInstance->GetCurrentActiveMontage() : nullptr;
-	FString CurMontage = CurrentMontage ? CurrentMontage->GetName() : TEXT("None");
+	ACharacter* Char = Cast<ACharacter>(GetOwner());
+	if (!Char) return;
 
-	//UE_LOG(LogTemp, Log, TEXT("Montage Ended : %s "), *EndMontage);
-	//UE_LOG(LogTemp, Log, TEXT("Montage Current : %s "), *CurMontage);
+	UAnimInstance* Anim = Char->GetMesh()->GetAnimInstance();
+	if (!Anim) return;
+
+	FString EndMontage = Montage ? Montage->GetName() : TEXT("None");
+	UAnimMontage* CurrentMontage = Anim ? Anim->GetCurrentActiveMontage() : nullptr;
+	FString CurMontage = CurrentMontage ? CurrentMontage->GetName() : TEXT("None");
 
 	if (!(EndMontage.Equals(CurMontage)))
 	{
 		ComboIndex = 0;
-		CurAttackInfo = FPlayerAttackInfo();
+		CurAttackContext = FAttackContext();
 	}
 
-	AnimInstance->OnMontageEnded.RemoveDynamic(this, &UAttackComponent::OnMontageEnded);
+	Anim->OnMontageEnded.RemoveDynamic(this, &UAttackComponent::OnMontageEnded);
 }
 
-void UAttackComponent::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
-{
-	if (BranchingPointPayload.SequenceAsset)
-	{
-		if (NotifyName == FName("WeaponAttack"))
-		{
-			if (CachedEquipment.GetInterface() && CachedEquipment.GetObject())
-			{
-				UStaticMeshComponent* WeaponMeshComponent = IEquipmentDataInterface::Execute_GetMainWeaponMeshComponent(CachedEquipment.GetObject());
-				FWeaponSetsInfo WeaponInfo = IEquipmentDataInterface::Execute_GetWeaponSetsData(CachedEquipment.GetObject());
-
-				if (WeaponMeshComponent != nullptr)
-				{
-					float AnimSectionTime = AnimInstance->GetCurveValue(FName("AnimSectionTime"));
-					float StartTime = BranchingPointPayload.NotifyEvent->GetTriggerTime() - AnimSectionTime;
-					float EndTime = BranchingPointPayload.NotifyEvent->GetEndTriggerTime() - AnimSectionTime;
-					UE_LOG(Log_Attack, Log, TEXT("NotifyState: %s, Start: %f, End: %f"),
-						*BranchingPointPayload.NotifyEvent->NotifyName.ToString(),
-						StartTime,
-						EndTime);
-
-					FTimerDelegate AttackTimerDelegate;
-					AttackTimerDelegate.BindUObject(this, &UAttackComponent::DetectAttackTarget, WeaponMeshComponent, WeaponInfo, StartTime, EndTime, false, false);
-					GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, AttackTimerDelegate, 0.01f, true);
-				}
-			}
-		}
-		else if (NotifyName == FName("WeaponTrail"))
-		{
-			if (CachedEquipment.GetInterface() && CachedEquipment.GetObject())
-			{
-				FWeaponSetsInfo WeaponInfo = IEquipmentDataInterface::Execute_GetWeaponSetsData(CachedEquipment.GetObject());
-
-				float AnimSectionTime = AnimInstance->GetCurveValue(FName("AnimSectionTime"));
-				float StartTime = BranchingPointPayload.NotifyEvent->GetTriggerTime() - AnimSectionTime;
-				float EndTime = BranchingPointPayload.NotifyEvent->GetEndTriggerTime() - AnimSectionTime;
-				UE_LOG(Log_Attack, Log, TEXT("NotifyState: %s, Start: %f, End: %f"),
-					*BranchingPointPayload.NotifyEvent->NotifyName.ToString(),
-					StartTime,
-					EndTime);
-
-				FTimerDelegate TrailTimerDelegate;
-				TrailTimerDelegate.BindUObject(this, &UAttackComponent::ExecuteWeaponTrail, WeaponInfo, StartTime, EndTime, false, false);
-				GetWorld()->GetTimerManager().SetTimer(TrailTimerHandle, TrailTimerDelegate, 0.01f, true);
-			}
-		}
-	}
-}
-
-void UAttackComponent::OnMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
-{
-	if (NotifyName == FName("WeaponAttack"))
-	{
-		if (GetWorld()->GetTimerManager().IsTimerActive(AttackTimerHandle))
-			GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
-
-		UStaticMeshComponent* WeaponMeshComponent = IEquipmentDataInterface::Execute_GetMainWeaponMeshComponent(CachedEquipment.GetObject());
-		FWeaponSetsInfo WeaponInfo = IEquipmentDataInterface::Execute_GetWeaponSetsData(CachedEquipment.GetObject());
-		float AnimSectionTime = AnimInstance->GetCurveValue(FName("AnimSectionTime"));
-		float StartTime = BranchingPointPayload.NotifyEvent->GetTriggerTime() - AnimSectionTime;
-		float EndTime = BranchingPointPayload.NotifyEvent->GetEndTriggerTime() - AnimSectionTime;
-		DetectAttackTarget(WeaponMeshComponent, WeaponInfo, StartTime, EndTime, true, false);
-		UE_LOG(Log_Attack, Warning, TEXT("Reset Detect"));
-		TrailComponent->Deactivate();
-		DetectTracePrevTime.Key = false;
-		HitActorListCurrentAttack.Empty();
-	}
-	else if (NotifyName == FName("WeaponTrail"))
-	{
-		if (GetWorld()->GetTimerManager().IsTimerActive(TrailTimerHandle))
-			GetWorld()->GetTimerManager().ClearTimer(TrailTimerHandle);
-
-		if (CachedEquipment.GetInterface() && CachedEquipment.GetObject())
-		{
-			FWeaponSetsInfo WeaponInfo = IEquipmentDataInterface::Execute_GetWeaponSetsData(CachedEquipment.GetObject());
-
-			float AnimSectionTime = AnimInstance->GetCurveValue(FName("AnimSectionTime"));
-			float StartTime = BranchingPointPayload.NotifyEvent->GetTriggerTime() - AnimSectionTime;
-			float EndTime = BranchingPointPayload.NotifyEvent->GetEndTriggerTime() - AnimSectionTime;
-
-			ExecuteWeaponTrail(WeaponInfo, StartTime, EndTime, true, false);
-			TrailPrevTime.Key = false;
-			TrailComponent->Deactivate();
-		}
-	}
-}
-
-void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime,bool IsDetectEnd, bool IsSubWeaponAttack)
+void UAttackComponent::DetectAttackTarget(float StartTime, float EndTime)
 {
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 
+	if (!AttackSourceInterface.GetInterface() || !AttackSourceInterface.GetObject() || !Character) return;
+
 	// 실행하는 공격 애니메이션의 본 트랜스폼 데이터 가져오기
-	UAnimBoneTransformDataAsset* TraceTargetBoneTransformData = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.TargetBoneTransformDataAsset.Get();
-
-	// 무기 데이터
-	FWeaponPartInfo CurrentWeaponPart = IsSubWeaponAttack ? WeaponInfo.SubWeapon : WeaponInfo.MainWeapon;
-
-	// 처음 실행되었을때 초기값 설정
-	if (!DetectTracePrevTime.Key)
-	{
-		DetectTracePrevTime.Key = true;
-		DetectTracePrevTime.Value = StartTime; // 노티파이 시작 시간으로 초기값 설정
-		TrailComponent->DeactivateImmediate();
-		TrailComponent->ResetSystem();            // 히스토리 초기화
-		TrailComponent->Activate(true);
-	}
-
-	// 현재 시간(몽타주 전체에서 현재 시간 - 현재 섹션의 시작 시간), 노티파이가 끝날때 호출 되면 노티파이의 끝 시간
-	float CurTime = !IsDetectEnd
-		? AnimInstance->GetCurveValue(FName("AnimTimeCheckCurve")) - AnimInstance->GetCurveValue(FName("AnimSectionTime"))
-		: EndTime;
+	UAnimBoneTransformDataAsset* TraceTargetBoneTransformData = CurAttackContext.AttackDetail[ComboIndex].TargetBoneTransformDataAsset.Get();
 
 	// 이전프레임과 현재프레임 사이를 0.001초 간격으로 나눔
-	int32 TraceCorrectionCount = (CurTime - DetectTracePrevTime.Value) / 0.001f;
+	int32 TraceCorrectionCount = (EndTime - StartTime) / 0.003f;
 
 	// 현재 루트본의 위치
 	FTransform CurrentRootWorldTransform = Character->GetMesh()->GetBoneTransform(0);
 
-	FTransform TargetWeaponOffset = CurrentWeaponPart.WeaponTransform;
+	FAttackTraceSource TraceSource = IAttackSourceInterface::Execute_GetAttackTraceSource(AttackSourceInterface.GetObject(), CurAttackContext.AttackDetail[ComboIndex].AttackSource);
 
-	const UStaticMeshSocket* StartSocket = WeaponMesh->GetStaticMesh()->FindSocket("Start");
-	const UStaticMeshSocket* EndSocket = WeaponMesh->GetStaticMesh()->FindSocket("End");
+	FTransform TargetWeaponOffset = TraceSource.TraceComponent->GetRelativeTransform();
 
-	if (!StartSocket || !EndSocket) return;
+	const FVector StartSocketRelativeLocation = TraceSource.TraceComponent->GetSocketTransform(TEXT("Start"), RTS_Component).GetLocation();
+	const FVector EndSocketRelativeLocation = TraceSource.TraceComponent->GetSocketTransform(TEXT("End"), RTS_Component).GetLocation();
 
-	const FVector StartSocketRelativeLocation = StartSocket->RelativeLocation;
-	const FVector EndSocketRelativeLocation = EndSocket->RelativeLocation;
-
-	const float subDT = (CurTime - DetectTracePrevTime.Value) / TraceCorrectionCount;
+	const float subDT = (EndTime - StartTime) / TraceCorrectionCount;
 
 	for (int32 i = 1; i <= TraceCorrectionCount; ++i)
 	{
-		float PrevTime = DetectTracePrevTime.Value + (i * 0.001f);
-		FTransform PrevTargetBoneTransformData = TraceTargetBoneTransformData->GetTransformAtTime(PrevTime);
+		const float PrevTime = StartTime + (i * 0.003f);
 
-		FVector PrevHandLocationAtDataWorldLocation = CurrentRootWorldTransform.TransformPosition(PrevTargetBoneTransformData.GetLocation());
-		FQuat PrevHandQuatAtDataWorldRotator = CurrentRootWorldTransform.TransformRotation(PrevTargetBoneTransformData.GetRotation());
-		FRotator PrevHandRotatorAtQuat = PrevHandQuatAtDataWorldRotator.Rotator();
+		const FTransform BoneData = TraceTargetBoneTransformData->GetTransformAtTime(PrevTime);
 
-		FTransform PrevHandTransform(PrevHandRotatorAtQuat, PrevHandLocationAtDataWorldLocation, PrevTargetBoneTransformData.GetScale3D());
+		// 데이터(손) -> 월드(root) 적용
+		const FTransform HandWorld = BoneData * CurrentRootWorldTransform;
 
+		// 손월드 -> 무기월드 오프셋 적용
+		const FTransform WeaponWorld = TargetWeaponOffset * HandWorld;
 
-		FVector PrevTargetWeaponLocation = PrevHandTransform.TransformPosition(TargetWeaponOffset.GetLocation());
-		FQuat PrevTargetWeaponQuat = PrevHandTransform.TransformRotation(TargetWeaponOffset.GetRotation());
-		FRotator PrevTargetWeaponRotation = PrevTargetWeaponQuat.Rotator();
-
-		FTransform PrevTargetWeaponTransform(PrevTargetWeaponRotation, PrevTargetWeaponLocation, CurrentWeaponPart.WeaponTransform.GetScale3D());
-
-		FVector PrevStartSocketWorldLocation = PrevTargetWeaponTransform.TransformPosition(StartSocketRelativeLocation);
-		FVector PrevEndSocketWorldLocation = PrevTargetWeaponTransform.TransformPosition(EndSocketRelativeLocation);
-
-		FVector StartLoc = PrevStartSocketWorldLocation;
-		FVector EndLoc = PrevEndSocketWorldLocation;
+		// 소켓 로컬(무기 기준) -> 월드
+		const FVector StartLoc = WeaponWorld.TransformPosition(StartSocketRelativeLocation);
+		const FVector EndLoc = WeaponWorld.TransformPosition(EndSocketRelativeLocation);
 
 		float CurWeaponLength = FVector::Distance(StartLoc, EndLoc);
 		float CurHalfHeight = (CurWeaponLength * 0.5f);
@@ -323,11 +180,7 @@ void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWea
 		FCollisionQueryParams CollisionParams;
 		CollisionParams.AddIgnoredActor(GetOwner());
 
-		float Radius = CurrentWeaponPart.HitBoxRadius;
-
-		TrailComponent->SetVectorParameter(FName("TrailStart"), StartLoc);
-		TrailComponent->SetVectorParameter(FName("TrailEnd"), EndLoc);
-		TrailComponent->AdvanceSimulation(1, subDT);
+		float Radius = TraceSource.Radius;
 
 		FCollisionShape DetectShape = FCollisionShape::MakeCapsule(Radius, CurHalfHeight);
 
@@ -340,7 +193,7 @@ void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWea
 			DetectShape,
 			CollisionParams
 		);
-
+		
 		if (bHit)
 		{
 			for (const FHitResult& Result : HitResults)
@@ -350,19 +203,23 @@ void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWea
 				{
 					HitActorListCurrentAttack.Add(HitActor);
 
+					UE_LOG(Log_Attack, Log, TEXT("[AttackComponent] %s Attacked %s"), *Character->GetName(), *HitActor->GetName());
+
 					if (HitActor->Implements<UHitReactionInterface>())
 					{
-						float OutDamage = WeaponInfo.AttackPower * CurAttackInfo.AttackDetail[ComboIndex].DamageMultiplier;
-						float OutPoiseDamage = WeaponInfo.PoisePower * CurAttackInfo.AttackDetail[ComboIndex].PoiseDamageMultiplier;
-						float OutStanceDamage = WeaponInfo.StancePower * CurAttackInfo.AttackDetail[ComboIndex].StanceDamageMultiplier;
-						EHitResponse OutResponse = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.Response;
-						EAttackType OutAttackType = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.AttackType;
+						FAttackDamageSource DamageSource = IAttackSourceInterface::Execute_GetAttackDamageSource(AttackSourceInterface.GetObject());
+
+						float OutDamage = DamageSource.AttackRating * CurAttackContext.AttackDetail[ComboIndex].DamageMultiplier;
+						float OutPoiseDamage = DamageSource.PoiseRating * CurAttackContext.AttackDetail[ComboIndex].PoiseDamageMultiplier;
+						float OutStanceDamage = DamageSource.StanceRating * CurAttackContext.AttackDetail[ComboIndex].StanceDamageMultiplier;
+						EHitResponse OutResponse = CurAttackContext.AttackDetail[ComboIndex].Response;
+						EDamageType OutAttackType = CurAttackContext.AttackDetail[ComboIndex].DamageType;
 						FVector OutHitPoint = Result.ImpactPoint;
 						FString OutHitPointName = Result.PhysMaterial.IsValid() ? Result.PhysMaterial->GetName() : FString();
-						bool OutCanBlocked = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.CanBlocked;
-						bool OutCanParried = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.CanParried;
-						bool OutCanAvoid = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.CanAvoid;
-						TArray<FStatusEffect> OutStatusEffect = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.StatusEffectList;
+						bool OutCanBlocked = CurAttackContext.AttackDetail[ComboIndex].CanBlocked;
+						bool OutCanParried = CurAttackContext.AttackDetail[ComboIndex].CanParried;
+						bool OutCanAvoid = CurAttackContext.AttackDetail[ComboIndex].CanAvoid;
+						TArray<FStatusEffect> OutStatusEffect = CurAttackContext.AttackDetail[ComboIndex].StatusEffectList;
 
 						FAttackRequest OutAttackData(
 							OutDamage,
@@ -379,108 +236,124 @@ void UAttackComponent::DetectAttackTarget(UStaticMeshComponent* WeaponMesh, FWea
 
 						IHitReactionInterface::Execute_OnHit(HitActor, OutAttackData);
 
-						// 피격에 필요한 데이터 전달(인터페이스)
-						UE_LOG(Log_Attack, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
-						UE_LOG(Log_Attack, Warning, TEXT("Damage : %f"), *Result.BoneName.ToString());
-						UE_LOG(Log_Attack, Warning, TEXT("Poise Damage : %f"), *Result.BoneName.ToString());
-						UE_LOG(Log_Attack, Warning, TEXT("Stance Damage : %f"), *Result.BoneName.ToString());
-						UE_LOG(Log_Attack, Warning, TEXT("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ"));
-
 					}
-				}
-				else if (HitActorListCurrentAttack.Contains(HitActor))
-				{
-					UE_LOG(Log_Attack, Warning, TEXT("Already Hit Actor"));
 				}
 			}
 		}
-
-		//DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Red, false, 1.0f);
+		
+		DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Red, false, 5.0f);
 	}
-	DetectTracePrevTime.Value = CurTime;
 }
 
-void UAttackComponent::ExecuteWeaponTrail(FWeaponSetsInfo WeaponInfo, float StartTime, float EndTime, bool IsTrailEnd, bool IsSubWeaponTrail)
+void UAttackComponent::ResetTraceData()
 {
-	UAnimBoneTransformDataAsset* TraceTargetBoneTransformData = CurAttackInfo.AttackDetail[ComboIndex].BaseAttackData.TargetBoneTransformDataAsset.Get();
+}
 
-	FWeaponPartInfo CurrentWeaponPart = IsSubWeaponTrail ? WeaponInfo.SubWeapon : WeaponInfo.MainWeapon;
-
-	if (!TrailPrevTime.Key)
+FTransform UAttackComponent::SamplingBoneTransformAnimTime(UAnimSequence* AnimSequence, const FName& BoneName, float Time)
+{
+	if (!AnimSequence || !AnimSequence->GetSkeleton())
 	{
-		TrailPrevTime.Key = true;
-		TrailPrevTime.Value = StartTime; // 노티파이 시작 시간으로 초기값 설정
-		TrailComponent->DeactivateImmediate();
-		TrailComponent->ResetSystem();            // 히스토리 초기화
-		TrailComponent->Activate(true);
+		return FTransform::Identity;
 	}
 
-	float CurTime = !IsTrailEnd
-		? AnimInstance->GetCurveValue(FName("AnimTimeCheckCurve")) - AnimInstance->GetCurveValue(FName("AnimSectionTime"))
-		: EndTime;
+	USkeleton* Skeleton = AnimSequence->GetSkeleton();
+	const FReferenceSkeleton& RefSkeleton = Skeleton->GetReferenceSkeleton();
 
-	int32 TraceCorrectionCount = (CurTime - TrailPrevTime.Value) / 0.001f;
-
-	const float subDT = (CurTime - TrailPrevTime.Value) / TraceCorrectionCount;
-
-	for (int32 i = 1; i <= TraceCorrectionCount; ++i)
+	const int32 BoneIndex = RefSkeleton.FindBoneIndex(BoneName);
+	if (BoneIndex == INDEX_NONE)
 	{
-		float PrevTime = TrailPrevTime.Value + (i * 0.001f);
+		return FTransform::Identity;
+	}
 
-		FWeaponSegment CurrentWeaponSeg;
-		bool bSamplingWeaponLocation = SampleWeaponSegmentAtTime(CurTime, TraceTargetBoneTransformData, CurrentWeaponPart, CurrentWeaponSeg);
+	// 0) 루트→타깃 체인 인덱스 만들기 (Skeleton index)
+	TArray<int32> Chain;
+	Chain.Reset();
 
-		if (bSamplingWeaponLocation)
+	int32 Cur = BoneIndex;
+	while (Cur != INDEX_NONE)
+	{
+		Chain.Add(Cur);
+		Cur = RefSkeleton.GetParentIndex(Cur);
+	}
+	Algo::Reverse(Chain);
+
+	// Root(0) 보장 (방어)
+	if (Chain.Num() == 0 || Chain[0] != 0)
+	{
+		Chain.Insert(0, 0);
+	}
+
+	// 1) RequiredBoneIndices = 체인만
+	TArray<FBoneIndexType> RequiredBoneIndices;
+	RequiredBoneIndices.Reserve(Chain.Num());
+	for (int32 SkelIdx : Chain)
+	{
+		RequiredBoneIndices.Add((FBoneIndexType)SkelIdx);
+	}
+
+	// 2) Curve 평가 옵션
+	FCurveEvaluationOption CurveOption(false);
+
+	// 3) FBoneContainer 생성 (체인만 포함)
+	FBoneContainer RequiredBones;
+	RequiredBones.InitializeTo(RequiredBoneIndices, CurveOption, *Skeleton);
+
+	// 4) Pose 준비
+	FMemMark Mark(FMemStack::Get());
+
+	FCompactPose Pose;
+	FBlendedCurve Curve;
+	UE::Anim::FStackAttributeContainer Attributes;
+	FAnimationPoseData PoseData(Pose, Curve, Attributes);
+
+	Pose.SetBoneContainer(&RequiredBones);
+
+	// 5) 애니 포즈 추출
+	const float ClampedTime = FMath::Clamp(Time, 0.f, AnimSequence->GetPlayLength());
+	FAnimExtractContext ExtractContext(ClampedTime, false);
+	AnimSequence->GetAnimationPose(PoseData, ExtractContext);
+
+	// 6) RefSkeleton 인덱스 공간에서 Local(Parent Space) 배열을 준비
+	//    - 체인만 평가했으니, 체인에 필요한 본들의 local만 채우면 됨
+	//    - 부모가 체인에 포함되어 있으므로 누적 가능
+	TArray<FTransform> LocalRefSpace;
+	LocalRefSpace.SetNum(Chain.Num()); // 기본은 RefPose
+	// (메모리 줄이고 싶으면 체인 본만 따로 담아도 되지만, 여기선 단순하게 유지)
+
+	// Pose(compact) -> Skeleton index 매핑해서 LocalRefSpace에 덮어쓰기
+	for (FCompactPoseBoneIndex CompactIdx(0); CompactIdx < Pose.GetNumBones(); ++CompactIdx)
+	{
+		const int32 SkelIdx = RequiredBones.GetSkeletonIndex(CompactIdx);
+		if (SkelIdx != INDEX_NONE && LocalRefSpace.IsValidIndex(SkelIdx))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("TrailStart [X : %f, Y : %f, Z : %f]"), CurrentWeaponSeg.StartWS.X, CurrentWeaponSeg.StartWS.Y, CurrentWeaponSeg.StartWS.Z);
-
-			TrailComponent->SetVectorParameter(FName("TrailStart"), CurrentWeaponSeg.StartWS);
-			TrailComponent->SetVectorParameter(FName("TrailEnd"), CurrentWeaponSeg.EndWS);
-			TrailComponent->AdvanceSimulation(1, subDT);
+			LocalRefSpace[SkelIdx] = Pose[CompactIdx];
 		}
 	}
 
-	TrailPrevTime.Value = CurTime;
-}
+	// 7) Root->Target 체인만 누적해서 Component Space(BoneCS) 계산
+	//    RootCS는 루트 local과 동일(보통)
+	const int32 RootIdx = 0;
+	FTransform RootCS = LocalRefSpace[RootIdx];
 
-bool UAttackComponent::SampleWeaponSegmentAtTime(float Time, const UAnimBoneTransformDataAsset* BoneData, const FWeaponPartInfo& WeaponPart, FWeaponSegment& OutSeg) const
-{
-	ACharacter* Character = Cast<ACharacter>(GetOwner());
+	if (Chain.Num() <= 1)
+	{
+		// Bone == Root
+		return FTransform::Identity;
+	}
 
-	FTransform PrevTargetBoneTransformData = BoneData->GetTransformAtTime(Time);
+	FTransform ParentCS = RootCS;
+	FTransform BoneCS = RootCS;
 
-	FTransform CurrentRootWorldTransform = Character->GetMesh()->GetBoneTransform(0);
-	FTransform TargetWeaponOffset = WeaponPart.WeaponTransform;
+	for (int32 i = 1; i < Chain.Num(); ++i)
+	{
+		const int32 SkelIdx = Chain[i];
+		const FTransform& Local = LocalRefSpace[SkelIdx];
 
-	FVector PrevHandLocationAtDataWorldLocation = CurrentRootWorldTransform.TransformPosition(PrevTargetBoneTransformData.GetLocation());
-	FQuat PrevHandQuatAtDataWorldRotator = CurrentRootWorldTransform.TransformRotation(PrevTargetBoneTransformData.GetRotation());
-	FRotator PrevHandRotatorAtQuat = PrevHandQuatAtDataWorldRotator.Rotator();
+		// ChildCS = Local * ParentCS
+		BoneCS = Local * ParentCS;
+		ParentCS = BoneCS;
+	}
 
-	FTransform PrevHandTransform(PrevHandRotatorAtQuat, PrevHandLocationAtDataWorldLocation, PrevTargetBoneTransformData.GetScale3D());
-
-
-	FVector PrevTargetWeaponLocation = PrevHandTransform.TransformPosition(TargetWeaponOffset.GetLocation());
-	FQuat PrevTargetWeaponQuat = PrevHandTransform.TransformRotation(TargetWeaponOffset.GetRotation());
-	FRotator PrevTargetWeaponRotation = PrevTargetWeaponQuat.Rotator();
-
-	FTransform PrevTargetWeaponTransform(PrevTargetWeaponRotation, PrevTargetWeaponLocation, WeaponPart.WeaponTransform.GetScale3D());
-
-	UWeaponDataAsset* WeaponData = WeaponPart.WeaponInstance.Get();
-
-	if (!WeaponData) return false;
-
-	const UStaticMeshSocket* StartSocket = WeaponData->WeaponMesh->FindSocket("Start");
-	const UStaticMeshSocket* EndSocket = WeaponData->WeaponMesh->FindSocket("End");
-
-	if (!StartSocket || !EndSocket) return false;
-
-	const FVector StartSocketRelativeLocation = StartSocket->RelativeLocation;
-	const FVector EndSocketRelativeLocation = EndSocket->RelativeLocation;
-
-	FVector PrevStartSocketWorldLocation = PrevTargetWeaponTransform.TransformPosition(StartSocketRelativeLocation);
-	FVector PrevEndSocketWorldLocation = PrevTargetWeaponTransform.TransformPosition(EndSocketRelativeLocation);
-
-	OutSeg = FWeaponSegment(PrevStartSocketWorldLocation, PrevEndSocketWorldLocation);
-
-	return true;
+	// 8) 루트 기준 상대 Transform 반환
+	return BoneCS.GetRelativeTransform(RootCS);
 }

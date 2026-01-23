@@ -9,6 +9,7 @@
 // 인터페이스
 #include "Combat/Interfaces/HitReactionInterface.h"
 #include "Characters/Interfaces/DeathInterface.h"
+#include "Combat/Interfaces/AttackSourceInterface.h"
 
 // 구조체, 자료형
 #include "Characters/Enemies/Data/EnemyData.h"
@@ -28,7 +29,8 @@ DECLARE_DELEGATE(FOnSingleDelegate);
 
 UCLASS()
 class UE5PROJECT_API AEnemyBase : public ACharacterBase,
-	public IDeathInterface
+	public IDeathInterface,
+	public IAttackSourceInterface
 {
 	GENERATED_BODY()
 
@@ -68,6 +70,16 @@ public:
 
 #pragma endregion Status
 
+#pragma region Equip
+	UPROPERTY(Transient) // 런타임 생성물이니 Save/Serialize 필요 없으면 Transient 권장
+		TObjectPtr<UStaticMeshComponent> MainWeapon = nullptr;
+
+	UPROPERTY(Transient) // 런타임 생성물이니 Save/Serialize 필요 없으면 Transient 권장
+		TObjectPtr<UStaticMeshComponent> SubEquip = nullptr;
+
+	//void CreateAndAttachEquip(UStaticMesh* MeshAsset, FName SocketName, FTransform Equip, FName CompName);
+#pragma endregion Equip
+
 //private:
 	//UPROPERTY(EditAnywhere)
 		//class UNavigationInvokerComponent* NavigationInvokerComponent;
@@ -85,6 +97,9 @@ public:
 	bool ApplyEnemyInfo(const FEnemyInfo* Info);
 	bool ApplyEnemyStats(const FEnemyStats* Stat);
 	bool ValidateData(const FEnemyDataSet* EnemyData);
+
+	FAttackTraceSource GetAttackTraceSource_Implementation(EAttackSourceType AttackSourceType) const;
+	FAttackDamageSource GetAttackDamageSource_Implementation() const;
 
 #pragma endregion Character_Data
 

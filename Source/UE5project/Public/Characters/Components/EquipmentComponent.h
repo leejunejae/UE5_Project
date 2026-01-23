@@ -7,6 +7,7 @@
 
 // 인터페이스
 #include "Characters/Interfaces/EquipmentDataInterface.h"
+#include "Combat/Interfaces/AttackSourceInterface.h"
 #include "Characters/Interfaces/StatInterface.h"
 
 #include "Items/Weapons/Data/WeaponData.h"
@@ -19,7 +20,8 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentMulDel, const EWeaponType);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UEquipmentComponent : public UActorComponent,
-	public IEquipmentDataInterface
+	public IEquipmentDataInterface,
+	public IAttackSourceInterface
 {
 	GENERATED_BODY()
 
@@ -49,8 +51,6 @@ private:
 
 	FWeaponSetsInfo EquipedWeapon;
 
-	UPROPERTY(EditInstanceOnly, Category = Equipment)
-	FName DefaultWeaponKey = FName("DefaultSNS");
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -58,6 +58,7 @@ public:
 	FORCEINLINE FWeaponSetsInfo GetWeaponSetsData_Native() const { return EquipedWeapon; }
 	FORCEINLINE FWeaponPartInfo GetMainWeaponData_Native() const { return EquipedWeapon.MainWeapon; }
 	FORCEINLINE FWeaponPartInfo GetSubEquipData_Native() const { return EquipedWeapon.SubWeapon; }
+	UStaticMeshComponent* GetMainWeaponMeshComponent_Native() const { return WeaponMesh; }
 
 	FWeaponSetsInfo GetWeaponSetsData_Implementation() const { return EquipedWeapon; }
 	FWeaponPartInfo GetMainWeaponData_Implementation() const { return EquipedWeapon.MainWeapon;}
@@ -66,6 +67,9 @@ public:
 	UStaticMeshComponent* GetSubEquipMeshComponent_Implementation() const { return SubEquipMesh; }
 	void EquipWeapon_Implementation(FName WeaponKey) override;
 	FVector GetWeaponSocketLocation_Implementation(FName SocketName, bool IsSubWeapon) const;
+
+	FAttackTraceSource GetAttackTraceSource_Implementation(EAttackSourceType AttackSourceType) const;
+	FAttackDamageSource GetAttackDamageSource_Implementation() const;
 
 	void SetWeaponSocketName(FName SocketName) { WeaponSocket = SocketName; }
 	void SetSubEquipSocketName(FName SocketName) { SubEquipSocket = SocketName; }

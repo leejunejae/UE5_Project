@@ -2,8 +2,6 @@
 
 
 #include "AI/BT/Tasks/BTTaskNode_SetLookTarget.h"
-#include "Characters/Enemies/EnemyBaseAIController.h"
-#include "Characters/Enemies/Human/PBEHuman.h"
 
 UBTTaskNode_SetLookTarget::UBTTaskNode_SetLookTarget()
 {
@@ -13,20 +11,6 @@ UBTTaskNode_SetLookTarget::UBTTaskNode_SetLookTarget()
 EBTNodeResult::Type UBTTaskNode_SetLookTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
-
-	auto ControllingPawn = Cast<APBEHuman>(OwnerComp.GetAIOwner()->GetPawn());
-	if (ControllingPawn == nullptr)
-	{
-		return EBTNodeResult::Failed;
-	}
-
-	AActor* Target = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
-	if (Target == nullptr)
-	{
-		return EBTNodeResult::Failed;
-	}
-
-	ControllingPawn->SetLookingTarget(Target);
 
 	return EBTNodeResult::Succeeded;
 }

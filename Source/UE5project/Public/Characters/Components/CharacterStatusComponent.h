@@ -4,14 +4,28 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameplayTagContainer.h"
+
 #include "Characters/Data/StatusData.h"
 #include "Characters/Interfaces/CharacterStatusInterface.h"
+#include "Characters/Player/ActionWindowRules.h"
+
 #include "CharacterStatusComponent.generated.h"
 
 class ACharacter;
 class UCharacterMovementComponent;
 
 DECLARE_MULTICAST_DELEGATE(FOnMultiDelegate);
+
+USTRUCT(BlueprintType)
+struct FBufferedAction
+{
+	GENERATED_BODY()
+
+	UPROPERTY() FGameplayTag ActionTag;
+	UPROPERTY() float ExpireTime = 0.f;
+	UPROPERTY() int32 Priority = 0;
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE5PROJECT_API UCharacterStatusComponent : public UActorComponent
@@ -26,6 +40,50 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Windows")
+		TObjectPtr<UActionWindowRules> WindowRules = nullptr;
+
+	// 버퍼 유효 시간(엘든링 느낌: 0.15~0.25)
+	UPROPERTY(EditAnywhere, Category = "Buffer")
+		float BufferDuration = 0.18f;
+
+	// ---- State ----
+	void SetState(const FGameplayTag& NewStateTag);
+	FGameplayTag GetState() const { return CurrentStateTag; }
+
+	// ---- Action (교체 철학) ----
+	void SwitchAction(const FGameplayTag& NewActionTag); // 행동 교체(이전 행동 윈도우 무효)
+	FGameplayTag GetCurrentAction() const { return CurrentActionTag; }
+
+	// ---- Window control (Notify에서 호출) ----
+	void OpenWindow(const FGameplayTag& WindowTag);
+	void CloseWindow(const FGameplayTag& WindowTag);
+
+	// ---- Input request ----
+	bool RequestAction(const FGameplayTag& ActionTag, int32 Priority = 0);
+	bool CanTryAction(const FGameplayTag& ActionTag) const;
+
+private:
+	// 현재 상태/행동 태그
+	UPROPERTY() FGameplayTag CurrentStateTag;  // State.Normal 등
+	UPROPERTY() FGameplayTag CurrentActionTag; // Action.Attack 등(없어도 됨)
+
+	// 현재 열려있는 Window.* 집합
+	TSet<FGameplayTag> OpenWindows;
+
+	// 입력 버퍼
+	TArray<FBufferedAction> BufferedActions;
+
+private:
+	static FGameplayTag ToWindowTag(const FGameplayTag& ActionTag);
+
+	void ResetWindowsToStateDefaults();
+	void ApplyCloseOnActionBegin(const FGameplayTag& ActionTag);
+
+	void PruneExpiredBufferedActions();
+	void TryConsumeBufferedActions();
 
 public:
 	FORCEINLINE bool IsDead() const { return bIsDead; }
@@ -57,11 +115,6 @@ public:
 
 #pragma region Ground
 public:
-	FORCEINLINE bool IsDodging() const { return GroundStance == EGroundStance::Dodge; }
-	FORCEINLINE bool IsBlocking() const { return GroundStance == EGroundStance::Block; }
-	FORCEINLINE bool IsParrying() const { return GroundStance == EGroundStance::Parry; }
-	FORCEINLINE bool IsInvincible() const { return GroundStance == EGroundStance::Invincible; }
-
 	FORCEINLINE EGroundStance GetGroundStance_Native() const { return GroundStance; }
 	FORCEINLINE void SetGroundStance_Native(EGroundStance NewStance) { GroundStance = NewStance; }
 

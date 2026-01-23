@@ -32,4 +32,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void PostInitializeComponents() override;
+
+private:
+	UPROPERTY(EditInstanceOnly, Category = Equipment)
+		FName DefaultWeaponKey = FName("DefaultSNS");
 };

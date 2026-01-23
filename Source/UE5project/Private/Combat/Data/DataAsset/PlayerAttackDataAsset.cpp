@@ -9,14 +9,10 @@ uint32 GetTypeHash(const FPlayerAttackDetail& AttackDetail)
 	return GetTypeHash(AttackDetail.SectionName);
 }
 */
-uint32 GetTypeHash(const FPlayerAttackInfo& AttackInfo)
-{
-	return GetTypeHash(AttackInfo.AttackName);
-}
 
-FPlayerAttackInfoList UPlayerAttackDataAsset::FindPlayerAttackInfo(const EWeaponType& WeaponType, bool bLogNotFound) const
+FAttackContextSet UPlayerAttackDataAsset::FindPlayerAttackContext(const EWeaponType& WeaponType, bool bLogNotFound) const
 {
-	const FPlayerAttackInfoList* Info = AttackInfoList.Find(WeaponType);
+	const FAttackContextSet* Info = AttackContextMap.Find(WeaponType);
 	if (Info)
 	{
 		return *Info;
@@ -27,5 +23,5 @@ FPlayerAttackInfoList UPlayerAttackDataAsset::FindPlayerAttackInfo(const EWeapon
 		UE_LOG(LogTemp, Error, TEXT("Not SkillInfo"))
 	}
 
-	return FPlayerAttackInfoList();
+	return FAttackContextSet();
 }

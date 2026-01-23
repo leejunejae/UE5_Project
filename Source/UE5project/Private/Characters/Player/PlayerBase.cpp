@@ -51,6 +51,9 @@
 #include "Interaction/Climb/Components/ClimbComponent.h"
 #include "Characters/Player/Components/LockOnComponent.h"
 
+// 데이터 참조
+#include "Characters/Player/PlayerConfig.h"
+
 //유틸리티
 #include "Utils/CoreLog.h"
 
@@ -86,26 +89,8 @@ APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 	GetCapsuleComponent()->SetCapsuleHalfHeight(90.0f);
 	//GetMesh()->SetOwnerNoSee(true);
 
-	static ConstructorHelpers::FObjectFinder<UInputConfigDataAsset>InputConfig_DA(TEXT("/Game/00_Character/C_Input/PlayerInput_DA.PlayerInput_DA"));
-	if (InputConfig_DA.Succeeded())
-	{
-		InputConfig = InputConfig_DA.Object;
-	}
-
 	static ConstructorHelpers::FClassFinder<UDefaultWidget>Class_DefualtWidget(TEXT("/Game/00_Character/Data/DefaultWidget_BP"));
 	if (Class_DefualtWidget.Succeeded()) DefaultWidgetClass = Class_DefualtWidget.Class;
-
-	static ConstructorHelpers::FObjectFinder<UHitReactionDataAsset> HitReactionDA_Asset(TEXT("/Game/00_Character/Data/HitReactionData/PlayerHitReactionDA.PlayerHitReactionDA"));
-	if (HitReactionDA_Asset.Succeeded())
-	{
-		HitReactionComponent->SetHitReactionDA(HitReactionDA_Asset.Object);
-	}
-
-	static ConstructorHelpers::FObjectFinder<UDataAsset> AttackDA_Asset(TEXT("/Game/00_Character/Data/AttackData/PlayerAttack_DA.PlayerAttack_DA"));
-	if (AttackDA_Asset.Succeeded())
-	{
-		AttackComponent->SetAttackDA(AttackDA_Asset.Object);
-	}
 
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> RollMontageAsset(TEXT("/Game/04_Animations/Player/SSH/Roll/Normal/Roll_Montage.Roll_Montage"));
 	if (RollMontageAsset.Succeeded())
@@ -142,6 +127,16 @@ void APlayerBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ApplyConfig();
+
+	CharacterBaseAnim = Cast<UPlayerBaseAnimInstance>(GetMesh()->GetAnimInstance());
+
+	if (CharacterBaseAnim)
+	{
+		CharacterBaseAnim->OnMountEnd.AddUObject(this, &APlayerBase::MountEnd);
+		CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &APlayerBase::DisMountEnd);
+	}
+
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	if (PlayerController)
 	{
@@ -158,7 +153,7 @@ void APlayerBase::BeginPlay()
 
 	//StatComponent->OnDeath.BindUObject(this, &APlayerBase::Death);
 	StatComponent->InitializeStats();
-	GetAttackComponent()->SetCurAttackType(EWeaponType::SwordAndShield);
+	GetAttackComponent()->SetCurAttackContextSet(EWeaponType::SwordAndShield);
 
 	InitSpringArmLocation = SpringArm->GetRelativeLocation();
 }
@@ -258,6 +253,17 @@ void APlayerBase::Tick(float DeltaTime)
 	}
 }
 
+void APlayerBase::ApplyConfig()
+{
+	if (!Config) { ensureMsgf(false, TEXT("Config missing")); return; }
+
+	GetCharacterStatusComponent()->WindowRules = Config->WindowRules;
+	GetMesh()->SetSkeletalMesh(Config->Mesh);
+	GetMesh()->SetAnimInstanceClass(Config->AnimBP);
+	HitReactionComponent->SetHitReactionDA(Config->HitReactData);
+	AttackComponent->SetAttackDA(Config->AttackData);
+}
+
 void APlayerBase::CameraSetting()
 {
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -330,15 +336,7 @@ void APlayerBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	CharacterBaseAnim = Cast<UPlayerBaseAnimInstance>(GetMesh()->GetAnimInstance());
-
 	InteractComponent->OnArrivedInteractionPoint.BindUObject(this, &APlayerBase::HandleArrivedInteractionPoint);
-
-	if (CharacterBaseAnim)
-	{
-		CharacterBaseAnim->OnMountEnd.AddUObject(this, &APlayerBase::MountEnd);
-		CharacterBaseAnim->OnDisMountEnd.AddUObject(this, &APlayerBase::DisMountEnd);
-	}
 
 	if (GetCharacterStatusComponent())
 	{

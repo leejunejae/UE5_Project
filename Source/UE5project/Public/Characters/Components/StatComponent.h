@@ -36,7 +36,7 @@ public:
 public:
 	void ChangeMaxHealth(const float Amount);
 	void ChangeMaxPoise(const float Amount);
-	bool ApplyDamage(const float Amount, const EAttackType AttackType);
+	bool ApplyDamage(const float Amount, const EDamageType AttackType);
 	bool Heal(const float Amount);
 	void ChangePoise(const float Amount, const EStatChangeType PoiseChangeType);
 

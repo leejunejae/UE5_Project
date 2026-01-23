@@ -11,6 +11,14 @@
 #include "UObject/NoExportTypes.h"
 #include "AttackData.generated.h"
 
+UENUM(BlueprintType)
+enum class EAttackSourceType : uint8
+{
+	MainHand,
+	OffHand,
+	Custom
+};
+
 USTRUCT(BlueprintType)
 struct FBaseAttackData
 {
@@ -27,7 +35,19 @@ public:
 		EHitResponse Response;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		EAttackType AttackType;
+		EDamageType DamageType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EAttackSourceType AttackSource;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float DamageMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float PoiseDamageMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float StanceDamageMultiplier;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool CanBlocked;
@@ -40,6 +60,44 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<FStatusEffect> StatusEffectList;
+};
+
+USTRUCT(Atomic, BlueprintType)
+struct FAttackContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FName AttackName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UAnimMontage* Anim;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FBaseAttackData> AttackDetail;
+
+	bool IsValid() const
+	{
+		return Anim != nullptr && !AttackDetail.IsEmpty();
+	}
+
+	inline bool operator==(const FAttackContext& Other) const
+	{
+		return AttackName == Other.AttackName;
+	}
+};
+
+uint32 GetTypeHash(const FAttackContext& AttackType);
+
+USTRUCT(Atomic, BlueprintType)
+struct FAttackContextSet
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSet<FAttackContext> Contexts;
 };
 
 UCLASS()

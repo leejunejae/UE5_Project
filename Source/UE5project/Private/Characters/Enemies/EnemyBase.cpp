@@ -169,6 +169,32 @@ bool AEnemyBase::ApplyEnemyStats(const FEnemyStats* Stat)
 	return true;
 }
 
+FAttackTraceSource AEnemyBase::GetAttackTraceSource_Implementation(EAttackSourceType AttackSourceType) const
+{
+	FAttackTraceSource OutSource;
+
+	switch (AttackSourceType)
+	{
+	case EAttackSourceType::MainHand:
+	{
+		OutSource.TraceComponent = MainWeapon;
+		OutSource.Radius = 10.0f;
+	}
+	case EAttackSourceType::OffHand:
+	{
+		OutSource.TraceComponent = SubEquip;
+		OutSource.Radius = 10.0f;
+	}
+	}
+
+	return OutSource;
+}
+
+FAttackDamageSource AEnemyBase::GetAttackDamageSource_Implementation() const
+{
+	return FAttackDamageSource();
+}
+
 void AEnemyBase::OnHit_Implementation(const FAttackRequest& AttackInfo)
 {
 	float HitAngle = HitReactionComponent->CalculateHitAngle(AttackInfo.HitPoint);
