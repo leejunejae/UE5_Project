@@ -6,7 +6,7 @@
 #include "CoreMinimal.h"
 
 // 구조체, 자료형
-#include "PEnumHeader.h"
+
 #include "Characters/Data/BaseCharacterHeader.h"
 #include "Combat/Data/CombatData.h"
 #include "Characters/Data/StatusData.h"

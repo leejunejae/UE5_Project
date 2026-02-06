@@ -2,12 +2,69 @@
 
 
 #include "Utils/AnimBoneTransformLibrary.h"
+
+#if WITH_EDITOR
+
 #include "Animation/AnimSequence.h"
-#include "Utils/AnimBoneTransformDataAsset.h"
+
+#include "Utils/AttackBoneDataRegistry.h"
+#include "Animation/Notifies/ANS_AttackHitWindow.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Curves/CurveVector.h"
 #include "UObject/SavePackage.h"
 #include "BonePose.h"
+
+// -------------------- utils --------------------
+
+void UAnimBoneTransformLibrary::SaveObjectPackage(UObject* Obj)
+{
+    if (!Obj) return;
+
+    UPackage* Pkg = Obj->GetOutermost();
+    if (!Pkg) return;
+
+    Pkg->MarkPackageDirty();
+
+    const FString PackageName = Pkg->GetName();
+    const FString Filename = FPackageName::LongPackageNameToFilename(
+        PackageName, FPackageName::GetAssetPackageExtension());
+
+    FSavePackageArgs SaveArgs;
+    UPackage::SavePackage(Pkg, Obj, *Filename, SaveArgs);
+}
+
+// -------------------- Gather windows from NotifyState --------------------
+
+void UAnimBoneTransformLibrary::GatherAttackHitWindows(const UAnimSequence* Anim, TArray<FHitWindow>& OutWindows)
+{
+    OutWindows.Reset();
+
+    if (!Anim) return;
+
+    for (const FAnimNotifyEvent& Ev : Anim->Notifies)
+    {
+        if (!Ev.NotifyStateClass) continue;
+        if (Ev.NotifyStateClass->GetClass() != UANS_AttackHitWindow::StaticClass()) continue;
+
+        const UANS_AttackHitWindow* WindowANS = Cast<UANS_AttackHitWindow>(Ev.NotifyStateClass);
+        if (!WindowANS) continue;
+
+        const float S = Ev.GetTriggerTime();
+        const float E = Ev.GetEndTriggerTime();
+
+        if (E > S)
+        {
+            OutWindows.Add(FHitWindow(WindowANS->WindowName, S, E));
+        }
+    }
+
+    OutWindows.Sort([](const FHitWindow& A, const FHitWindow& B)
+        {
+            return A.StartTime < B.StartTime;
+        });
+}
+
+// -------------------- Pose evaluation (your original) --------------------
 
 FTransform UAnimBoneTransformLibrary::GetBoneTransformAtTime(UAnimSequence* AnimSequence, const FName& BoneName, float Time)
 {
@@ -76,62 +133,81 @@ FTransform UAnimBoneTransformLibrary::GetBoneTransformAtTime(UAnimSequence* Anim
     return RelativeTransform;
 }
 
-void UAnimBoneTransformLibrary::ExtractAnimBoneTransformToAsset(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate, const FString& SavePath, const FString& AssetName)
+void UAnimBoneTransformLibrary::BuildSegmentsFromWindows(TMap<FName, FBoneTransformSegment>& OutSegments, const TArray<FHitWindow>& Windows, UAnimSequence* AnimSequence, const FName& BoneName, float SampleInterval)
 {
-    if (!AnimSequence || FrameRate <= 0.f) return;
+    OutSegments.Reset();
+    if (!AnimSequence || Windows.Num() == 0) return;
 
-    const float Duration = AnimSequence->GetPlayLength();
-    TArray<FBoneFrameSample> Samples;
-
-    for (float Time = 0.f; Time <= Duration; Time += FrameRate)
+    for (const auto& W : Windows)
     {
-        FTransform BoneTransform = GetBoneTransformAtTime(AnimSequence, BoneName, Time);
-        Samples.Add(FBoneFrameSample(Time, BoneTransform));
+        FBoneTransformSegment Seg;
+        Seg.StartTime = W.StartTime;
+        Seg.EndTime = W.EndTime;
+
+        for (float T = Seg.StartTime; T <= Seg.EndTime + KINDA_SMALL_NUMBER; T += SampleInterval)
+        {
+            Seg.Samples.Add(FBoneFrameSample(T, GetBoneTransformAtTime(AnimSequence, BoneName, T)));
+        }
+
+        // EndTime을 정확히 찍도록 보정
+        if (Seg.Samples.Num() == 0 || !FMath::IsNearlyEqual(Seg.Samples.Last().Time, Seg.EndTime, 1e-4f))
+        {
+            Seg.Samples.Add(FBoneFrameSample(Seg.EndTime, GetBoneTransformAtTime(AnimSequence, BoneName, Seg.EndTime)));
+        }
+
+        // (선택) 여기에 ReduceSamples(Seg.Samples, PosTol, RotTol) 넣으면 B 방식 완성
+        OutSegments.Add(W.Name, MoveTemp(Seg));
     }
-
-    FString PackageName = SavePath + "/" + AssetName;
-    UPackage* Package = CreatePackage(*PackageName);
-    UAnimBoneTransformDataAsset* NewAsset = NewObject<UAnimBoneTransformDataAsset>(Package, *AssetName, RF_Public | RF_Standalone);
-
-    NewAsset->BoneTransformArray = Samples;
-
-    FAssetRegistryModule::AssetCreated(NewAsset);
-    NewAsset->MarkPackageDirty();
-
-    FSavePackageArgs SaveArgs;
-    UPackage::SavePackage(Package, NewAsset, *FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension()), SaveArgs);
 }
 
-void UAnimBoneTransformLibrary::ExtractAnimBoneLocationToCurve(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate, const FString& SavePath, const FString& AssetName)
+// -------------------- Public entry (CallInEditor) --------------------
+
+void UAnimBoneTransformLibrary::BuildHitDataFromNotifyWindows(
+    UAnimSequence* AnimSequence,
+    FName BoneName,
+    float SampleInterval,
+    UAttackBoneDataRegistry* Registry
+)
 {
-    if (!AnimSequence || FrameRate <= 0.f) return;
+    if (!AnimSequence || SampleInterval <= 0.f || !Registry)
+        return;
 
-    const float Duration = AnimSequence->GetPlayLength();
-    TArray<TPair<float, FVector>> Samples;
+    // 1) 윈도우 자동 수집
+    TArray<FHitWindow> Windows;
+    GatherAttackHitWindows(AnimSequence, Windows);
 
-    for (float Time = 0.f; Time <= Duration; Time += FrameRate)
+    if (Windows.Num() == 0)
     {
-        FTransform BoneTransform = GetBoneTransformAtTime(AnimSequence, BoneName, Time);
-        Samples.Add(TPair<float, FVector>(Time, BoneTransform.GetLocation()));
+        UE_LOG(LogTemp, Warning, TEXT("[BuildHitData] No UANS_AttackHitWindow found in %s"), *AnimSequence->GetName());
+        return;
     }
 
-    FString PackageName = SavePath + "/" + AssetName;
-    UPackage* Package = CreatePackage(*PackageName);
-    UCurveVector* NewAsset = NewObject<UCurveVector>(Package, *AssetName, RF_Public | RF_Standalone);
-
-    for (const TPair<float, FVector>& S : Samples)
+    // 2) 윈도우별로 Key/Asset 생성 + Registry 등록
+    for (int32 i = 0; i < Windows.Num(); ++i)
     {
-        const float   T = S.Key;
-        const FVector V = S.Value;
+        TArray<FHitWindow> SingleWindow;
+        SingleWindow.Add(Windows[i]);
 
-        NewAsset->FloatCurves[0].AddKey(T, V.X);
-        NewAsset->FloatCurves[1].AddKey(T, V.Y);
-        NewAsset->FloatCurves[2].AddKey(T, V.Z);
+        FHitDataEntry Entry;
+        Entry.BoneName = BoneName;
+        Entry.SampleInterval = SampleInterval;
+
+        BuildSegmentsFromWindows(
+            Entry.Segments,
+            SingleWindow,
+            AnimSequence,
+            BoneName,
+            SampleInterval
+        );
+
+        Registry->UpsertSamples(AnimSequence, Entry);
     }
 
-    FAssetRegistryModule::AssetCreated(NewAsset);
-    NewAsset->MarkPackageDirty();
+    // 3) Registry 저장
+    SaveObjectPackage(Registry);
 
-    FSavePackageArgs SaveArgs;
-    UPackage::SavePackage(Package, NewAsset, *FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension()), SaveArgs);
+    UE_LOG(LogTemp, Log, TEXT("[BuildHitData] Done. Anim=%s, Bone=%s, Windows=%d"),
+        *AnimSequence->GetName(), *BoneName.ToString(), Windows.Num());
 }
+
+#endif // WITH_EDITOR

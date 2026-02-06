@@ -6,7 +6,7 @@
 #include "Characters/Player/PlayerBase.h"
 #include "Characters/Components/EquipmentComponent.h"
 
-#include "Utils/AnimBoneTransformDataAsset.h"
+#include "Utils/AnimBoneDataRegistryRoot.h"
 #include "Engine/StaticMeshSocket.h"
 #include "Combat/Interfaces/HitReactionInterface.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"

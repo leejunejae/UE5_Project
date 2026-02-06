@@ -119,6 +119,7 @@ APlayerBase::APlayerBase(const FObjectInitializer& ObjectInitializer)
 	EquipmentComponent->SetSubEquipSocketName(FName("S_SubEquip"));
 
 	CameraSetting();
+	CurrentProfileTag = FGameplayTag::RequestGameplayTag(FName("Skeleton.Player"));
 	Tags.Add("Player");
 }
 

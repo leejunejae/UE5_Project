@@ -1,9 +1,4 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Characters/Enemies/Human/PBEHumanAI.h"
-
-APBEHumanAI::APBEHumanAI()
-{
-
-}
+#include "Utils/AnimBoneDataRegistryRoot.h"

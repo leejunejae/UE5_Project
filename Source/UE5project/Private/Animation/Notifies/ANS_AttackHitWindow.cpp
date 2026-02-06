@@ -4,6 +4,8 @@
 #include "Animation/Notifies/ANS_AttackHitWindow.h"
 #include "Characters/CharacterBase.h"
 #include "Combat/Components/AttackComponent.h"
+#include "Core/Subsystems/GameInstanceSystem/AnimBoneDataSubsystem.h"
+#include "GameplayTags.h"
 
 void UANS_AttackHitWindow::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Anim, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
@@ -11,14 +13,20 @@ void UANS_AttackHitWindow::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSe
 
     ACharacterBase* Character = Cast<ACharacterBase>(MeshComp->GetOwner());
     if (!Character) return;
-
-    if (const FAnimNotifyEvent* Notify = EventReference.GetNotify())
+    if (UAttackComponent* AttackComp = Character->GetAttackComponent())
     {
-        PrevTime = Notify->GetTriggerTime();
-        EndTime = Notify->GetEndTriggerTime();
-        bFinished = false;
-        
-        UE_LOG(LogTemp, Error, TEXT("StartTime : %f"), PrevTime);
+        if (const FAnimNotifyEvent* Notify = EventReference.GetNotify())
+        {
+            PrevTime = Notify->GetTriggerTime();
+            EndTime = Notify->GetEndTriggerTime();
+            bFinished = false;
+            
+            FGameplayTag ProfileTag = Character->GetCharacterProfileTag();
+            const UAnimSequence* Seq = Cast<UAnimSequence>(Anim);
+            AttackComp->BeginAttackTrace(ProfileTag, Seq, WindowName);
+
+            UE_LOG(LogTemp, Error, TEXT("StartTime : %f"), PrevTime);
+        }
     }
 }
 
@@ -38,13 +46,13 @@ void UANS_AttackHitWindow::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSeq
             float CurrentTime = PrevTime + FrameDeltaTime;
             if (CurrentTime < Notify->GetEndTriggerTime())
             {
-                AttackComp->DetectAttackTarget(PrevTime, CurrentTime);
+                AttackComp->ExecuteAttackTrace(PrevTime, CurrentTime, bDrawDebug);
                 UE_LOG(LogTemp, Error, TEXT("PrevTime : %f, CurrentTime : %f"), PrevTime, CurrentTime);
                 PrevTime = CurrentTime;
             }
             else
             {
-                AttackComp->DetectAttackTarget(PrevTime, EndTime);
+                AttackComp->ExecuteAttackTrace(PrevTime, EndTime, bDrawDebug);
                 bFinished = true;
                 UE_LOG(LogTemp, Error, TEXT("PrevTime : %f, EndTime : %f"), PrevTime, EndTime);
                 PrevTime = EndTime;
@@ -68,7 +76,7 @@ void UANS_AttackHitWindow::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequ
             if (!bFinished)
             {
                 bFinished = true;
-                AttackComp->DetectAttackTarget(PrevTime, EndTime);
+                AttackComp->ExecuteAttackTrace(PrevTime, EndTime, bDrawDebug);
                 UE_LOG(LogTemp, Error, TEXT("Notify End PrevTime : %f, EndTime :%f"), PrevTime, EndTime);
             }
         }

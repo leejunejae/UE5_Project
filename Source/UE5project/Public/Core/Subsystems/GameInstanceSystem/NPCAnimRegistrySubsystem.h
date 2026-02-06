@@ -22,7 +22,4 @@ public:
 private:
 	UPROPERTY(EditDefaultsOnly)
 		TObjectPtr<UNPCAnimSetDataAsset> NPCAnimSet;
-
-	UPROPERTY()
-		TMap<FGameplayTag, TSoftObjectPtr<UNPCAnimProfileDataAsset>> SkeletonToSetMap;
 };

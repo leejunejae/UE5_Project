@@ -306,7 +306,7 @@ void AEnemyBaseAIController::UpdateEntryFromStimulus(FThreatEntry& Entry, AActor
         {
             Entry.LastSensedTime = Now;
             Entry.bForgottened = false;
-            // 피격은 강하게 올려주는 게 정석
+            // 피격은 즉시 위협스코어 상승
             Entry.ThreatScore = FMath::Clamp(Entry.ThreatScore + DamageBonus, 0.f, MaxThreatScore);
         }
     }
@@ -402,7 +402,14 @@ AActor* AEnemyBaseAIController::ChoosePrimaryTarget(float Now)
     float BestScore = -FLT_MAX;
 
     // 현재 Primary 유지 정책: 최소 유지 시간 안이면 스위치 금지
-    const bool bPrimaryLocked = PrimaryTarget.IsValid() && (Now < HostileMap.FindRef(PrimaryTarget).MinHoldUntilTime);
+    bool bPrimaryLocked = false;
+    if (PrimaryTarget.IsValid())
+    {
+        if (const FThreatEntry* Cur = HostileMap.Find(PrimaryTarget))
+        {
+            bPrimaryLocked = (Now < Cur->MinHoldUntilTime);
+        }
+    }
 
     // 현재 Primary의 점수
     float CurrentPrimaryScore = -FLT_MAX;

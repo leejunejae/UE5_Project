@@ -11,17 +11,18 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 #include "Engine/StaticMeshSocket.h"
-#include "Utils/AnimBoneTransformDataAsset.h"
+#include "Utils/AttackBoneDataRegistry.h"
+#include "Utils/AnimBoneDataRegistryRoot.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
 
+#include "Core/Subsystems/GameInstanceSystem/AnimBoneDataSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "GameplayTags.h"
+
 #include "Utils/CoreLog.h"
-
-
-#include "Characters/Player/PlayerBase.h"
-#include "Characters/Components/EquipmentComponent.h"
 
 
 // Sets default values for this component's properties
@@ -102,7 +103,7 @@ void UAttackComponent::PlayAnimation(FAttackContext AttackInfo, int32 index, flo
 
 	Anim->Montage_Play(AttackInfo.Anim, Playrate);
 	Anim->Montage_JumpToSection(AttackInfo.AttackDetail[index].SectionName, AttackInfo.Anim);
-	
+
 	FOnMontageEnded MontageEndDelegate;
 	MontageEndDelegate.BindUObject(this, &UAttackComponent::OnMontageEnded);
 	Anim->Montage_SetEndDelegate(MontageEndDelegate, AttackInfo.Anim);
@@ -129,17 +130,30 @@ void UAttackComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	Anim->OnMontageEnded.RemoveDynamic(this, &UAttackComponent::OnMontageEnded);
 }
 
-void UAttackComponent::DetectAttackTarget(float StartTime, float EndTime)
+void UAttackComponent::ExecuteAttackTrace(float StartTime, float EndTime, bool bDrawDebug)
 {
 	ACharacter* Character = Cast<ACharacter>(GetOwner());
 
-	if (!AttackSourceInterface.GetInterface() || !AttackSourceInterface.GetObject() || !Character) return;
+	if (!AttackSourceInterface.GetInterface() || !AttackSourceInterface.GetObject())
+	{
+		UE_LOG(Log_Attack, Error, TEXT("[UAttackComponent] AttackSourceInterface is null"));
+		return;
+	}
 
-	// 실행하는 공격 애니메이션의 본 트랜스폼 데이터 가져오기
-	UAnimBoneTransformDataAsset* TraceTargetBoneTransformData = CurAttackContext.AttackDetail[ComboIndex].TargetBoneTransformDataAsset.Get();
+	if (!Character)
+	{
+		UE_LOG(Log_Attack, Error, TEXT("[UAttackComponent] Owner Character Invalid"));
+		return;
+	}
+
+	if (!CurrentSeg)
+	{
+		UE_LOG(Log_Attack, Error, TEXT("[UAttackComponent] AnimBoneData was not set"));
+		return;
+	}
 
 	// 이전프레임과 현재프레임 사이를 0.001초 간격으로 나눔
-	int32 TraceCorrectionCount = (EndTime - StartTime) / 0.003f;
+	int32 TraceCorrectionCount = (EndTime - StartTime) / 0.001f;
 
 	// 현재 루트본의 위치
 	FTransform CurrentRootWorldTransform = Character->GetMesh()->GetBoneTransform(0);
@@ -155,9 +169,9 @@ void UAttackComponent::DetectAttackTarget(float StartTime, float EndTime)
 
 	for (int32 i = 1; i <= TraceCorrectionCount; ++i)
 	{
-		const float PrevTime = StartTime + (i * 0.003f);
+		const float PrevTime = StartTime + (i * 0.001f);
 
-		const FTransform BoneData = TraceTargetBoneTransformData->GetTransformAtTime(PrevTime);
+		const FTransform BoneData = CurrentSeg->GetTransformAtTime(PrevTime);
 
 		// 데이터(손) -> 월드(root) 적용
 		const FTransform HandWorld = BoneData * CurrentRootWorldTransform;
@@ -171,10 +185,6 @@ void UAttackComponent::DetectAttackTarget(float StartTime, float EndTime)
 
 		float CurWeaponLength = FVector::Distance(StartLoc, EndLoc);
 		float CurHalfHeight = (CurWeaponLength * 0.5f);
-
-		FVector CurCapsuleCenter = (StartLoc + EndLoc) * 0.5f;
-		FVector CurCapsuleAxis = (EndLoc - StartLoc).GetSafeNormal();
-		FQuat CurCapsuleRotation = FRotationMatrix::MakeFromZ(CurCapsuleAxis).ToQuat();
 
 		TArray<FHitResult> HitResults;
 		FCollisionQueryParams CollisionParams;
@@ -241,119 +251,22 @@ void UAttackComponent::DetectAttackTarget(float StartTime, float EndTime)
 			}
 		}
 		
-		DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Red, false, 5.0f);
-	}
-}
-
-void UAttackComponent::ResetTraceData()
-{
-}
-
-FTransform UAttackComponent::SamplingBoneTransformAnimTime(UAnimSequence* AnimSequence, const FName& BoneName, float Time)
-{
-	if (!AnimSequence || !AnimSequence->GetSkeleton())
-	{
-		return FTransform::Identity;
-	}
-
-	USkeleton* Skeleton = AnimSequence->GetSkeleton();
-	const FReferenceSkeleton& RefSkeleton = Skeleton->GetReferenceSkeleton();
-
-	const int32 BoneIndex = RefSkeleton.FindBoneIndex(BoneName);
-	if (BoneIndex == INDEX_NONE)
-	{
-		return FTransform::Identity;
-	}
-
-	// 0) 루트→타깃 체인 인덱스 만들기 (Skeleton index)
-	TArray<int32> Chain;
-	Chain.Reset();
-
-	int32 Cur = BoneIndex;
-	while (Cur != INDEX_NONE)
-	{
-		Chain.Add(Cur);
-		Cur = RefSkeleton.GetParentIndex(Cur);
-	}
-	Algo::Reverse(Chain);
-
-	// Root(0) 보장 (방어)
-	if (Chain.Num() == 0 || Chain[0] != 0)
-	{
-		Chain.Insert(0, 0);
-	}
-
-	// 1) RequiredBoneIndices = 체인만
-	TArray<FBoneIndexType> RequiredBoneIndices;
-	RequiredBoneIndices.Reserve(Chain.Num());
-	for (int32 SkelIdx : Chain)
-	{
-		RequiredBoneIndices.Add((FBoneIndexType)SkelIdx);
-	}
-
-	// 2) Curve 평가 옵션
-	FCurveEvaluationOption CurveOption(false);
-
-	// 3) FBoneContainer 생성 (체인만 포함)
-	FBoneContainer RequiredBones;
-	RequiredBones.InitializeTo(RequiredBoneIndices, CurveOption, *Skeleton);
-
-	// 4) Pose 준비
-	FMemMark Mark(FMemStack::Get());
-
-	FCompactPose Pose;
-	FBlendedCurve Curve;
-	UE::Anim::FStackAttributeContainer Attributes;
-	FAnimationPoseData PoseData(Pose, Curve, Attributes);
-
-	Pose.SetBoneContainer(&RequiredBones);
-
-	// 5) 애니 포즈 추출
-	const float ClampedTime = FMath::Clamp(Time, 0.f, AnimSequence->GetPlayLength());
-	FAnimExtractContext ExtractContext(ClampedTime, false);
-	AnimSequence->GetAnimationPose(PoseData, ExtractContext);
-
-	// 6) RefSkeleton 인덱스 공간에서 Local(Parent Space) 배열을 준비
-	//    - 체인만 평가했으니, 체인에 필요한 본들의 local만 채우면 됨
-	//    - 부모가 체인에 포함되어 있으므로 누적 가능
-	TArray<FTransform> LocalRefSpace;
-	LocalRefSpace.SetNum(Chain.Num()); // 기본은 RefPose
-	// (메모리 줄이고 싶으면 체인 본만 따로 담아도 되지만, 여기선 단순하게 유지)
-
-	// Pose(compact) -> Skeleton index 매핑해서 LocalRefSpace에 덮어쓰기
-	for (FCompactPoseBoneIndex CompactIdx(0); CompactIdx < Pose.GetNumBones(); ++CompactIdx)
-	{
-		const int32 SkelIdx = RequiredBones.GetSkeletonIndex(CompactIdx);
-		if (SkelIdx != INDEX_NONE && LocalRefSpace.IsValidIndex(SkelIdx))
+		if (bDrawDebug)
 		{
-			LocalRefSpace[SkelIdx] = Pose[CompactIdx];
+			FVector CurCapsuleCenter = (StartLoc + EndLoc) * 0.5f;
+			FVector CurCapsuleAxis = (EndLoc - StartLoc).GetSafeNormal();
+			FQuat CurCapsuleRotation = FRotationMatrix::MakeFromZ(CurCapsuleAxis).ToQuat();
+			DrawDebugCapsule(GetWorld(), CurCapsuleCenter, CurHalfHeight, Radius, CurCapsuleRotation, FColor::Red, false, 5.0f);
 		}
 	}
+}
 
-	// 7) Root->Target 체인만 누적해서 Component Space(BoneCS) 계산
-	//    RootCS는 루트 local과 동일(보통)
-	const int32 RootIdx = 0;
-	FTransform RootCS = LocalRefSpace[RootIdx];
+void UAttackComponent::BeginAttackTrace(FGameplayTag Profile, const UAnimSequence* AnimKey, FName WindowName)
+{
+	if (!AnimKey) return;
 
-	if (Chain.Num() <= 1)
-	{
-		// Bone == Root
-		return FTransform::Identity;
-	}
+	UAnimBoneDataSubsystem* Subsys = GetWorld()->GetGameInstance()->GetSubsystem<UAnimBoneDataSubsystem>();
+	if (!Subsys) return;
 
-	FTransform ParentCS = RootCS;
-	FTransform BoneCS = RootCS;
-
-	for (int32 i = 1; i < Chain.Num(); ++i)
-	{
-		const int32 SkelIdx = Chain[i];
-		const FTransform& Local = LocalRefSpace[SkelIdx];
-
-		// ChildCS = Local * ParentCS
-		BoneCS = Local * ParentCS;
-		ParentCS = BoneCS;
-	}
-
-	// 8) 루트 기준 상대 Transform 반환
-	return BoneCS.GetRelativeTransform(RootCS);
+	CurrentSeg = Subsys->GetAnimBoneData(Profile, AnimKey, WindowName);
 }

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Combat/Data/CombatData.h"
 #include "Items/Weapons/Data/WeaponData.h"
-#include "Utils/AnimBoneTransformDataAsset.h"
+#include "Utils/AnimBoneDataRegistryRoot.h"
 #include "Engine/DataTable.h"
 #include "Engine/DataAsset.h"
 #include "UObject/NoExportTypes.h"
@@ -29,7 +29,7 @@ public:
 		FName SectionName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TSoftObjectPtr<UAnimBoneTransformDataAsset> TargetBoneTransformDataAsset;
+		TSoftObjectPtr<UAnimBoneDataRegistryRoot> TargetBoneTransformDataAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		EHitResponse Response;

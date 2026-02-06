@@ -33,8 +33,6 @@ void UBTService_UpdateCombatState::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	FCombatContext Context;
 
 	AActor* Target = Cast<AActor>(Blackboard->GetValueAsObject(EnemyController->Key_Target));
-	
-
 
 	Context.DistanceToTarget = Blackboard->GetValueAsFloat(EnemyController->Key_TargetDistance);
 	Context.AbsDeltaYawDeg = AbsDeltaYawDeg(Enemy, Target);

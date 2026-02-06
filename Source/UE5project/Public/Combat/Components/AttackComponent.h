@@ -14,17 +14,29 @@ class UHitReactionInterface;
 class UNiagaraSystem;
 class UNiagaraComponent;
 class IAttackSourceInterface;
+struct FBoneTransformSegment;
 
 DECLARE_DELEGATE(FOnSingleDelegate);
 
-struct FWeaponSegment {
-	FVector StartWS;
-	FVector EndWS;
+USTRUCT(BlueprintType)
+struct FBoneTransformSample
+{
+	GENERATED_BODY()
 
-	FWeaponSegment() {}
-	FWeaponSegment(const FVector& InStart, const FVector& InEnd)
-		: StartWS(InStart), EndWS(InEnd)
-	{}
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		float Time;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		FTransform BoneTransform;
+
+	FBoneTransformSample()
+		: Time(0.f), BoneTransform(FTransform::Identity)
+	{
+	}
+
+	FBoneTransformSample(float InTime, const FTransform& InTransform)
+		: Time(InTime), BoneTransform(InTransform) {}
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -40,30 +52,24 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	//void SetMovementMode();
-
 public:	
 	FORCEINLINE void SetAttackDA(const UDataAsset* AttackDA) { AttackListDA = AttackDA; }
 
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	virtual void ExecuteAttack(FName AttackName, float Playrate = 1.0f);
 	virtual void PlayAnimation(FAttackContext AttackInfo, int32 index, float Playrate = 1.0f);
-	virtual void DetectAttackTarget(float StartTime, float EndTime);
-	void ResetTraceData();
+	virtual void ExecuteAttackTrace(float StartTime, float EndTime, bool bDrawDebug = false);
 
-	FTransform SamplingBoneTransformAnimTime(UAnimSequence* AnimSequence, const FName& BoneName, float Time);
+	void BeginAttackTrace(FGameplayTag Profile, const UAnimSequence* AnimKey, FName WindowName);
 
 protected:
 	UPROPERTY(VisibleAnywhere, Meta = (AllowPrivateAccess = true))
 		const class UDataAsset* AttackListDA;
 
 	TScriptInterface<IAttackSourceInterface> AttackSourceInterface;
-
 	FOnMontageEnded OnMontageEndedDelegate;
-
-	TTuple<bool, float> DetectTracePrevTime;
-
 	TSet<AActor*> HitActorListCurrentAttack;
+	const FBoneTransformSegment* CurrentSeg = nullptr;
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
 		FAttackContextSet CurAttackContextSet;

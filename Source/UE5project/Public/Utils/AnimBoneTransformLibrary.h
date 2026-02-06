@@ -3,20 +3,36 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Utils/AttackBoneDataRegistry.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AnimBoneTransformLibrary.generated.h"
 
 /**
  * 
  */
-UENUM(BlueprintType)
-enum class EExtractType : uint8
+USTRUCT()
+struct FHitWindow
 {
-	Transform UMETA(DisplayName = "Transform"),
-	Vector UMETA(DisplayName = "Vector"),
-	Rotator UMETA(DisplayName = "Rotator"),
-	Scale UMETA(DisplayName = "Scale"),
+    GENERATED_BODY()
+
+public:
+    UPROPERTY()
+        FName Name;
+
+    UPROPERTY()
+        float StartTime;
+
+    UPROPERTY()
+        float EndTime;
+
+
+    FHitWindow() = default;
+    FHitWindow(FName InName, float InS, float InE)
+        : Name(InName), StartTime(InS), EndTime(InE) {}
 };
+
+class UAnimSequence;
+class UAttackHitDataRegistry;
 
 UCLASS()
 class UE5PROJECT_API UAnimBoneTransformLibrary : public UBlueprintFunctionLibrary
@@ -24,12 +40,32 @@ class UE5PROJECT_API UAnimBoneTransformLibrary : public UBlueprintFunctionLibrar
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Trajectory")
-		static FTransform GetBoneTransformAtTime(UAnimSequence* AnimSequence, const FName& BoneName, float Time);
+    // ✅ NotifyState 윈도우를 자동 수집해서, 윈도우별 Segment만 프리베이크 후
+    // ✅ UAnimBoneDataRegistryRoot 생성 + Registry 자동 등록 + Save 까지
+    UFUNCTION(BlueprintCallable, CallInEditor, Category = "Attack|HitData")
+        static void BuildHitDataFromNotifyWindows(
+            UAnimSequence* AnimSequence,
+            FName BoneName,
+            float SampleInterval,
+            UAttackBoneDataRegistry* Registry
+        );
 
-	UFUNCTION(BlueprintCallable, Category = "Trajectory")
-		static void ExtractAnimBoneTransformToAsset(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate,const FString& SavePath, const FString& AssetName);
+private:
+#if WITH_EDITOR
+    static FTransform GetBoneTransformAtTime(UAnimSequence* AnimSequence, const FName& BoneName, float Time);
 
-	UFUNCTION(BlueprintCallable, Category = "Trajectory")
-		static void ExtractAnimBoneLocationToCurve(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate, const FString& SavePath, const FString& AssetName);
+    static void GatherAttackHitWindows(const UAnimSequence* Anim, TArray<FHitWindow>& OutWindows);
+
+    static void BuildSegmentsFromWindows(
+        TMap<FName, FBoneTransformSegment>& OutSegments,
+        const TArray<FHitWindow>& Windows,
+        UAnimSequence* AnimSequence,
+        const FName& BoneName,
+        float SampleInterval
+    );
+
+    static void SaveObjectPackage(UObject* Obj);
+#endif
+	//UFUNCTION(BlueprintCallable, Category = "Trajectory")
+		//static void ExtractAnimBoneTransformToAsset(UAnimSequence* AnimSequence, const FName& BoneName, float FrameRate,const FString& SavePath, const FString& AssetName);
 };

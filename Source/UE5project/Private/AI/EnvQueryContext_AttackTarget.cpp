@@ -4,7 +4,6 @@
 #include "AI/EnvQueryContext_AttackTarget.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_Actor.h"
-#include "Characters/Enemies/Human/PBEHumanAI.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 

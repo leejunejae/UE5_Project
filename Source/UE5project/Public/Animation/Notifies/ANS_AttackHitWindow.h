@@ -21,8 +21,14 @@ public:
 
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Anim, const FAnimNotifyEventReference& EventReference) override;
 
+	UPROPERTY(EditAnywhere)
+		FName WindowName;
+
 protected:
 	float PrevTime = 0.0f;
 	float EndTime = 0.0f;
 	bool bFinished = false;
+	
+	UPROPERTY(EditAnywhere)
+		bool bDrawDebug = false;
 };

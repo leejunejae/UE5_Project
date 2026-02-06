@@ -7,7 +7,7 @@
 #include "Characters/Data/CharacterStatData.h"
 #include "Characters/Interfaces/DeathInterface.h"
 #include "Combat/Data/CombatData.h"
-#include "PEnumHeader.h"
+
 #include "StatComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnStatCompMultiDel);

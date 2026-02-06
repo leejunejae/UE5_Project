@@ -7,6 +7,7 @@
 
 #include "Interaction/Climb/Data/ClimbHeader.h"
 #include "Characters/Data/StatusData.h"
+#include "GameplayTags.h"
 
 #include "Combat/Interfaces/HitReactionInterface.h"
 #include "GenericTeamAgentInterface.h"
@@ -109,4 +110,14 @@ protected:
 public:
 	FORCEINLINE UClimbComponent* GetClimbComponent() const { return ClimbComponent; }
 #pragma endregion Ladder
+
+#pragma region Animation
+public:
+	FORCEINLINE FGameplayTag GetCharacterProfileTag() const { return CurrentProfileTag; }
+
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "Animation")
+		FGameplayTag CurrentProfileTag;
+
+#pragma endregion Animation
 };

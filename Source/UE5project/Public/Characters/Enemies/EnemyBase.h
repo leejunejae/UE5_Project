@@ -142,8 +142,5 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Animation")
 		TMap<FGameplayTag, FLocomotionAnim> AnimProfiles;
-
-	UPROPERTY(VisibleAnywhere, Category = "Animation")
-		FGameplayTag CurrentProfileTag;
 #pragma endregion Animation
 };
